@@ -119,9 +119,20 @@ docker run -d --name qdrant -p 6333:6333 -v qdrant_storage:/qdrant/storage qdran
 
 ## Integration
 
-### Claude Code CLI
+### Claude Code (Plugin Marketplace)
 
-Create `.mcp.json` in your project root:
+The easiest way to install in Claude Code — no config files needed:
+
+```
+/plugin marketplace add AndyAnh174/vibe-hnindex
+/plugin install vibe-hnindex@vibe-hnindex-marketplace
+```
+
+This automatically sets up the MCP server. You can start using tools like `index_codebase` and `search` right away.
+
+### Claude Code CLI (Manual)
+
+Alternatively, create `.mcp.json` in your project root:
 
 ```json
 {
