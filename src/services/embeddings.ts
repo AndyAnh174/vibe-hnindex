@@ -40,8 +40,13 @@ export async function embed(texts: string[]): Promise<number[][]> {
 }
 
 export async function embedSingle(text: string): Promise<number[]> {
-  const [vector] = await embed([text]);
-  return vector;
+  const results = await embed([text]);
+  if (!results[0] || results[0].length !== config.embeddingDimensions) {
+    throw new Error(
+      `Embedding returned invalid dimensions: expected ${config.embeddingDimensions}, got ${results[0]?.length ?? 0}`
+    );
+  }
+  return results[0];
 }
 
 export async function healthCheck(): Promise<boolean> {

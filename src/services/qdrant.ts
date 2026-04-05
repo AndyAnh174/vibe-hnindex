@@ -26,8 +26,12 @@ export async function ensureCollection(projectName: string): Promise<void> {
   try {
     await qdrant.getCollection(collectionName);
     // Collection already exists
-  } catch {
-    // Collection doesn't exist, create it
+  } catch (error: unknown) {
+    // Only create if collection not found (404), re-throw other errors
+    const status = (error as { status?: number })?.status;
+    if (status && status !== 404) {
+      throw error;
+    }
     await qdrant.createCollection(collectionName, {
       vectors: {
         size: config.embeddingDimensions,

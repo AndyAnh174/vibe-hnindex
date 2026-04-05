@@ -47,6 +47,17 @@ export async function indexFile(args: {
     };
   }
 
+  // Path traversal protection: file must be inside project root
+  const resolvedRoot = path.resolve(project.rootPath);
+  if (!absolutePath.startsWith(resolvedRoot + path.sep) && absolutePath !== resolvedRoot) {
+    return {
+      content: [{
+        type: 'text',
+        text: `Error: File "${absolutePath}" is outside project root "${resolvedRoot}".`,
+      }],
+    };
+  }
+
   // Check Ollama
   const ollamaOk = await ollamaHealthCheck();
   if (!ollamaOk) {
@@ -107,23 +118,29 @@ export async function indexFile(args: {
     indexedAt: now,
   }));
 
-  const vectors = await embed(records.map(r => r.content));
-  insertChunks(records);
+  try {
+    const vectors = await embed(records.map(r => r.content));
+    insertChunks(records);
 
-  if (qdrantAvailable) {
-    const points = records.map((r, i) => ({
-      id: r.id,
-      vector: vectors[i],
-      payload: {
-        project_name: r.projectName,
-        file_path: r.filePath,
-        chunk_index: r.chunkIndex,
-        start_line: r.startLine,
-        end_line: r.endLine,
-        language: r.language,
-      },
-    }));
-    await upsertPoints(args.project_name, points);
+    if (qdrantAvailable) {
+      const points = records.map((r, i) => ({
+        id: r.id,
+        vector: vectors[i],
+        payload: {
+          project_name: r.projectName,
+          file_path: r.filePath,
+          chunk_index: r.chunkIndex,
+          start_line: r.startLine,
+          end_line: r.endLine,
+          language: r.language,
+        },
+      }));
+      await upsertPoints(args.project_name, points);
+    }
+  } catch (error) {
+    console.error('[index-file] Embedding failed, inserting chunks without vectors:', error);
+    insertChunks(records);
+    qdrantAvailable = false;
   }
 
   // Update stats

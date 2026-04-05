@@ -181,9 +181,21 @@ export async function* scanDirectory(rootPath: string): AsyncGenerator<FileEntry
     for (const entry of entries) {
       const fullPath = path.join(dir, entry.name);
 
+      // Skip symlinks to prevent traversal outside project root
+      if (entry.isSymbolicLink()) {
+        console.error(`[scanner] Skipping symlink: ${fullPath}`);
+        continue;
+      }
+
       if (entry.isDirectory()) {
         if (SKIP_DIRECTORIES.has(entry.name)) continue;
         if (entry.name.startsWith('.')) continue; // skip hidden dirs
+        // Verify resolved path is still under project root
+        const resolvedDir = await fsp.realpath(fullPath).catch(() => null);
+        if (!resolvedDir || !resolvedDir.startsWith(absoluteRoot)) {
+          console.error(`[scanner] Skipping directory outside root: ${fullPath}`);
+          continue;
+        }
         yield* walk(fullPath);
       } else if (entry.isFile()) {
         if (!shouldIndexFile(fullPath)) continue;

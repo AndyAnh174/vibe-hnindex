@@ -29,6 +29,23 @@ const activeWatchers = new Map<string, { watcher: fs.FSWatcher; count: number }>
 const pendingFiles = new Map<string, NodeJS.Timeout>();
 const DEBOUNCE_MS = 1000;
 
+// Cleanup all watchers on process exit
+function cleanupAllWatchers() {
+  for (const [name, entry] of activeWatchers) {
+    entry.watcher.close();
+    console.error(`[watch] Stopped watching: ${name}`);
+  }
+  activeWatchers.clear();
+  for (const timeout of pendingFiles.values()) {
+    clearTimeout(timeout);
+  }
+  pendingFiles.clear();
+}
+
+process.on('exit', cleanupAllWatchers);
+process.on('SIGINT', () => { cleanupAllWatchers(); process.exit(0); });
+process.on('SIGTERM', () => { cleanupAllWatchers(); process.exit(0); });
+
 async function reindexFile(
   projectName: string,
   rootPath: string,
