@@ -4,6 +4,7 @@
 
 [![npm version](https://img.shields.io/npm/v/vibe-hnindex.svg)](https://www.npmjs.com/package/vibe-hnindex)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![GitHub](https://img.shields.io/github/stars/AndyAnh174/vibe-hnindex?style=social)](https://github.com/AndyAnh174/vibe-hnindex)
 
 ## What is this?
 
@@ -330,7 +331,7 @@ TypeScript, JavaScript, Python, Java, Go, Rust, C, C++, C#, Ruby, PHP, Swift, Ko
 ## Development
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/vibe-hnindex.git
+git clone https://github.com/AndyAnh174/vibe-hnindex.git
 cd vibe-hnindex
 npm install
 npm run build

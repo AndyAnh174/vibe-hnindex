@@ -56,10 +56,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "git+https://github.com/AndyAnh174/vibe-hnindex.git"
   },
-  "homepage": "",
+  "homepage": "https://github.com/AndyAnh174/vibe-hnindex#readme",
   "bugs": {
-    "url": ""
+    "url": "https://github.com/AndyAnh174/vibe-hnindex/issues"
   }
 }
