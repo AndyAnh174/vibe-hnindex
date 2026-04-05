@@ -10,6 +10,8 @@ import { search } from './tools/search.js';
 import { listProjectsTool } from './tools/list-projects.js';
 import { deleteProjectTool } from './tools/delete-project.js';
 import { getFileInfoTool } from './tools/get-file-info.js';
+import { projectStatsTool } from './tools/project-stats.js';
+import { watchProjectTool, unwatchProjectTool } from './tools/watch-project.js';
 
 // Initialize database on startup
 initDatabase();
@@ -79,12 +81,15 @@ server.tool(
 // --- Tool: search ---
 server.tool(
   'search',
-  'Search the indexed codebase. Returns matching code chunks with file paths, line numbers, and relevance scores. Supports keyword (FTS5/BM25), semantic (vector similarity), and hybrid (RRF fusion) modes.',
+  'Search the indexed codebase. Returns matching code chunks with file paths, line numbers, and relevance scores. Supports keyword (FTS5/BM25), semantic (vector similarity), and hybrid (RRF fusion) modes. Can filter by language and file path pattern.',
   {
     query: z.string().describe('Search query — natural language or keywords'),
     project_name: z.string().describe('Project to search in'),
     mode: z.enum(['keyword', 'semantic', 'hybrid']).default('hybrid').describe('Search mode: keyword (FTS5), semantic (vector), or hybrid (recommended)'),
     limit: z.number().int().min(1).max(50).default(10).describe('Maximum number of results to return'),
+    language: z.string().optional().describe('Filter by language (e.g., "typescript", "python", "go")'),
+    file_pattern: z.string().optional().describe('Filter by file path glob pattern (e.g., "src/api/*", "*.ts", "services/**")'),
+    expand_context: z.number().int().min(0).max(5).default(0).describe('Number of adjacent chunks to include before/after each result for more context (0 = no expansion)'),
   },
   async (args) => search(args),
 );
@@ -118,11 +123,41 @@ server.tool(
   async (args) => getFileInfoTool(args),
 );
 
+// --- Tool: project_stats ---
+server.tool(
+  'project_stats',
+  'Get detailed statistics about an indexed project: language breakdown, file/chunk counts, total lines, and averages. Useful for understanding codebase composition before searching.',
+  {
+    project_name: z.string().describe('Project name'),
+  },
+  async (args) => projectStatsTool(args),
+);
+
+// --- Tool: watch_project ---
+server.tool(
+  'watch_project',
+  'Start watching an indexed project for file changes. When a source file is saved, it will be automatically re-indexed. Uses debouncing to avoid excessive re-indexing.',
+  {
+    project_name: z.string().describe('Project name (must already exist from index_codebase)'),
+  },
+  async (args) => watchProjectTool(args),
+);
+
+// --- Tool: unwatch_project ---
+server.tool(
+  'unwatch_project',
+  'Stop watching a project for file changes.',
+  {
+    project_name: z.string().describe('Project name to stop watching'),
+  },
+  async (args) => unwatchProjectTool(args),
+);
+
 // --- Start server ---
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started');
+  console.error('[vibe-hnindex] Server started (v0.1.3)');
 }
 
 main().catch((error) => {

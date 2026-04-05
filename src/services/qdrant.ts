@@ -92,17 +92,14 @@ export async function searchSimilar(
       }
     }
 
-    const searchParams: Record<string, unknown> = {
+    const filter = must.length > 0 ? { must } : undefined;
+
+    const results = await getQdrantClient().search(collectionName, {
       vector: queryVector,
       limit,
       with_payload: false,
-    };
-
-    if (must.length > 0) {
-      searchParams.filter = { must };
-    }
-
-    const results = await getQdrantClient().search(collectionName, searchParams);
+      ...(filter ? { filter } : {}),
+    });
 
     return results.map(r => ({
       id: r.id as string,
