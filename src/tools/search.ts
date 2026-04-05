@@ -1,10 +1,15 @@
 import { config } from '../config.js';
 import type { SearchResult } from '../types.js';
-import { searchKeyword, getChunksByIds, getProject } from '../services/sqlite.js';
+import { searchKeyword, getChunksByIds, getProject, getAdjacentChunks } from '../services/sqlite.js';
 import { searchSimilar, healthCheck as qdrantHealthCheck } from '../services/qdrant.js';
 import { embedSingle, healthCheck as ollamaHealthCheck } from '../services/embeddings.js';
 
 type SearchMode = 'keyword' | 'semantic' | 'hybrid';
+
+interface SearchFilters {
+  language?: string;
+  file_pattern?: string;
+}
 
 // Reciprocal Rank Fusion
 function rrfFuse(
@@ -30,10 +35,18 @@ export async function search(args: {
   project_name: string;
   mode?: SearchMode;
   limit?: number;
+  language?: string;
+  file_pattern?: string;
+  expand_context?: number;
 }): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
   const mode = args.mode || 'hybrid';
   const limit = args.limit || 10;
   const candidateLimit = 20; // fetch more candidates for RRF
+  const expandContext = args.expand_context || 0;
+
+  const filters: SearchFilters = {};
+  if (args.language) filters.language = args.language;
+  if (args.file_pattern) filters.file_pattern = args.file_pattern;
 
   // Validate project
   const project = getProject(args.project_name);
@@ -54,7 +67,7 @@ export async function search(args: {
   // Keyword search
   if (mode === 'keyword' || mode === 'hybrid') {
     try {
-      keywordResults = searchKeyword(args.query, args.project_name, candidateLimit);
+      keywordResults = searchKeyword(args.query, args.project_name, candidateLimit, filters);
     } catch (error) {
       console.error('[search] Keyword search error:', error);
       warnings.push('Keyword search failed.');
@@ -93,7 +106,7 @@ export async function search(args: {
     } else {
       try {
         const queryVector = await embedSingle(args.query);
-        semanticResults = await searchSimilar(args.project_name, queryVector, candidateLimit);
+        semanticResults = await searchSimilar(args.project_name, queryVector, candidateLimit, filters);
       } catch (error) {
         console.error('[search] Semantic search error:', error);
         warnings.push('Semantic search failed.');
@@ -156,10 +169,33 @@ export async function search(args: {
     return { content: [{ type: 'text', text }] };
   }
 
-  const header = `Found ${finalResults.length} results for "${args.query}" (mode: ${actualMode}):\n`;
+  // Build filter info string
+  const filterParts: string[] = [];
+  if (args.language) filterParts.push(`language: ${args.language}`);
+  if (args.file_pattern) filterParts.push(`path: ${args.file_pattern}`);
+  const filterInfo = filterParts.length > 0 ? ` [filters: ${filterParts.join(', ')}]` : '';
+
+  const header = `Found ${finalResults.length} results for "${args.query}" (mode: ${actualMode})${filterInfo}:\n`;
   const warningText = warnings.length > 0 ? `\n⚠ ${warnings.join('\n⚠ ')}\n` : '';
 
   const resultTexts = finalResults.map((r, i) => {
+    // Context expansion
+    if (expandContext > 0) {
+      const expanded = getAdjacentChunks(
+        args.project_name, r.filePath, r.chunkIndex, expandContext, expandContext
+      );
+      const mergedContent = expanded.map(c => c.content).join('\n');
+      const startLine = expanded[0]?.startLine ?? r.startLine;
+      const endLine = expanded[expanded.length - 1]?.endLine ?? r.endLine;
+
+      return [
+        `### ${i + 1}. ${r.filePath}:${startLine}-${endLine} (${r.language}) [score: ${r.score.toFixed(4)}]`,
+        '```' + r.language,
+        mergedContent,
+        '```',
+      ].join('\n');
+    }
+
     return [
       `### ${i + 1}. ${r.filePath}:${r.startLine}-${r.endLine} (${r.language}) [score: ${r.score.toFixed(4)}]`,
       '```' + r.language,

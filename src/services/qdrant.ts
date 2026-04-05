@@ -66,16 +66,43 @@ export async function upsertPoints(
 export async function searchSimilar(
   projectName: string,
   queryVector: number[],
-  limit: number
+  limit: number,
+  filters?: { language?: string; file_pattern?: string }
 ): Promise<Array<{ id: string; score: number }>> {
   const collectionName = getCollectionName(projectName);
 
   try {
-    const results = await getQdrantClient().search(collectionName, {
+    const must: Array<Record<string, unknown>> = [];
+
+    if (filters?.language) {
+      must.push({
+        key: 'language',
+        match: { value: filters.language.toLowerCase() },
+      });
+    }
+    if (filters?.file_pattern) {
+      // Convert glob pattern to a prefix match for Qdrant
+      // e.g. "src/api/*" → match file_path starting with "src/api/"
+      const prefix = filters.file_pattern.replace(/\*.*$/, '');
+      if (prefix) {
+        must.push({
+          key: 'file_path',
+          match: { text: prefix },
+        });
+      }
+    }
+
+    const searchParams: Record<string, unknown> = {
       vector: queryVector,
       limit,
       with_payload: false,
-    });
+    };
+
+    if (must.length > 0) {
+      searchParams.filter = { must };
+    }
+
+    const results = await getQdrantClient().search(collectionName, searchParams);
 
     return results.map(r => ({
       id: r.id as string,

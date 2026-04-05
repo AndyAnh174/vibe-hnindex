@@ -196,20 +196,38 @@ export function getExistingFileHash(projectName: string, filePath: string): stri
 
 // --- Search ---
 
-export function searchKeyword(query: string, projectName: string, limit: number): SearchResult[] {
+export function searchKeyword(
+  query: string,
+  projectName: string,
+  limit: number,
+  filters?: { language?: string; file_pattern?: string }
+): SearchResult[] {
   // Escape FTS5 special characters for safe querying
   const safeQuery = query.replace(/['"]/g, ' ').trim();
   if (!safeQuery) return [];
 
-  const rows = getDb().prepare(`
+  let sql = `
     SELECT c.id, c.file_path, c.absolute_path, c.chunk_index, c.start_line, c.end_line,
            c.content, c.language, rank
     FROM chunks_fts
     JOIN chunks c ON chunks_fts.rowid = c.rowid
     WHERE chunks_fts MATCH ? AND c.project_name = ?
-    ORDER BY rank
-    LIMIT ?
-  `).all(safeQuery, projectName, limit) as Array<{
+  `;
+  const params: unknown[] = [safeQuery, projectName];
+
+  if (filters?.language) {
+    sql += ` AND c.language = ?`;
+    params.push(filters.language.toLowerCase());
+  }
+  if (filters?.file_pattern) {
+    sql += ` AND c.file_path GLOB ?`;
+    params.push(filters.file_pattern);
+  }
+
+  sql += ` ORDER BY rank LIMIT ?`;
+  params.push(limit);
+
+  const rows = getDb().prepare(sql).all(...params) as Array<{
     id: string;
     file_path: string;
     absolute_path: string;
@@ -304,6 +322,86 @@ export function getProjectChunkCount(projectName: string): number {
     'SELECT COUNT(*) as cnt FROM chunks WHERE project_name = ?'
   ).get(projectName) as { cnt: number };
   return row.cnt;
+}
+
+export function getProjectStats(projectName: string): {
+  languages: Array<{ language: string; fileCount: number; chunkCount: number }>;
+  totalFiles: number;
+  totalChunks: number;
+  totalLines: number;
+  avgChunksPerFile: number;
+} {
+  const langRows = getDb().prepare(`
+    SELECT language,
+           COUNT(DISTINCT file_path) as file_count,
+           COUNT(*) as chunk_count
+    FROM chunks WHERE project_name = ?
+    GROUP BY language ORDER BY chunk_count DESC
+  `).all(projectName) as Array<{ language: string; file_count: number; chunk_count: number }>;
+
+  const lineRow = getDb().prepare(`
+    SELECT COALESCE(SUM(end_line), 0) as total_lines,
+           COUNT(*) as total_chunks,
+           COUNT(DISTINCT file_path) as total_files
+    FROM chunks WHERE project_name = ?
+  `).get(projectName) as { total_lines: number; total_chunks: number; total_files: number };
+
+  return {
+    languages: langRows.map(r => ({
+      language: r.language,
+      fileCount: r.file_count,
+      chunkCount: r.chunk_count,
+    })),
+    totalFiles: lineRow.total_files,
+    totalChunks: lineRow.total_chunks,
+    totalLines: lineRow.total_lines,
+    avgChunksPerFile: lineRow.total_files > 0
+      ? Math.round((lineRow.total_chunks / lineRow.total_files) * 10) / 10
+      : 0,
+  };
+}
+
+// --- Context expansion: get surrounding chunks ---
+
+export function getAdjacentChunks(
+  projectName: string,
+  filePath: string,
+  chunkIndex: number,
+  expandBefore: number,
+  expandAfter: number
+): SearchResult[] {
+  const minIndex = Math.max(0, chunkIndex - expandBefore);
+  const maxIndex = chunkIndex + expandAfter;
+
+  const rows = getDb().prepare(`
+    SELECT id, file_path, absolute_path, chunk_index, start_line, end_line,
+           content, language
+    FROM chunks
+    WHERE project_name = ? AND file_path = ? AND chunk_index BETWEEN ? AND ?
+    ORDER BY chunk_index
+  `).all(projectName, filePath, minIndex, maxIndex) as Array<{
+    id: string;
+    file_path: string;
+    absolute_path: string;
+    chunk_index: number;
+    start_line: number;
+    end_line: number;
+    content: string;
+    language: string;
+  }>;
+
+  return rows.map(r => ({
+    id: r.id,
+    filePath: r.file_path,
+    absolutePath: r.absolute_path,
+    chunkIndex: r.chunk_index,
+    startLine: r.start_line,
+    endLine: r.end_line,
+    content: r.content,
+    language: r.language,
+    score: 0,
+    matchType: 'keyword' as const,
+  }));
 }
 
 export function getProjectFileCount(projectName: string): number {
