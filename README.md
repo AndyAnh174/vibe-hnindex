@@ -1,39 +1,41 @@
 # vibe-hnindex
 
-> MCP Server biến AI assistant thành "trợ lý hiểu sẵn codebase" — index source code vào knowledge base local, search bằng keyword + semantic + hybrid.
+> MCP Server that turns AI assistants into "codebase-aware" helpers — index source code into a local knowledge base, search with keyword + semantic + hybrid modes.
 
 [![npm version](https://img.shields.io/npm/v/vibe-hnindex.svg)](https://www.npmjs.com/package/vibe-hnindex)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![GitHub](https://img.shields.io/github/stars/AndyAnh174/vibe-hnindex?style=social)](https://github.com/AndyAnh174/vibe-hnindex)
 
-## What is this?
+## About
 
-`vibe-hnindex` là một [MCP Server](https://modelcontextprotocol.io/) chạy trên máy local. Nó cho phép AI assistants (Claude, Cursor, Windsurf, Google Antigravity...) **index toàn bộ source code** vào knowledge base và **search lại bất cứ lúc nào** — kể cả ở chat session mới.
+`vibe-hnindex` is a [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) server that runs locally on your machine. It allows AI assistants (Claude, Cursor, Windsurf, Google Antigravity...) to **index your entire codebase** into a knowledge base and **search it anytime** — even across chat sessions.
 
-**Không cần cloud. Không cần API key. Data nằm 100% trên máy bạn.**
+**No cloud. No API keys. 100% local data.**
 
-### Use cases
+**Status:** This project is in early development (v0.1.x). Expect breaking changes and new features in upcoming releases. Feedback and contributions are welcome!
 
-- **Onboard repo mới** → index 1 lần, hỏi "flow authentication hoạt động thế nào" → AI trả đúng file, đúng dòng
-- **Debug nhanh** → "tìm chỗ nào gọi API payment" → hybrid search chính xác hơn grep
-- **Cross-session** → hôm nay index, tuần sau mở chat mới vẫn query được
+### Use Cases
+
+- **Onboard a new repo** — index once, ask "how does the auth flow work?" and get exact files + line numbers
+- **Fast debugging** — "find where the payment API is called" with semantic understanding (better than grep)
+- **Cross-session memory** — index today, search next week in a brand new chat
 
 ## Features
 
 - **Keyword search** — SQLite FTS5 + BM25 ranking
 - **Semantic search** — Qdrant vector similarity + bge-m3 embeddings (1024-dim)
-- **Hybrid search** — kết hợp cả hai bằng Reciprocal Rank Fusion (RRF)
-- **Smart chunking** — chia code theo boundary tự nhiên (function/class), overlap 5 lines
-- **Incremental indexing** — SHA-256 hash check, chỉ re-index file thay đổi
-- **40+ ngôn ngữ** — TypeScript, Python, Go, Rust, Java, C#, PHP, Ruby, Dart, Solidity...
-- **Graceful degradation** — Qdrant down? Keyword search vẫn hoạt động
+- **Hybrid search** — combines both using Reciprocal Rank Fusion (RRF)
+- **Smart chunking** — splits code at natural boundaries (function/class), 5-line overlap
+- **Incremental indexing** — SHA-256 hash check, only re-indexes changed files
+- **40+ languages** — TypeScript, Python, Go, Rust, Java, C#, PHP, Ruby, Dart, Solidity...
+- **Graceful degradation** — keyword search still works when Qdrant/Ollama is down
 
 ## Architecture
 
 ```
 ┌──────────────────────────────────────────────────────────┐
 │  AI Client (Claude / Cursor / Windsurf / Antigravity)    │
-│  Gọi MCP tools: index_codebase, search, list_projects... │
+│  Calls MCP tools: index_codebase, search, list_projects  │
 └────────────────────────┬─────────────────────────────────┘
                          │ JSON-RPC (stdio)
 ┌────────────────────────▼─────────────────────────────────┐
@@ -66,7 +68,7 @@ ollama pull bge-m3:567m
 ollama serve
 ```
 
-Hoặc dùng Ollama remote: set `OLLAMA_URL=http://your-server:11434`
+Or use a remote Ollama server: set `OLLAMA_URL=http://your-server:11434`
 
 ### 3. Qdrant (vector database)
 
@@ -74,15 +76,13 @@ Hoặc dùng Ollama remote: set `OLLAMA_URL=http://your-server:11434`
 docker run -d --name qdrant -p 6333:6333 -v qdrant_storage:/qdrant/storage qdrant/qdrant
 ```
 
-> Keyword search hoạt động **không cần** Qdrant. Qdrant chỉ cần cho semantic/hybrid search.
+> **Note:** Keyword search works **without** Qdrant. Qdrant is only required for semantic/hybrid search.
 
 ---
 
 ## Quick Start
 
-### 1. Cấu hình MCP Server
-
-Thêm vào config file của AI tool bạn dùng (xem chi tiết bên dưới):
+### 1. Add to your AI tool's MCP config
 
 ```json
 {
@@ -100,28 +100,28 @@ Thêm vào config file của AI tool bạn dùng (xem chi tiết bên dưới):
 }
 ```
 
-### 2. Restart AI tool
+### 2. Restart your AI tool
 
-### 3. Trong chat, nói:
+### 3. In chat, just ask:
 
 ```
-"Index folder D:/projects/my-app tên là my-app"
-→ AI gọi index_codebase, index toàn bộ codebase
+"Index the codebase at D:/projects/my-app, name it my-app"
+→ Indexes all source files
 
-"Tìm trong my-app phần xử lý authentication"
-→ AI gọi search, trả code chunks liên quan
+"Search my-app for authentication middleware"
+→ Returns matching code chunks with file paths and line numbers
 
-"Liệt kê project đã index"
-→ AI gọi list_projects
+"List all indexed projects"
+→ Shows what's been indexed
 ```
 
 ---
 
-## Integration (Config cho từng AI tool)
+## Integration
 
 ### Claude Code CLI
 
-Tạo file `.mcp.json` ở root project:
+Create `.mcp.json` in your project root:
 
 ```json
 {
@@ -148,44 +148,35 @@ cd /path/to/your-project && claude
 Edit `claude_desktop_config.json`:
 - **Windows:** `%APPDATA%\Claude\claude_desktop_config.json`
 - **macOS:** `~/Library/Application Support/Claude/claude_desktop_config.json`
+- **Linux:** `~/.config/Claude/claude_desktop_config.json`
 
-```json
-{
-  "mcpServers": {
-    "vibe-hnindex": {
-      "command": "npx",
-      "args": ["-y", "vibe-hnindex"],
-      "env": {
-        "OLLAMA_URL": "http://localhost:11434",
-        "OLLAMA_MODEL": "bge-m3:567m",
-        "QDRANT_URL": "http://localhost:6333"
-      }
-    }
-  }
-}
-```
+Same JSON format as above.
 
 ### Google Antigravity
 
 Edit `mcp_config.json`:
 - **Windows:** `C:\Users\<USER>\.gemini\antigravity\mcp_config.json`
-- **macOS:** `~/.gemini/antigravity/mcp_config.json`
+- **macOS / Linux:** `~/.gemini/antigravity/mcp_config.json`
 
-Hoặc: **3-dot menu > MCP > Manage MCP Servers > View raw config**
+Or in Antigravity: **3-dot menu > MCP > Manage MCP Servers > View raw config**
 
-Cùng format JSON như trên.
+Same JSON format as above.
 
 ### Cursor
 
-File `.cursor/mcp.json` ở root project hoặc global settings. Cùng format.
+Create `.cursor/mcp.json` in project root, or configure globally:
+- **Windows:** `%APPDATA%\Cursor\User\globalStorage\cursor.mcp\mcp.json`
+- **macOS / Linux:** `~/.cursor/mcp.json`
+
+Same JSON format.
 
 ### Windsurf
 
-File `~/.windsurf/mcp_config.json`. Cùng format.
+Edit `~/.windsurf/mcp_config.json` (same path on macOS, Linux, and Windows). Same JSON format.
 
 ### VS Code (Copilot)
 
-File `.vscode/mcp.json` ở root project:
+Create `.vscode/mcp.json` in project root:
 
 ```json
 {
@@ -205,11 +196,11 @@ File `.vscode/mcp.json` ở root project:
 
 ---
 
-## Tools (6 MCP tools)
+## Tools
 
 ### `index_codebase`
 
-Index toàn bộ folder. Hỗ trợ incremental (chỉ re-index file thay đổi).
+Index an entire directory. Supports incremental re-indexing.
 
 ```
 index_codebase(path: "/path/to/project", project_name: "my-app")
@@ -217,7 +208,7 @@ index_codebase(path: "/path/to/project", project_name: "my-app")
 
 ### `index_file`
 
-Index/re-index 1 file. Project phải tồn tại.
+Index or re-index a single file. Project must already exist.
 
 ```
 index_file(file_path: "/path/to/file.ts", project_name: "my-app")
@@ -225,13 +216,13 @@ index_file(file_path: "/path/to/file.ts", project_name: "my-app")
 
 ### `search`
 
-Tìm kiếm code. 3 mode:
+Search indexed code with 3 modes:
 
-| Mode | Mô tả | Khi nào dùng |
-|------|--------|-------------|
-| `keyword` | SQLite FTS5 + BM25 | Tìm chính xác tên hàm, biến |
-| `semantic` | Qdrant cosine similarity | Tìm theo ý nghĩa |
-| `hybrid` | RRF fusion (recommended) | Kết quả tốt nhất |
+| Mode | How it works | Best for |
+|------|-------------|----------|
+| `keyword` | SQLite FTS5 + BM25 | Exact function/variable names |
+| `semantic` | Qdrant cosine similarity | Natural language queries |
+| `hybrid` | RRF fusion (recommended) | Best overall results |
 
 ```
 search(query: "authentication middleware", project_name: "my-app", mode: "hybrid", limit: 10)
@@ -239,11 +230,11 @@ search(query: "authentication middleware", project_name: "my-app", mode: "hybrid
 
 ### `list_projects`
 
-Liệt kê tất cả project đã index.
+List all indexed projects with metadata.
 
 ### `delete_project`
 
-Xóa project khỏi knowledge base (SQLite + Qdrant).
+Remove a project from the knowledge base (SQLite + Qdrant).
 
 ```
 delete_project(project_name: "my-app")
@@ -251,7 +242,7 @@ delete_project(project_name: "my-app")
 
 ### `get_file_info`
 
-Xem thông tin 1 file đã index (chunks, line ranges).
+Get info about a specific indexed file (chunks, line ranges, language).
 
 ```
 get_file_info(file_path: "src/index.ts", project_name: "my-app")
@@ -261,51 +252,53 @@ get_file_info(file_path: "src/index.ts", project_name: "my-app")
 
 ## Configuration
 
-| Variable | Default | Mô tả |
-|----------|---------|-------|
+All settings via environment variables:
+
+| Variable | Default | Description |
+|----------|---------|-------------|
 | `OLLAMA_URL` | `http://localhost:11434` | Ollama server URL |
-| `OLLAMA_MODEL` | `bge-m3:567m` | Embedding model |
+| `OLLAMA_MODEL` | `bge-m3:567m` | Embedding model name |
 | `STORAGE_PATH` | `~/.vibe-hnindex` | SQLite database location |
 | `QDRANT_URL` | `http://localhost:6333` | Qdrant server URL |
-| `QDRANT_COLLECTION_PREFIX` | `mcp_ck_` | Prefix tên collection |
-| `CHUNK_SIZE` | `60` | Lines per chunk |
+| `QDRANT_COLLECTION_PREFIX` | `mcp_ck_` | Qdrant collection name prefix |
+| `CHUNK_SIZE` | `60` | Target lines per chunk |
 | `CHUNK_OVERLAP` | `5` | Overlap lines between chunks |
-| `MAX_FILE_SIZE` | `1048576` | Max file size (bytes, default 1MB) |
+| `MAX_FILE_SIZE` | `1048576` | Max file size in bytes (default 1MB) |
 
 ---
 
 ## How It Works
 
-### Indexing
+### Indexing Pipeline
 
 ```
 Scan directory → filter files (40+ extensions, skip node_modules/.git/dist...)
-  → SHA-256 hash check → skip unchanged files
+  → SHA-256 hash → skip unchanged files
   → chunk code (60 lines, boundary-aware, 5-line overlap)
   → embed via Ollama bge-m3 (batch 32, 1024-dim vectors)
-  → store in SQLite (text + FTS5) + Qdrant (vectors)
+  → store in SQLite (text + FTS5) and Qdrant (vectors)
 ```
 
 ### Hybrid Search (RRF)
 
-Chạy keyword + semantic song song, kết hợp bằng Reciprocal Rank Fusion:
+Runs keyword + semantic search in parallel, combines with Reciprocal Rank Fusion:
 
 ```
 score(chunk) = 1/(60 + rank_keyword) + 1/(60 + rank_semantic)
 ```
 
-Chunks xuất hiện ở cả 2 danh sách được boost score.
+Chunks appearing in both result sets get boosted scores.
 
 ### Data Storage
 
-| Component | Location | Dùng cho |
+| Component | Location | Purpose |
 |-----------|----------|---------|
-| SQLite | `~/.vibe-hnindex/knowledge.db` | Chunks text, FTS5 index, metadata |
-| Qdrant | Docker volume `qdrant_storage` | Vector embeddings (1024-dim, cosine) |
+| SQLite | `~/.vibe-hnindex/knowledge.db` | Chunk text, FTS5 index, project metadata |
+| Qdrant | Docker volume `qdrant_storage` | Vector embeddings (1024-dim, cosine distance) |
 
-Mỗi project = 1 Qdrant collection tên `mcp_ck_{project_name}`.
+Each project = 1 Qdrant collection named `mcp_ck_{project_name}`.
 
-Data **persistent** — mở chat mới, project mới vẫn search được.
+Data is **persistent** — survives across chat sessions and IDE restarts.
 
 ---
 
@@ -313,18 +306,18 @@ Data **persistent** — mở chat mới, project mới vẫn search được.
 
 TypeScript, JavaScript, Python, Java, Go, Rust, C, C++, C#, Ruby, PHP, Swift, Kotlin, Scala, Lua, Bash, SQL, Vue, Svelte, HTML, CSS, SCSS, YAML, TOML, JSON, XML, Markdown, Protocol Buffers, GraphQL, Terraform, Zig, Elixir, Erlang, Clojure, Haskell, OCaml, F#, Dart, Solidity, CMake, Gradle, Dockerfile, Makefile
 
-**Auto-skip:** `node_modules`, `.git`, `dist`, `build`, `__pycache__`, `vendor`, lock files, binary files, files > 1MB
+**Auto-skipped:** `node_modules`, `.git`, `dist`, `build`, `__pycache__`, `vendor`, lock files, binary files, files > 1MB
 
 ---
 
 ## Error Handling
 
-| Lỗi | Hành vi |
-|-----|---------|
-| Ollama down | Error message + keyword search vẫn hoạt động |
-| Qdrant down | Error message + keyword search vẫn hoạt động |
-| Hybrid + services down | Auto fallback về keyword + warning |
-| File unreadable / >1MB / binary | Skip, continue, report in summary |
+| Error | Behavior |
+|-------|----------|
+| Ollama down | Clear error message. Keyword search still works. |
+| Qdrant down | Clear error message. Keyword search still works. |
+| Hybrid mode + services down | Auto-fallback to keyword search + warning |
+| File unreadable / too large / binary | Skip file, continue indexing, report in summary |
 
 ---
 
@@ -335,34 +328,74 @@ git clone https://github.com/AndyAnh174/vibe-hnindex.git
 cd vibe-hnindex
 npm install
 npm run build
-npm run dev    # chạy trực tiếp từ source (tsx)
+npm run dev   # run directly from source via tsx
 ```
+
+### Project Structure
+
+```
+src/
+├── index.ts                 # Entry point: MCP server + tool registration
+├── config.ts                # Environment variables + defaults
+├── types.ts                 # Shared TypeScript interfaces
+├── services/
+│   ├── sqlite.ts            # SQLite + FTS5: schema, CRUD, keyword search
+│   ├── qdrant.ts            # Qdrant: collection management, vector search
+│   ├── embeddings.ts        # Ollama API client (POST /api/embed)
+│   ├── chunker.ts           # Smart line-based code chunker
+│   └── file-scanner.ts      # Recursive directory walker + file filter
+└── tools/
+    ├── index-codebase.ts    # index_codebase handler
+    ├── index-file.ts        # index_file handler
+    ├── search.ts            # search handler (keyword/semantic/hybrid)
+    ├── list-projects.ts     # list_projects handler
+    ├── delete-project.ts    # delete_project handler
+    └── get-file-info.ts     # get_file_info handler
+```
+
+---
+
+## Roadmap
+
+- [ ] Watch mode — auto re-index on file changes
+- [ ] Search filters — by language, file path pattern
+- [ ] AST-based chunking for better code understanding
+- [ ] Web UI dashboard for managing indexed projects
+- [ ] Support for more embedding models
 
 ---
 
 ## FAQ
 
-**Data lưu ở đâu?**
+**Where is data stored?**
 SQLite: `~/.vibe-hnindex/knowledge.db`. Qdrant: Docker volume `qdrant_storage`.
 
-**Mở chat mới có mất data không?**
-Không. Data persistent.
+**Does opening a new chat lose data?**
+No. Data is persistent. Index once, search forever until you `delete_project`.
 
-**Có cần Docker không?**
-Qdrant cần Docker. Keyword search hoạt động không cần Docker.
+**Is Docker required?**
+Qdrant needs Docker. Keyword search works without Docker/Qdrant.
 
-**Ollama chạy ở máy khác được không?**
-Được. Set `OLLAMA_URL=http://ip:port`.
+**Can Ollama run on a different machine?**
+Yes. Set `OLLAMA_URL=http://ip:port` in your MCP config env.
 
-**Index lại codebase có chậm không?**
-Incremental — chỉ re-index file thay đổi (SHA-256 check).
+**Is re-indexing slow?**
+No. Incremental indexing only processes files with changed SHA-256 hashes.
 
 ---
 
 ## License
 
-MIT License — see [LICENSE](LICENSE)
+MIT — see [LICENSE](LICENSE)
 
 ## Contributing
 
-Issues and PRs welcome.
+Issues and PRs are welcome at [github.com/AndyAnh174/vibe-hnindex](https://github.com/AndyAnh174/vibe-hnindex).
+
+## Contact
+
+- **Author:** Ho Viet Anh (AndyAnh174)
+- **Email:** hovietanh147@gmail.com
+- **GitHub:** [github.com/AndyAnh174](https://github.com/AndyAnh174)
+
+If you have questions, suggestions, or want to report a bug, feel free to [open an issue](https://github.com/AndyAnh174/vibe-hnindex/issues) or reach out via email.
