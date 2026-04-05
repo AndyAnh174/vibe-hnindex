@@ -5,7 +5,7 @@ let client: QdrantClient;
 
 export function getQdrantClient(): QdrantClient {
   if (!client) {
-    client = new QdrantClient({ url: config.qdrantUrl });
+    client = new QdrantClient({ url: config.qdrantUrl, checkCompatibility: false });
   }
   return client;
 }
