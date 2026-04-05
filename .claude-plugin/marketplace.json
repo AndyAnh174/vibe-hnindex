@@ -1,0 +1,29 @@
+{
+  "name": "vibe-hnindex-marketplace",
+  "owner": {
+    "name": "Ho Viet Anh (AndyAnh174)",
+    "email": "hovietanh147@gmail.com"
+  },
+  "metadata": {
+    "description": "MCP tools for indexing and searching codebases with keyword + semantic + hybrid modes",
+    "version": "0.2.0"
+  },
+  "plugins": [
+    {
+      "name": "vibe-hnindex",
+      "source": "./",
+      "description": "Index source code into a local knowledge base, search with keyword + semantic + hybrid modes",
+      "version": "0.2.0",
+      "author": {
+        "name": "Ho Viet Anh (AndyAnh174)",
+        "email": "hovietanh147@gmail.com"
+      },
+      "homepage": "https://github.com/AndyAnh174/vibe-hnindex",
+      "repository": "https://github.com/AndyAnh174/vibe-hnindex",
+      "license": "MIT",
+      "keywords": ["mcp", "codebase", "search", "indexing", "semantic-search", "rag"],
+      "category": "developer-tools",
+      "tags": ["mcp", "search", "codebase", "knowledge-base", "qdrant", "sqlite"]
+    }
+  ]
+}
