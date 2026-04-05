@@ -54,7 +54,7 @@
 
 ## Prerequisites
 
-### 1. Node.js >= 18
+### 1. Node.js >= 20
 
 ```bash
 node -v
