@@ -33,3 +33,6 @@ jobs:
         run: |
           test -f dist/index.js || (echo "dist/index.js not found" && exit 1)
           echo "Build output OK"
+
+      - name: Run tests
+        run: npm test

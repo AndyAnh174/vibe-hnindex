@@ -18,7 +18,7 @@ initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.1.3',
+  version: '0.2.0',
 });
 
 // --- Resource: knowledge://projects ---
@@ -157,7 +157,7 @@ server.tool(
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started (v0.1.3)');
+  console.error('[vibe-hnindex] Server started (v0.2.0)');
 }
 
 main().catch((error) => {
