@@ -1,0 +1,14 @@
+src/
+node_modules/
+.git/
+.github/
+.claude/
+.env
+.env.example
+*.db
+*.db-journal
+tsconfig.json
+docker-compose.yml
+.mcp.json
+.gitignore
+.npmignore

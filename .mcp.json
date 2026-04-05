@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "codebase-knowledge": {
+      "command": "node",
+      "args": ["D:/RTIC/MCP/dist/index.js"],
+      "env": {
+        "OLLAMA_URL": "http://222.253.80.30:11434",
+        "OLLAMA_MODEL": "bge-m3:567m",
+        "QDRANT_URL": "http://localhost:6333"
+      }
+    }
+  }
+}

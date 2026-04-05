@@ -1,0 +1,65 @@
+{
+  "name": "vibe-hnindex",
+  "version": "0.1.0",
+  "description": "MCP server for indexing and searching codebases with keyword + semantic search. Works with Claude, Cursor, Windsurf, Antigravity.",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "vibe-hnindex": "dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build",
+    "version": "npm run build"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@qdrant/js-client-rest": "^1.13.0",
+    "better-sqlite3": "^11.7.0",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "codebase",
+    "knowledge-base",
+    "search",
+    "semantic-search",
+    "qdrant",
+    "sqlite",
+    "fts5",
+    "ollama",
+    "bge-m3",
+    "embeddings",
+    "rag",
+    "claude",
+    "cursor",
+    "windsurf",
+    "antigravity"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "homepage": "",
+  "bugs": {
+    "url": ""
+  }
+}

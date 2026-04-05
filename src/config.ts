@@ -1,0 +1,34 @@
+import path from 'node:path';
+import os from 'node:os';
+
+export const config = {
+  // Ollama
+  ollamaUrl: process.env.OLLAMA_URL || 'http://222.253.80.30:11434',
+  embeddingModel: process.env.OLLAMA_MODEL || 'bge-m3:567m',
+  embeddingDimensions: 1024,
+
+  // Storage (SQLite)
+  storagePath: process.env.STORAGE_PATH || path.join(os.homedir(), '.vibe-hnindex'),
+  get sqlitePath() {
+    return path.join(this.storagePath, 'knowledge.db');
+  },
+
+  // Qdrant
+  qdrantUrl: process.env.QDRANT_URL || 'http://localhost:6333',
+  qdrantCollectionPrefix: process.env.QDRANT_COLLECTION_PREFIX || 'mcp_ck_',
+
+  // Chunking
+  chunkSize: parseInt(process.env.CHUNK_SIZE || '60', 10),
+  chunkOverlap: parseInt(process.env.CHUNK_OVERLAP || '5', 10),
+
+  // Indexing
+  maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '1048576', 10), // 1MB
+
+  // Embedding batching
+  embeddingBatchSize: 32,
+} as const;
+
+export function getCollectionName(projectName: string): string {
+  const sanitized = projectName.replace(/[^a-zA-Z0-9_]/g, '_');
+  return `${config.qdrantCollectionPrefix}${sanitized}`;
+}
