@@ -1,0 +1,24 @@
+{
+  "name": "vibe-hnindex",
+  "description": "Index source code into a local knowledge base, search with keyword + semantic + hybrid modes",
+  "version": "0.2.0",
+  "author": {
+    "name": "Ho Viet Anh (AndyAnh174)",
+    "email": "hovietanh147@gmail.com"
+  },
+  "homepage": "https://github.com/AndyAnh174/vibe-hnindex",
+  "repository": "https://github.com/AndyAnh174/vibe-hnindex",
+  "license": "MIT",
+  "keywords": ["mcp", "codebase", "search", "indexing", "semantic-search", "qdrant", "sqlite", "rag"],
+  "mcpServers": {
+    "vibe-hnindex": {
+      "command": "npx",
+      "args": ["-y", "vibe-hnindex"],
+      "env": {
+        "OLLAMA_URL": "http://localhost:11434",
+        "OLLAMA_MODEL": "bge-m3:567m",
+        "QDRANT_URL": "http://localhost:6333"
+      }
+    }
+  }
+}
