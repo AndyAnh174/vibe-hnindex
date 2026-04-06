@@ -6,12 +6,12 @@
     "url": "https://github.com/AndyAnh174/vibe-hnindex",
     "source": "github"
   },
-  "version": "0.3.2",
+  "version": "0.3.3",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "vibe-hnindex",
-      "version": "0.3.2",
+      "version": "0.3.3",
       "transport": {
         "type": "stdio"
       },
@@ -36,6 +36,13 @@
           "format": "string",
           "isSecret": false,
           "name": "QDRANT_URL"
+        },
+        {
+          "description": "Qdrant API key (Qdrant Cloud or API-key-protected clusters)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true,
+          "name": "QDRANT_API_KEY"
         },
         {
           "description": "SQLite database storage path",

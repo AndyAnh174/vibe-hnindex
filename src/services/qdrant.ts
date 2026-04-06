@@ -2,10 +2,28 @@ import { QdrantClient } from '@qdrant/js-client-rest';
 import { config, getCollectionName } from '../config.js';
 
 let client: QdrantClient;
+let cloudConfigWarned = false;
+
+function warnIfCloudUrlWithoutApiKey(): void {
+  if (cloudConfigWarned) return;
+  const url = config.qdrantUrl.toLowerCase();
+  const looksLikeCloud = url.startsWith('https://') && url.includes('qdrant');
+  if (looksLikeCloud && !config.qdrantApiKey) {
+    cloudConfigWarned = true;
+    console.error(
+      '[qdrant] QDRANT_URL looks like Qdrant Cloud but QDRANT_API_KEY is unset. Set the API key from your Cloud dashboard or semantic search will fail.'
+    );
+  }
+}
 
 export function getQdrantClient(): QdrantClient {
   if (!client) {
-    client = new QdrantClient({ url: config.qdrantUrl, checkCompatibility: false });
+    warnIfCloudUrlWithoutApiKey();
+    client = new QdrantClient({
+      url: config.qdrantUrl,
+      checkCompatibility: false,
+      ...(config.qdrantApiKey ? { apiKey: config.qdrantApiKey } : {}),
+    });
   }
   return client;
 }
