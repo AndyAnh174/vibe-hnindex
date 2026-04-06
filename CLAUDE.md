@@ -114,6 +114,7 @@ node node_modules/vitest/vitest.mjs run
 | OLLAMA_MODEL | bge-m3:567m | Embedding model |
 | STORAGE_PATH | ~/.vibe-hnindex | SQLite DB location |
 | QDRANT_URL | http://localhost:6333 | Qdrant server |
+| QDRANT_API_KEY | *(unset)* | Optional; Qdrant Cloud / API-key auth |
 
 ## Publishing
 

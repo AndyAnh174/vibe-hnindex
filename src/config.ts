@@ -3,7 +3,7 @@ import os from 'node:os';
 
 export const config = {
   // Ollama
-  ollamaUrl: process.env.OLLAMA_URL || 'http://222.253.80.30:11434',
+  ollamaUrl: process.env.OLLAMA_URL || 'http://localhost:11434',
   embeddingModel: process.env.OLLAMA_MODEL || 'bge-m3:567m',
   embeddingDimensions: 1024,
 
@@ -13,8 +13,9 @@ export const config = {
     return path.join(this.storagePath, 'knowledge.db');
   },
 
-  // Qdrant
+  // Qdrant (set QDRANT_API_KEY for Qdrant Cloud / authenticated clusters)
   qdrantUrl: process.env.QDRANT_URL || 'http://localhost:6333',
+  qdrantApiKey: process.env.QDRANT_API_KEY?.trim() || undefined,
   qdrantCollectionPrefix: process.env.QDRANT_COLLECTION_PREFIX || 'mcp_ck_',
 
   // Chunking
