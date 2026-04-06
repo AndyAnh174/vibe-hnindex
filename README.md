@@ -11,7 +11,7 @@
 [![MCP](https://img.shields.io/badge/MCP-compatible-6366f1?style=flat-square)](https://modelcontextprotocol.io/)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
 
-**Current release: v0.3.3**
+**Current release: v0.4.0**
 
 [Documentation](#documentation) · [Quick install](#quick-install) · [Features](#features) · [License](#license)
 

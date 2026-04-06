@@ -3,24 +3,32 @@ import type { SearchResult } from '../types.js';
 import {
   searchKeyword,
   getChunksByIds,
-  getProject,
+  getProjectWithRetry,
   getAdjacentChunks,
 } from '../services/sqlite.js';
 import { searchSimilar, healthCheck as qdrantHealthCheck } from '../services/qdrant.js';
 import { embedSingle, healthCheck as ollamaHealthCheck } from '../services/embeddings.js';
 import { tokenizeForFts, buildFtsOrQuery } from '../services/keyword-query.js';
-import { applyPathQualityScores } from '../services/path-quality.js';
+import { applyPathQualityScores, deprioritizeMultiplier } from '../services/path-quality.js';
 import {
   DEFAULT_MAX_CONTENT_CHARS,
   truncateContentUnicode,
 } from '../services/snippet.js';
+import { resolveSearchMode } from '../services/query-router.js';
 
-type SearchMode = 'keyword' | 'semantic' | 'hybrid';
+type SearchMode = 'keyword' | 'semantic' | 'hybrid' | 'auto';
 type ContentMode = 'full' | 'compact';
 
 interface SearchFilters {
   language?: string;
   file_pattern?: string;
+}
+
+interface HybridExplainMeta {
+  rrfScore: number;
+  keywordRank?: number;
+  semanticRank?: number;
+  semanticRawScore?: number;
 }
 
 /** Keep the highest-scoring chunk per file path (first wins if scores tie). */
@@ -72,8 +80,11 @@ export async function search(args: {
   content_mode?: ContentMode;
   max_content_chars?: number;
   deprioritize_generated_paths?: boolean;
+  explain?: boolean;
 }): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
-  const mode = args.mode || 'hybrid';
+  const rawMode =
+    args.mode !== undefined ? args.mode : config.searchAutoRoute ? 'auto' : 'hybrid';
+  const effectiveMode = resolveSearchMode(args.query, rawMode);
   const limit = args.limit || 10;
   const dedupeByFileEnabled = args.dedupe_by_file !== false;
   const kwLimit = keywordFetchLimit(limit, dedupeByFileEnabled);
@@ -82,13 +93,13 @@ export async function search(args: {
   const contentMode: ContentMode = args.content_mode === 'full' ? 'full' : 'compact';
   const maxContentChars = args.max_content_chars ?? DEFAULT_MAX_CONTENT_CHARS;
   const deprioritizePaths = args.deprioritize_generated_paths !== false;
+  const explain = args.explain === true;
 
   const filters: SearchFilters = {};
   if (args.language) filters.language = args.language;
   if (args.file_pattern) filters.file_pattern = args.file_pattern;
 
-  // Validate project
-  const project = getProject(args.project_name);
+  const project = await getProjectWithRetry(args.project_name);
   if (!project) {
     return {
       content: [{
@@ -100,13 +111,17 @@ export async function search(args: {
 
   let keywordResults: SearchResult[] = [];
   let semanticResults: Array<{ id: string; score: number }> = [];
-  let warnings: string[] = [];
-  let actualMode = mode;
+  const warnings: string[] = [];
+  let actualMode = effectiveMode;
+
+  const semanticFetchLimit = dedupeByFileEnabled
+    ? Math.min(200, Math.max(limit * 20, limit))
+    : limit;
 
   // Keyword search (fetch more rows when deduping by file so we can still fill `limit` distinct files)
-  if (mode === 'keyword' || mode === 'hybrid') {
+  if (effectiveMode === 'keyword' || effectiveMode === 'hybrid') {
     try {
-      const kwFetch = mode === 'keyword' ? kwLimit : Math.max(candidateLimit, kwLimit);
+      const kwFetch = effectiveMode === 'keyword' ? kwLimit : Math.max(candidateLimit, kwLimit);
       keywordResults = searchKeyword(args.query, args.project_name, kwFetch, filters);
 
       const tokens = tokenizeForFts(args.query);
@@ -128,18 +143,43 @@ export async function search(args: {
     }
   }
 
-  // Semantic search
-  const semanticFetchLimit = dedupeByFileEnabled
-    ? Math.min(200, Math.max(limit * 20, limit))
-    : limit;
+  let keywordFallbackRan = false;
 
-  if (mode === 'semantic' || mode === 'hybrid') {
+  if (
+    effectiveMode === 'keyword' &&
+    keywordResults.length === 0 &&
+    config.searchKeywordFallbackSemantic
+  ) {
+    const ollamaOk = await ollamaHealthCheck();
+    const qdrantOk = await qdrantHealthCheck();
+    if (ollamaOk && qdrantOk) {
+      try {
+        const queryVector = await embedSingle(args.query);
+        semanticResults = await searchSimilar(
+          args.project_name,
+          queryVector,
+          semanticFetchLimit,
+          filters
+        );
+        keywordFallbackRan = true;
+        if (semanticResults.length > 0) {
+          warnings.push('Keyword had no hits; semantic fallback used.');
+        }
+      } catch (error) {
+        console.error('[search] Keyword→semantic fallback error:', error);
+        warnings.push('Semantic fallback after keyword failed.');
+      }
+    }
+  }
+
+  // Semantic search (skip if keyword fallback already populated semanticResults)
+  if ((effectiveMode === 'semantic' || effectiveMode === 'hybrid') && !keywordFallbackRan) {
     const ollamaOk = await ollamaHealthCheck();
     const qdrantOk = await qdrantHealthCheck();
 
     if (!ollamaOk) {
       warnings.push(`Ollama not available at ${config.ollamaUrl}. Semantic search disabled.`);
-      if (mode === 'hybrid') {
+      if (effectiveMode === 'hybrid') {
         actualMode = 'keyword';
       } else {
         return {
@@ -151,7 +191,7 @@ export async function search(args: {
       }
     } else if (!qdrantOk) {
       warnings.push(`Qdrant not available at ${config.qdrantUrl}. Semantic search disabled.`);
-      if (mode === 'hybrid') {
+      if (effectiveMode === 'hybrid') {
         actualMode = 'keyword';
       } else {
         return {
@@ -164,30 +204,50 @@ export async function search(args: {
     } else {
       try {
         const queryVector = await embedSingle(args.query);
-        const semLimit = mode === 'hybrid' ? Math.max(candidateLimit, semanticFetchLimit) : semanticFetchLimit;
+        const semLimit =
+          effectiveMode === 'hybrid' ? Math.max(candidateLimit, semanticFetchLimit) : semanticFetchLimit;
         semanticResults = await searchSimilar(args.project_name, queryVector, semLimit, filters);
       } catch (error) {
         console.error('[search] Semantic search error:', error);
         warnings.push('Semantic search failed.');
-        if (mode === 'hybrid') actualMode = 'keyword';
+        if (effectiveMode === 'hybrid') actualMode = 'keyword';
       }
     }
   }
 
   // Combine results
   let finalResults: SearchResult[];
+  const hybridExplainById = new Map<string, HybridExplainMeta>();
+  const semanticRawById = new Map(semanticResults.map((r) => [r.id, r.score]));
+  const keywordRankById = new Map(keywordResults.map((r, i) => [r.id, i + 1]));
+  const semanticRankById = new Map(semanticResults.map((r, i) => [r.id, i + 1]));
 
-  if (actualMode === 'keyword') {
+  if (keywordFallbackRan && semanticResults.length > 0) {
+    actualMode = 'semantic';
+    const ids = semanticResults.slice(0, semanticFetchLimit).map((r) => r.id);
+    const chunks = getChunksByIds(ids);
+    const scoreMap = new Map(semanticResults.map((r) => [r.id, r.score]));
+    finalResults = chunks.map((c) => ({
+      ...c,
+      score: scoreMap.get(c.id) || 0,
+      matchType: 'semantic' as const,
+    }));
+    finalResults.sort((a, b) => b.score - a.score);
+    if (dedupeByFileEnabled) {
+      finalResults = dedupeByFile(finalResults, limit);
+    } else {
+      finalResults = finalResults.slice(0, limit);
+    }
+  } else if (actualMode === 'keyword') {
     const ranked = dedupeByFileEnabled
       ? dedupeByFile(keywordResults, limit)
       : keywordResults.slice(0, limit);
     finalResults = ranked;
   } else if (actualMode === 'semantic') {
-    // Fetch full chunk data from SQLite
-    const ids = semanticResults.slice(0, semanticFetchLimit).map(r => r.id);
+    const ids = semanticResults.slice(0, semanticFetchLimit).map((r) => r.id);
     const chunks = getChunksByIds(ids);
-    const scoreMap = new Map(semanticResults.map(r => [r.id, r.score]));
-    finalResults = chunks.map(c => ({
+    const scoreMap = new Map(semanticResults.map((r) => [r.id, r.score]));
+    finalResults = chunks.map((c) => ({
       ...c,
       score: scoreMap.get(c.id) || 0,
       matchType: 'semantic' as const,
@@ -204,13 +264,11 @@ export async function search(args: {
     const hybridPool = dedupeByFileEnabled ? kwLimit : limit;
     const sorted = [...rrfScores.entries()].sort((a, b) => b[1] - a[1]).slice(0, hybridPool);
 
-    // Build result map from keyword results
     const resultMap = new Map<string, SearchResult>();
     for (const r of keywordResults) {
       resultMap.set(r.id, r);
     }
 
-    // Fetch any missing chunks (from semantic-only results)
     const missingIds = sorted.filter(([id]) => !resultMap.has(id)).map(([id]) => id);
     if (missingIds.length > 0) {
       const missingChunks = getChunksByIds(missingIds);
@@ -219,20 +277,31 @@ export async function search(args: {
       }
     }
 
-    finalResults = sorted
-      .reduce<SearchResult[]>((acc, [id, score]) => {
-        const chunk = resultMap.get(id);
-        if (chunk) {
-          acc.push({ ...chunk, score, matchType: 'hybrid' });
-        }
-        return acc;
-      }, []);
+    for (const [id, rrfScore] of rrfScores) {
+      hybridExplainById.set(id, {
+        rrfScore,
+        keywordRank: keywordRankById.get(id),
+        semanticRank: semanticRankById.get(id),
+        semanticRawScore: semanticRawById.get(id),
+      });
+    }
+
+    finalResults = sorted.reduce<SearchResult[]>((acc, [id, score]) => {
+      const chunk = resultMap.get(id);
+      if (chunk) {
+        acc.push({ ...chunk, score, matchType: 'hybrid' });
+      }
+      return acc;
+    }, []);
     if (dedupeByFileEnabled) {
       finalResults = dedupeByFile(finalResults, limit);
     } else {
       finalResults = finalResults.slice(0, limit);
     }
   }
+
+  const scoreBeforePath = new Map(finalResults.map((r) => [r.id, r.score]));
+  const pathMulById = new Map(finalResults.map((r) => [r.id, deprioritizeMultiplier(r.filePath)]));
 
   finalResults = applyPathQualityScores(finalResults, deprioritizePaths);
 
@@ -244,7 +313,6 @@ export async function search(args: {
     return { content: [{ type: 'text', text }] };
   }
 
-  // Build filter info string
   const filterParts: string[] = [];
   if (args.language) filterParts.push(`language: ${args.language}`);
   if (args.file_pattern) filterParts.push(`path: ${args.file_pattern}`);
@@ -253,7 +321,9 @@ export async function search(args: {
   }
   const filterInfo = filterParts.length > 0 ? ` [filters: ${filterParts.join(', ')}]` : '';
 
-  const header = `Found ${finalResults.length} results for "${args.query}" (mode: ${actualMode})${filterInfo}:\n`;
+  const modeLabel =
+    rawMode === 'auto' ? `${effectiveMode} (auto from query)` : effectiveMode;
+  const header = `Found ${finalResults.length} results for "${args.query}" (mode: ${modeLabel})${filterInfo}:\n`;
   const warningText = warnings.length > 0 ? `\n⚠ ${warnings.join('\n⚠ ')}\n` : '';
 
   const expandCap =
@@ -268,12 +338,38 @@ export async function search(args: {
       return truncateContentUnicode(raw, cap);
     };
 
-    // Context expansion
+    let explainLine = '';
+    if (explain) {
+      const before = scoreBeforePath.get(r.id) ?? r.score;
+      const mul = pathMulById.get(r.id) ?? 1;
+      const parts: string[] = [
+        `score_before_path=${before.toFixed(6)}`,
+        `path_multiplier=${mul}`,
+        `final_score=${r.score.toFixed(6)}`,
+        `match=${r.matchType}`,
+      ];
+      if (r.matchType === 'semantic') {
+        parts.push(`semantic_raw=${(semanticRawById.get(r.id) ?? before).toFixed(6)}`);
+      }
+      if (r.matchType === 'hybrid') {
+        const h = hybridExplainById.get(r.id);
+        if (h) {
+          parts.push(`rrf=${h.rrfScore.toFixed(6)}`);
+          if (h.keywordRank !== undefined) parts.push(`keyword_rank=${h.keywordRank}`);
+          if (h.semanticRank !== undefined) parts.push(`semantic_rank=${h.semanticRank}`);
+          if (h.semanticRawScore !== undefined) {
+            parts.push(`semantic_raw=${h.semanticRawScore.toFixed(6)}`);
+          }
+        }
+      }
+      explainLine = `\nexplain: ${parts.join(' ')}`;
+    }
+
     if (expandContext > 0) {
       const expanded = getAdjacentChunks(
         args.project_name, r.filePath, r.chunkIndex, expandContext, expandContext
       );
-      const mergedContent = expanded.map(c => c.content).join('\n');
+      const mergedContent = expanded.map((c) => c.content).join('\n');
       const startLine = expanded[0]?.startLine ?? r.startLine;
       const endLine = expanded[expanded.length - 1]?.endLine ?? r.endLine;
 
@@ -282,7 +378,8 @@ export async function search(args: {
         '```' + r.language,
         formatBody(mergedContent),
         '```',
-      ].join('\n');
+        explainLine,
+      ].filter(Boolean).join('\n');
     }
 
     return [
@@ -290,7 +387,8 @@ export async function search(args: {
       '```' + r.language,
       formatBody(r.content),
       '```',
-    ].join('\n');
+      explainLine,
+    ].filter(Boolean).join('\n');
   });
 
   return {

@@ -1,5 +1,14 @@
 # Changelog (highlights)
 
+## v0.4.0
+
+- **`search` — project race** — uses `getProjectWithRetry` so “project not found” right after `index_codebase` is rare.
+- **`index_codebase` readiness** — summary ends with `Ready: yes|no` and, when Qdrant is up, `qdrant_vectors: <count>` after a best-effort collection verify.
+- **`mode: auto`** — heuristic routing to keyword vs hybrid (optional **`SEARCH_AUTO_ROUTE=true`** to treat omitted `mode` like `auto`).
+- **Keyword → semantic fallback** — if keyword returns no hits and Ollama+Qdrant are OK, one semantic pass runs (default **`SEARCH_KEYWORD_FALLBACK_SEMANTIC`** on; set to `false` to disable).
+- **`explain`** — optional per-result score breakdown (path multiplier, RRF / semantic hints).
+- **MCP schema** — `search` exposes `content_mode`, `max_content_chars`, `deprioritize_generated_paths`, `mode` including `auto`, and `explain`.
+
 ## v0.3.3
 
 - **`QDRANT_API_KEY`** — optional for local Docker; **required** for [Qdrant Cloud](https://cloud.qdrant.io/) (set with `QDRANT_URL` = HTTPS cluster URL from the dashboard).
