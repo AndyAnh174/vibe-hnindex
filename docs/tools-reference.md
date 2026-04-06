@@ -1,5 +1,9 @@
 # Tools reference
 
+These are the MCP **tools** the server exposes. Your assistant calls them by name with arguments (exact names match below). For setup, see [Getting started](getting-started.md).
+
+---
+
 ## `index_codebase`
 
 Index an entire directory. Supports incremental re-indexing. The response includes **`Ready: yes`** or **`Ready: no`** and, when Qdrant is available, **`qdrant_vectors: <count>`** (v0.4.0+) so you can confirm the vector collection after indexing.
