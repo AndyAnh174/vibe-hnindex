@@ -1,6 +1,9 @@
 # Integrations
 
-Use the same `env` block as [Getting started](getting-started.md): self-hosted Qdrant only needs `QDRANT_URL`; Qdrant Cloud also needs `QDRANT_API_KEY` and an HTTPS `QDRANT_URL`.
+After you have the MCP JSON from [Getting started](getting-started.md), **this page only answers: which file to edit** for each product. The `mcpServers` / `servers` payload is the same idea everywhere:
+
+- **Self-hosted Qdrant:** `OLLAMA_*`, `QDRANT_URL` (no API key).
+- **Qdrant Cloud:** also set `QDRANT_API_KEY` and an HTTPS `QDRANT_URL`.
 
 ---
 
@@ -57,14 +60,62 @@ Same `mcpServers` JSON as above.
 
 ## Google Antigravity
 
-Edit `mcp_config.json`:
+Google **Antigravity** (Gemini-based IDE) stores MCP config in one file. The JSON shape matches other clients: a root object with **`mcpServers`**.
+
+### Config file location
 
 | OS | Path |
 |----|------|
 | Windows | `C:\Users\<USER>\.gemini\antigravity\mcp_config.json` |
 | macOS / Linux | `~/.gemini/antigravity/mcp_config.json` |
 
-Or: **⋮ menu → MCP → Manage MCP Servers → View raw config**
+Create the folders `.gemini/antigravity/` if they do not exist.
+
+### Edit from the UI
+
+**⋮** (menu) → **MCP** → **Manage MCP Servers** → **View raw config** — this opens the same `mcp_config.json`.
+
+### Example (npm / `npx`, same as Getting started)
+
+```json
+{
+  "mcpServers": {
+    "vibe-hnindex": {
+      "command": "npx",
+      "args": ["-y", "vibe-hnindex"],
+      "env": {
+        "OLLAMA_URL": "http://localhost:11434",
+        "OLLAMA_MODEL": "bge-m3:567m",
+        "QDRANT_URL": "http://localhost:6333"
+      }
+    }
+  }
+}
+```
+
+You can rename `"vibe-hnindex"` to any label (e.g. `"codebase-knowledge"`). It only affects the name shown in the MCP list.
+
+### Local dev (run your own `dist/index.js`)
+
+If you built the repo locally:
+
+```json
+{
+  "mcpServers": {
+    "vibe-hnindex": {
+      "command": "node",
+      "args": ["D:/path/to/vibe-hnindex/dist/index.js"],
+      "env": {
+        "OLLAMA_URL": "http://localhost:11434",
+        "OLLAMA_MODEL": "bge-m3:567m",
+        "QDRANT_URL": "http://localhost:6333"
+      }
+    }
+  }
+}
+```
+
+Use forward slashes or escaped backslashes in `args` on Windows. Point `OLLAMA_URL` / `QDRANT_URL` to wherever **your** services run (remote Ollama is fine).
 
 ---
 
