@@ -162,26 +162,19 @@ function pathHasEggInfoSegment(filename: string): boolean {
   return filename.replace(/\\/g, '/').split('/').some(p => p.endsWith('.egg-info'));
 }
 
-export async function watchProjectTool(args: {
-  project_name: string;
-}): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
-  const project = getProject(args.project_name);
+export async function startWatchingProject(projectName: string): Promise<{ ok: boolean; message: string }> {
+  const project = getProject(projectName);
   if (!project) {
     return {
-      content: [{
-        type: 'text',
-        text: `Error: Project "${args.project_name}" not found. Run index_codebase first.`,
-      }],
+      ok: false,
+      message: `Project "${projectName}" not found. Run index_codebase first.`,
     };
   }
 
-  // Check if already watching
-  if (activeWatchers.has(args.project_name)) {
+  if (activeWatchers.has(projectName)) {
     return {
-      content: [{
-        type: 'text',
-        text: `Already watching project "${args.project_name}" at ${project.rootPath}`,
-      }],
+      ok: true,
+      message: `Already watching project "${projectName}" at ${project.rootPath}`,
     };
   }
 
@@ -195,15 +188,12 @@ export async function watchProjectTool(args: {
     const fullPath = path.join(rootPath, filename);
     const ext = path.extname(filename).toLowerCase();
 
-    // Skip non-supported files
     if (!WATCH_EXTENSIONS.has(ext)) return;
 
-    // Skip files in ignored directories
     const parts = filename.replace(/\\/g, '/').split('/');
     if (parts.some(p => SKIP_DIRS.has(p))) return;
     if (pathHasEggInfoSegment(filename)) return;
 
-    // Debounce: wait 1s after last change before re-indexing
     const existing = pendingFiles.get(fullPath);
     if (existing) clearTimeout(existing);
 
@@ -213,11 +203,10 @@ export async function watchProjectTool(args: {
       const relativePath = path.relative(resolvedRoot, fullPath).replace(/\\/g, '/');
 
       if (!fs.existsSync(fullPath)) {
-        // File deleted — remove chunks (even if path now matches .hnindexignore)
-        const oldIds = deleteFileChunks(args.project_name, relativePath);
+        const oldIds = deleteFileChunks(projectName, relativePath);
         if (oldIds.length > 0) {
           const qdrantOk = await qdrantHealthCheck();
-          if (qdrantOk) await deletePoints(args.project_name, oldIds);
+          if (qdrantOk) await deletePoints(projectName, oldIds);
         }
         console.error(`[watch] Removed: ${relativePath}`);
         return;
@@ -225,25 +214,32 @@ export async function watchProjectTool(args: {
 
       if (isIgnored(relativePath, ignorePatterns)) return;
 
-      const result = await reindexFile(args.project_name, resolvedRoot, fullPath);
+      const result = await reindexFile(projectName, resolvedRoot, fullPath);
       if (result) {
         console.error(`[watch] Re-indexed: ${result}`);
       }
     }, DEBOUNCE_MS));
   });
 
-  activeWatchers.set(args.project_name, { watcher, count: 0 });
+  activeWatchers.set(projectName, { watcher, count: 0 });
 
   return {
-    content: [{
-      type: 'text',
-      text: [
-        `Watching project "${args.project_name}" for file changes.`,
-        `Path: ${rootPath}`,
-        `Files will be automatically re-indexed when saved.`,
-        `Use unwatch_project to stop watching.`,
-      ].join('\n'),
-    }],
+    ok: true,
+    message: [
+      `Watching project "${projectName}" for file changes.`,
+      `Path: ${rootPath}`,
+      `Files will be automatically re-indexed when saved.`,
+      `Use unwatch_project to stop watching.`,
+    ].join('\n'),
+  };
+}
+
+export async function watchProjectTool(args: {
+  project_name: string;
+}): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  const result = await startWatchingProject(args.project_name);
+  return {
+    content: [{ type: 'text', text: result.message }],
   };
 }
 

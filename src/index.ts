@@ -17,13 +17,15 @@ import { fileSummaryTool } from './tools/file-summary.js';
 import { getDependenciesTool, getDependentsTool, impactAnalysisTool } from './tools/dependencies.js';
 import { recentChangesTool } from './tools/recent-changes.js';
 import { smartContextTool } from './tools/smart-context.js';
+import { projectBriefingTool } from './tools/project-briefing.js';
+import { onboardingPromptTool } from './tools/onboarding-prompt.js';
 
 // Initialize database on startup
 initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.4.1',
+  version: '0.5.0',
 });
 
 // --- Resource: knowledge://projects ---
@@ -68,6 +70,7 @@ server.tool(
   {
     path: z.string().describe('Absolute path to the codebase directory'),
     project_name: z.string().describe('Unique name for this project'),
+    watch: z.boolean().optional().default(false).describe('After a successful index, start watching the project for file changes (same behavior as watch_project)'),
   },
   async (args) => indexCodebase(args),
 );
@@ -169,6 +172,29 @@ server.tool(
   async (args) => codebaseOverviewTool(args),
 );
 
+// --- Tool: project_briefing ---
+server.tool(
+  'project_briefing',
+  'Rule-based project briefing from README, CLAUDE.md, package.json, and indexed stats (no LLM). Results are cached in SQLite until the index fingerprint changes.',
+  {
+    project_name: z.string().describe('Project name'),
+    regenerate: z.boolean().optional().describe('If true, rebuild briefing and refresh cache'),
+  },
+  async (args) => projectBriefingTool(args),
+);
+
+// --- Tool: onboarding_prompt ---
+server.tool(
+  'onboarding_prompt',
+  'Single markdown blob for agent onboarding: cached project briefing, stats, and optional recent git activity. Output is truncated to max_chars.',
+  {
+    project_name: z.string().describe('Project name'),
+    max_chars: z.number().int().min(1000).max(100000).optional().describe('Maximum output length in characters (default 10000)'),
+    include_recent: z.boolean().optional().default(true).describe('Include a short recent-commits section (default true)'),
+  },
+  async (args) => onboardingPromptTool(args),
+);
+
 // --- Tool: file_summary ---
 server.tool(
   'file_summary',
@@ -242,7 +268,7 @@ server.tool(
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started (v0.4.1)');
+  console.error('[vibe-hnindex] Server started (v0.5.0)');
 }
 
 main().catch((error) => {

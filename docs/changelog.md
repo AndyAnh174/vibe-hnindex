@@ -9,6 +9,13 @@
 - **`explain`** — optional per-result score breakdown (path multiplier, RRF / semantic hints).
 - **MCP schema** — `search` exposes `content_mode`, `max_content_chars`, `deprioritize_generated_paths`, `mode` including `auto`, and `explain`.
 
+## v0.5.0
+
+- **`project_briefing`** — briefing rule-based từ README, CLAUDE.md, `package.json` và thống kê index; cache SQLite với khóa `file_count|chunk_count|last_indexed_at`; tham số `regenerate`.
+- **`onboarding_prompt`** — một khối markdown: briefing + stats + (tuỳ chọn) git gần đây; cắt theo `max_chars`.
+- **`index_codebase`** — tham số **`watch`** (mặc định `false`); sau khi index thành công có thể bật cùng watcher như `watch_project`.
+- **Watch** — logic chung `startWatchingProject` dùng cho `watch_project` và `index_codebase` + `watch`.
+
 ## v0.3.3
 
 - **`QDRANT_API_KEY`** — optional for local Docker; **required** for [Qdrant Cloud](https://cloud.qdrant.io/) (set with `QDRANT_URL` = HTTPS cluster URL from the dashboard).

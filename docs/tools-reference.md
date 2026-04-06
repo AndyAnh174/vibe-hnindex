@@ -4,8 +4,11 @@
 
 Index an entire directory. Supports incremental re-indexing. The response includes **`Ready: yes`** or **`Ready: no`** and, when Qdrant is available, **`qdrant_vectors: <count>`** (v0.4.0+) so you can confirm the vector collection after indexing.
 
+Optional **`watch`** (default `false`, v0.5.0+): after a successful index, start the same file watcher as `watch_project`.
+
 ```
 index_codebase(path: "/path/to/project", project_name: "my-app")
+index_codebase(path: "/path/to/project", project_name: "my-app", watch: true)
 ```
 
 ---
@@ -64,6 +67,18 @@ Metadata for a specific indexed file (chunks, line ranges, language).
 ```
 get_file_info(file_path: "src/index.ts", project_name: "my-app")
 ```
+
+---
+
+## `project_briefing` (v0.5.0+)
+
+Rule-based project briefing (README, CLAUDE.md, `package.json`, index stats). Cached until the index fingerprint changes. Use **`regenerate: true`** to force a rebuild.
+
+---
+
+## `onboarding_prompt` (v0.5.0+)
+
+Single markdown blob for onboarding: cached briefing, **`project_stats`**, and optional recent git activity. Truncated to **`max_chars`** (default 10000). Set **`include_recent: false`** to omit git.
 
 ---
 
