@@ -12,7 +12,7 @@
 
 **No cloud. No API keys. 100% local data.**
 
-**Status:** This project is in early development (v0.1.x). Expect breaking changes and new features in upcoming releases. Feedback and contributions are welcome!
+**Status:** v0.3.0 — Codebase Intelligence. 16 MCP tools, dependency graph, git integration. Feedback and contributions are welcome!
 
 ### Use Cases
 
@@ -32,23 +32,9 @@
 
 ## Architecture
 
-```
-┌──────────────────────────────────────────────────────────┐
-│  AI Client (Claude / Cursor / Windsurf / Antigravity)    │
-│  Calls MCP tools: index_codebase, search, list_projects  │
-└────────────────────────┬─────────────────────────────────┘
-                         │ JSON-RPC (stdio)
-┌────────────────────────▼─────────────────────────────────┐
-│  vibe-hnindex (MCP Server)                               │
-│                                                          │
-│  File Scanner → Chunker → Ollama Embeddings              │
-│       ↓              ↓            ↓                      │
-│  ┌──────────┐  ┌──────────┐                              │
-│  │  SQLite   │  │  Qdrant  │                              │
-│  │  FTS5     │  │  Vectors │                              │
-│  └──────────┘  └──────────┘                              │
-└──────────────────────────────────────────────────────────┘
-```
+<p align="center">
+  <img src="assets/architecture.svg" alt="vibe-hnindex Architecture" width="800"/>
+</p>
 
 ---
 
