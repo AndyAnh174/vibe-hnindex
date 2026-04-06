@@ -78,7 +78,7 @@ export async function codebaseOverviewTool(args: {
   return { content: [{ type: 'text', text }] };
 }
 
-function buildDirTree(files: string[]): string {
+export function buildDirTree(files: string[]): string {
   const dirs = new Map<string, number>();
 
   for (const file of files) {
@@ -119,7 +119,7 @@ const ENTRY_PATTERNS = [
   /^src\/lib\.rs$/,
 ];
 
-function detectEntryPoints(files: string[]): string[] {
+export function detectEntryPoints(files: string[]): string[] {
   const entries: string[] = [];
   for (const file of files) {
     const normalized = file.replace(/\\/g, '/');
@@ -133,7 +133,7 @@ function detectEntryPoints(files: string[]): string[] {
   return entries;
 }
 
-function detectFrameworks(projectName: string, files: string[]): string[] {
+export function detectFrameworks(projectName: string, files: string[]): string[] {
   const detected: string[] = [];
   const fileSet = new Set(files.map(f => f.replace(/\\/g, '/')));
 

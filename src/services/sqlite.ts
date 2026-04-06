@@ -80,6 +80,16 @@ export function initDatabase(): void {
     CREATE INDEX IF NOT EXISTS idx_exports_name ON exports(project_name, export_name);
   `);
 
+  // Cached project briefing (rule-based; invalidated when cache_key changes)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS project_briefings (
+      project_name TEXT PRIMARY KEY,
+      body TEXT NOT NULL,
+      cache_key TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+  `);
+
   // FTS5 virtual table (content-sync with chunks)
   db.exec(`
     CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5(
@@ -232,7 +242,53 @@ export function deleteProject(projectName: string): void {
   d.prepare('DELETE FROM dependencies WHERE project_name = ?').run(projectName);
   d.prepare('DELETE FROM exports WHERE project_name = ?').run(projectName);
   d.prepare('DELETE FROM chunks WHERE project_name = ?').run(projectName);
+  d.prepare('DELETE FROM project_briefings WHERE project_name = ?').run(projectName);
   d.prepare('DELETE FROM projects WHERE project_name = ?').run(projectName);
+}
+
+// --- Project briefings (cached) ---
+
+export interface ProjectBriefingRow {
+  projectName: string;
+  body: string;
+  cacheKey: string;
+  updatedAt: string;
+}
+
+export function getBriefing(projectName: string): ProjectBriefingRow | null {
+  const row = getDb().prepare(`
+    SELECT project_name, body, cache_key, updated_at
+    FROM project_briefings WHERE project_name = ?
+  `).get(projectName) as {
+    project_name: string;
+    body: string;
+    cache_key: string;
+    updated_at: string;
+  } | undefined;
+
+  if (!row) return null;
+  return {
+    projectName: row.project_name,
+    body: row.body,
+    cacheKey: row.cache_key,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function upsertBriefing(projectName: string, body: string, cacheKey: string): void {
+  const now = new Date().toISOString();
+  getDb().prepare(`
+    INSERT INTO project_briefings (project_name, body, cache_key, updated_at)
+    VALUES (?, ?, ?, ?)
+    ON CONFLICT(project_name) DO UPDATE SET
+      body = excluded.body,
+      cache_key = excluded.cache_key,
+      updated_at = excluded.updated_at
+  `).run(projectName, body, cacheKey, now);
+}
+
+export function deleteBriefing(projectName: string): void {
+  getDb().prepare('DELETE FROM project_briefings WHERE project_name = ?').run(projectName);
 }
 
 export function getExistingFileHash(projectName: string, filePath: string): string | null {

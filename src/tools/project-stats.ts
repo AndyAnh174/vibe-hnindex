@@ -1,4 +1,30 @@
-import { getProjectWithRetry, getProjectStats } from '../services/sqlite.js';
+import { getProject, getProjectWithRetry, getProjectStats } from '../services/sqlite.js';
+
+/** Plain markdown section for onboarding / composition (no MCP wrapper). */
+export function formatProjectStatsSection(projectName: string): string | null {
+  const project = getProject(projectName);
+  if (!project) return null;
+
+  const stats = getProjectStats(projectName);
+  const langTable = stats.languages.map(l =>
+    `| ${l.language} | ${l.fileCount} | ${l.chunkCount} |`
+  ).join('\n');
+
+  return [
+    `## Stats: ${projectName}`,
+    `- **Path:** ${project.rootPath}`,
+    `- **Total files:** ${stats.totalFiles}`,
+    `- **Total chunks:** ${stats.totalChunks}`,
+    `- **Total lines indexed:** ${stats.totalLines}`,
+    `- **Avg chunks per file:** ${stats.avgChunksPerFile}`,
+    `- **Last indexed:** ${project.lastIndexedAt}`,
+    '',
+    '### Languages',
+    '| Language | Files | Chunks |',
+    '|----------|-------|--------|',
+    langTable,
+  ].join('\n');
+}
 
 export async function projectStatsTool(args: {
   project_name: string;
