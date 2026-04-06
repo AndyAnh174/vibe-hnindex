@@ -25,23 +25,31 @@ src/
 ├── config.ts                # Env vars + defaults (OLLAMA_URL, QDRANT_URL, etc.)
 ├── types.ts                 # Shared interfaces (ChunkRecord, SearchResult, etc.)
 ├── services/
-│   ├── sqlite.ts            # SQLite + FTS5: schema, CRUD, keyword search, stats
+│   ├── sqlite.ts            # SQLite + FTS5: schema, CRUD, keyword search, stats, deps/exports
 │   ├── qdrant.ts            # Qdrant client: collections, vector upsert/search
 │   ├── embeddings.ts        # Ollama API client (batch embed, health check)
 │   ├── chunker.ts           # Smart line-based code chunker (boundary-aware)
-│   └── file-scanner.ts      # Recursive dir walker, language detection, binary skip
+│   ├── file-scanner.ts      # Recursive dir walker, language detection, binary skip
+│   ├── dependency-parser.ts # Import/export regex parser (TS/JS/Python/Go/Rust/Java)
+│   └── git.ts               # Git command runner (recent commits, file history)
 └── tools/
-    ├── index-codebase.ts    # Full directory indexing pipeline
-    ├── index-file.ts        # Single file indexing (with path traversal protection)
+    ├── index-codebase.ts    # Full directory indexing pipeline + dependency parsing
+    ├── index-file.ts        # Single file indexing + dependency parsing
     ├── search.ts            # 3 modes: keyword/semantic/hybrid (RRF), filters, context expansion
     ├── list-projects.ts     # List indexed projects
     ├── delete-project.ts    # Delete project from SQLite + Qdrant
     ├── get-file-info.ts     # File chunk details
     ├── project-stats.ts     # Language breakdown, file/chunk counts
-    └── watch-project.ts     # fs.watch auto re-index on file save
+    ├── watch-project.ts     # fs.watch auto re-index on file save
+    ├── codebase-overview.ts # Project structure, languages, entry points, frameworks
+    ├── file-summary.ts      # Per-file summary: purpose, exports, imports, dependents
+    ├── dependencies.ts      # get_dependencies, get_dependents, impact_analysis
+    ├── recent-changes.ts    # Git-aware recent changes with index cross-reference
+    └── smart-context.ts     # All-in-one file context (imports, dependents, git history)
 tests/
 ├── chunker.test.ts
 ├── config.test.ts
+├── dependency-parser.test.ts
 ├── file-scanner.test.ts
 └── sqlite.test.ts
 ```
@@ -82,7 +90,7 @@ AI Client → JSON-RPC (stdio) → vibe-hnindex MCP Server
 # Build
 node node_modules/typescript/bin/tsc
 
-# Test (40 tests)
+# Test (85 tests)
 node node_modules/vitest/vitest.mjs run
 
 # Note: on Windows, npx tsc / npx vitest may not work due to PATH issues
@@ -114,23 +122,24 @@ node node_modules/vitest/vitest.mjs run
 - **Claude Plugin**: `.claude-plugin/marketplace.json` + `plugin.json`
 - **GitHub Actions**: CI on push (Node 20/22/24), CD auto-publish npm on main merge
 
-## Roadmap (v0.3.0)
+## v0.3.0 Features (current)
 
-### Priority 1: codebase_overview + file_summary
-- Auto-generate project architecture summary from file structure + imports
-- Per-file 1-2 sentence summary stored in DB
-- AI gets full codebase understanding in 1 tool call (~200 tokens vs 2000+)
+### Codebase Intelligence (7 new tools → 16 total)
+- **codebase_overview** — project structure, languages, entry points, frameworks, key exports
+- **file_summary** — per-file purpose, exports, imports, dependents, complexity
+- **get_dependencies** — what does a file import?
+- **get_dependents** — what files import this file?
+- **impact_analysis** — transitive BFS of reverse dependencies (depth 1-5)
+- **recent_changes** — git-aware recent commits cross-referenced with index
+- **smart_context** — all-in-one file context bundle (content, deps, git history, exports)
 
-### Priority 2: Dependency graph + import_graph
-- Parse import/export statements during indexing (TS/JS/Python/Go)
-- New tables: `dependencies` (source → target + symbols), `exports` (file → symbols)
-- New tools: `get_dependencies`, `get_exports`, `impact_analysis`
-- AI knows "change function X affects files A, B, C" in 1 call
+### Dependency Graph
+- Import/export regex parsing for TS/JS, Python, Go, Rust, Java/Kotlin
+- 2 new SQLite tables: `dependencies`, `exports`
+- Parsed automatically during indexing (incremental)
+- Import path resolution (relative paths → actual files)
 
-### Priority 3: recent_changes + smart_context
-- Tool to show files changed recently (git-aware)
-- Search returns compact results: function signature + summary instead of raw 60-line chunks
-- Reduce tokens per search result by 70-80%
+## Roadmap
 
 ### Future
 - Multi-project search

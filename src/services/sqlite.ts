@@ -2,7 +2,7 @@ import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
 import { config } from '../config.js';
-import type { ChunkRecord, ProjectInfo, SearchResult } from '../types.js';
+import type { ChunkRecord, DependencyRecord, ExportRecord, ProjectInfo, SearchResult } from '../types.js';
 
 let db: Database.Database;
 
@@ -46,6 +46,37 @@ export function initDatabase(): void {
     CREATE INDEX IF NOT EXISTS idx_chunks_project ON chunks(project_name);
     CREATE INDEX IF NOT EXISTS idx_chunks_project_file ON chunks(project_name, file_path);
     CREATE INDEX IF NOT EXISTS idx_chunks_hash ON chunks(project_name, file_path, file_hash);
+  `);
+
+  // --- Dependency graph tables ---
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS dependencies (
+      id TEXT PRIMARY KEY,
+      project_name TEXT NOT NULL,
+      source_file TEXT NOT NULL,
+      target_file TEXT NOT NULL,
+      import_specifiers TEXT,
+      import_type TEXT NOT NULL,
+      language TEXT NOT NULL,
+      UNIQUE(project_name, source_file, target_file, import_type)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_deps_source ON dependencies(project_name, source_file);
+    CREATE INDEX IF NOT EXISTS idx_deps_target ON dependencies(project_name, target_file);
+
+    CREATE TABLE IF NOT EXISTS exports (
+      id TEXT PRIMARY KEY,
+      project_name TEXT NOT NULL,
+      file_path TEXT NOT NULL,
+      export_name TEXT NOT NULL,
+      export_type TEXT NOT NULL,
+      line_number INTEGER NOT NULL,
+      language TEXT NOT NULL,
+      UNIQUE(project_name, file_path, export_name)
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_exports_file ON exports(project_name, file_path);
+    CREATE INDEX IF NOT EXISTS idx_exports_name ON exports(project_name, export_name);
   `);
 
   // FTS5 virtual table (content-sync with chunks)
@@ -182,6 +213,8 @@ export function deleteFileChunks(projectName: string, filePath: string): string[
 
 export function deleteProject(projectName: string): void {
   const d = getDb();
+  d.prepare('DELETE FROM dependencies WHERE project_name = ?').run(projectName);
+  d.prepare('DELETE FROM exports WHERE project_name = ?').run(projectName);
   d.prepare('DELETE FROM chunks WHERE project_name = ?').run(projectName);
   d.prepare('DELETE FROM projects WHERE project_name = ?').run(projectName);
 }
@@ -409,4 +442,146 @@ export function getProjectFileCount(projectName: string): number {
     'SELECT COUNT(DISTINCT file_path) as cnt FROM chunks WHERE project_name = ?'
   ).get(projectName) as { cnt: number };
   return row.cnt;
+}
+
+// --- Dependencies ---
+
+export function insertDependencies(deps: DependencyRecord[]): void {
+  if (deps.length === 0) return;
+
+  const insert = getDb().prepare(`
+    INSERT OR REPLACE INTO dependencies (id, project_name, source_file, target_file, import_specifiers, import_type, language)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const transaction = getDb().transaction((items: DependencyRecord[]) => {
+    for (const d of items) {
+      insert.run(d.id, d.projectName, d.sourceFile, d.targetFile,
+        d.importSpecifiers ? JSON.stringify(d.importSpecifiers) : null,
+        d.importType, d.language);
+    }
+  });
+
+  transaction(deps);
+}
+
+export function deleteFileDependencies(projectName: string, filePath: string): void {
+  getDb().prepare('DELETE FROM dependencies WHERE project_name = ? AND source_file = ?')
+    .run(projectName, filePath);
+}
+
+export function getDependencies(projectName: string, filePath: string): DependencyRecord[] {
+  const rows = getDb().prepare(`
+    SELECT id, project_name, source_file, target_file, import_specifiers, import_type, language
+    FROM dependencies WHERE project_name = ? AND source_file = ?
+  `).all(projectName, filePath) as Array<{
+    id: string; project_name: string; source_file: string; target_file: string;
+    import_specifiers: string | null; import_type: string; language: string;
+  }>;
+
+  return rows.map(r => ({
+    id: r.id,
+    projectName: r.project_name,
+    sourceFile: r.source_file,
+    targetFile: r.target_file,
+    importSpecifiers: r.import_specifiers ? JSON.parse(r.import_specifiers) : null,
+    importType: r.import_type as DependencyRecord['importType'],
+    language: r.language,
+  }));
+}
+
+export function getDependents(projectName: string, filePath: string): DependencyRecord[] {
+  const rows = getDb().prepare(`
+    SELECT id, project_name, source_file, target_file, import_specifiers, import_type, language
+    FROM dependencies WHERE project_name = ? AND target_file = ?
+  `).all(projectName, filePath) as Array<{
+    id: string; project_name: string; source_file: string; target_file: string;
+    import_specifiers: string | null; import_type: string; language: string;
+  }>;
+
+  return rows.map(r => ({
+    id: r.id,
+    projectName: r.project_name,
+    sourceFile: r.source_file,
+    targetFile: r.target_file,
+    importSpecifiers: r.import_specifiers ? JSON.parse(r.import_specifiers) : null,
+    importType: r.import_type as DependencyRecord['importType'],
+    language: r.language,
+  }));
+}
+
+// --- Exports ---
+
+export function insertExports(records: ExportRecord[]): void {
+  if (records.length === 0) return;
+
+  const insert = getDb().prepare(`
+    INSERT OR REPLACE INTO exports (id, project_name, file_path, export_name, export_type, line_number, language)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const transaction = getDb().transaction((items: ExportRecord[]) => {
+    for (const e of items) {
+      insert.run(e.id, e.projectName, e.filePath, e.exportName, e.exportType, e.lineNumber, e.language);
+    }
+  });
+
+  transaction(records);
+}
+
+export function deleteFileExports(projectName: string, filePath: string): void {
+  getDb().prepare('DELETE FROM exports WHERE project_name = ? AND file_path = ?')
+    .run(projectName, filePath);
+}
+
+export function getExportsByFile(projectName: string, filePath: string): ExportRecord[] {
+  const rows = getDb().prepare(`
+    SELECT id, project_name, file_path, export_name, export_type, line_number, language
+    FROM exports WHERE project_name = ? AND file_path = ?
+    ORDER BY line_number
+  `).all(projectName, filePath) as Array<{
+    id: string; project_name: string; file_path: string; export_name: string;
+    export_type: string; line_number: number; language: string;
+  }>;
+
+  return rows.map(r => ({
+    id: r.id,
+    projectName: r.project_name,
+    filePath: r.file_path,
+    exportName: r.export_name,
+    exportType: r.export_type as ExportRecord['exportType'],
+    lineNumber: r.line_number,
+    language: r.language,
+  }));
+}
+
+export function getExportsByProject(projectName: string, limit = 50): ExportRecord[] {
+  const rows = getDb().prepare(`
+    SELECT id, project_name, file_path, export_name, export_type, line_number, language
+    FROM exports WHERE project_name = ?
+    ORDER BY file_path, line_number
+    LIMIT ?
+  `).all(projectName, limit) as Array<{
+    id: string; project_name: string; file_path: string; export_name: string;
+    export_type: string; line_number: number; language: string;
+  }>;
+
+  return rows.map(r => ({
+    id: r.id,
+    projectName: r.project_name,
+    filePath: r.file_path,
+    exportName: r.export_name,
+    exportType: r.export_type as ExportRecord['exportType'],
+    lineNumber: r.line_number,
+    language: r.language,
+  }));
+}
+
+// --- Utility ---
+
+export function getAllProjectFiles(projectName: string): string[] {
+  const rows = getDb().prepare(
+    'SELECT DISTINCT file_path FROM chunks WHERE project_name = ? ORDER BY file_path'
+  ).all(projectName) as Array<{ file_path: string }>;
+  return rows.map(r => r.file_path);
 }

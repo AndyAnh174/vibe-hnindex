@@ -14,7 +14,14 @@ import {
   updateProjectStats,
   getProjectFileCount,
   getProjectChunkCount,
+  getAllProjectFiles,
+  insertDependencies,
+  insertExports,
+  deleteFileDependencies,
+  deleteFileExports,
 } from '../services/sqlite.js';
+import { parseImports, parseExports, resolveImportPath } from '../services/dependency-parser.js';
+import type { DependencyRecord, ExportRecord } from '../types.js';
 import {
   ensureCollection,
   upsertPoints,
@@ -171,6 +178,65 @@ export async function indexCodebase(args: {
   // Flush remaining
   await flushBatch();
 
+  // --- Dependency parsing pass ---
+  let parsedDeps = 0;
+  try {
+    const projectFiles = getAllProjectFiles(args.project_name);
+
+    for await (const file of scanDirectory(rootPath)) {
+      // Check if file changed (only parse changed files)
+      const fileHash = crypto.createHash('sha256').update(file.content).digest('hex');
+      const existingHash = getExistingFileHash(args.project_name, file.relativePath);
+      if (existingHash !== fileHash) continue; // only parse files that were just indexed (hash now matches)
+
+      try {
+        // Clear old deps/exports for this file
+        deleteFileDependencies(args.project_name, file.relativePath);
+        deleteFileExports(args.project_name, file.relativePath);
+
+        // Parse imports
+        const imports = parseImports(file.content, file.language);
+        const depRecords: DependencyRecord[] = [];
+        for (const imp of imports) {
+          const resolved = resolveImportPath(imp.specifier, file.relativePath, projectFiles);
+          depRecords.push({
+            id: crypto.randomUUID(),
+            projectName: args.project_name,
+            sourceFile: file.relativePath,
+            targetFile: resolved ?? imp.specifier,
+            importSpecifiers: imp.specifiers,
+            importType: imp.importType,
+            language: file.language,
+          });
+        }
+        if (depRecords.length > 0) {
+          insertDependencies(depRecords);
+        }
+
+        // Parse exports
+        const exports = parseExports(file.content, file.language);
+        const exportRecords: ExportRecord[] = exports.map(exp => ({
+          id: crypto.randomUUID(),
+          projectName: args.project_name,
+          filePath: file.relativePath,
+          exportName: exp.name,
+          exportType: exp.exportType,
+          lineNumber: exp.lineNumber,
+          language: file.language,
+        }));
+        if (exportRecords.length > 0) {
+          insertExports(exportRecords);
+        }
+
+        parsedDeps++;
+      } catch (parseError) {
+        console.error(`[index] Dependency parsing failed for ${file.relativePath}:`, parseError);
+      }
+    }
+  } catch (depError) {
+    console.error('[index] Dependency parsing pass failed:', depError);
+  }
+
   // Update project stats
   const finalFileCount = getProjectFileCount(args.project_name);
   const finalChunkCount = getProjectChunkCount(args.project_name);
@@ -184,6 +250,7 @@ export async function indexCodebase(args: {
     `  Files indexed: ${indexedFiles}`,
     `  Files unchanged (skipped): ${unchangedFiles}`,
     `  Total chunks: ${finalChunkCount}`,
+    `  Dependencies parsed: ${parsedDeps} files`,
   ];
 
   if (!qdrantAvailable) {

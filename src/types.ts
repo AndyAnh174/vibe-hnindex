@@ -46,3 +46,32 @@ export interface Chunk {
   endLine: number;
   chunkIndex: number;
 }
+
+export interface DependencyRecord {
+  id: string;
+  projectName: string;
+  sourceFile: string;
+  targetFile: string;
+  importSpecifiers: string[] | null;
+  importType: 'static' | 'dynamic' | 'require' | 'type-only';
+  language: string;
+}
+
+export interface ExportRecord {
+  id: string;
+  projectName: string;
+  filePath: string;
+  exportName: string;
+  exportType: 'function' | 'class' | 'variable' | 'type' | 'interface' | 'enum' | 'default';
+  lineNumber: number;
+  language: string;
+}
+
+export interface GitCommit {
+  hash: string;
+  shortHash: string;
+  author: string;
+  date: string;
+  message: string;
+  files: string[];
+}

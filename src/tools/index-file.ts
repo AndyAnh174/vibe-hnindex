@@ -15,7 +15,14 @@ import {
   updateProjectStats,
   getProjectFileCount,
   getProjectChunkCount,
+  getAllProjectFiles,
+  insertDependencies,
+  insertExports,
+  deleteFileDependencies,
+  deleteFileExports,
 } from '../services/sqlite.js';
+import { parseImports, parseExports, resolveImportPath } from '../services/dependency-parser.js';
+import type { DependencyRecord, ExportRecord } from '../types.js';
 import {
   ensureCollection,
   upsertPoints,
@@ -141,6 +148,40 @@ export async function indexFile(args: {
     console.error('[index-file] Embedding failed, inserting chunks without vectors:', error);
     insertChunks(records);
     qdrantAvailable = false;
+  }
+
+  // --- Dependency parsing ---
+  try {
+    deleteFileDependencies(args.project_name, relativePath);
+    deleteFileExports(args.project_name, relativePath);
+
+    const projectFiles = getAllProjectFiles(args.project_name);
+
+    const imports = parseImports(content, language);
+    const depRecords: DependencyRecord[] = imports.map(imp => ({
+      id: crypto.randomUUID(),
+      projectName: args.project_name,
+      sourceFile: relativePath,
+      targetFile: resolveImportPath(imp.specifier, relativePath, projectFiles) ?? imp.specifier,
+      importSpecifiers: imp.specifiers,
+      importType: imp.importType,
+      language,
+    }));
+    if (depRecords.length > 0) insertDependencies(depRecords);
+
+    const parsedExports = parseExports(content, language);
+    const exportRecords: ExportRecord[] = parsedExports.map(exp => ({
+      id: crypto.randomUUID(),
+      projectName: args.project_name,
+      filePath: relativePath,
+      exportName: exp.name,
+      exportType: exp.exportType,
+      lineNumber: exp.lineNumber,
+      language,
+    }));
+    if (exportRecords.length > 0) insertExports(exportRecords);
+  } catch (parseError) {
+    console.error(`[index-file] Dependency parsing failed for ${relativePath}:`, parseError);
   }
 
   // Update stats

@@ -12,13 +12,18 @@ import { deleteProjectTool } from './tools/delete-project.js';
 import { getFileInfoTool } from './tools/get-file-info.js';
 import { projectStatsTool } from './tools/project-stats.js';
 import { watchProjectTool, unwatchProjectTool } from './tools/watch-project.js';
+import { codebaseOverviewTool } from './tools/codebase-overview.js';
+import { fileSummaryTool } from './tools/file-summary.js';
+import { getDependenciesTool, getDependentsTool, impactAnalysisTool } from './tools/dependencies.js';
+import { recentChangesTool } from './tools/recent-changes.js';
+import { smartContextTool } from './tools/smart-context.js';
 
 // Initialize database on startup
 initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.2.1',
+  version: '0.3.0',
 });
 
 // --- Resource: knowledge://projects ---
@@ -153,11 +158,90 @@ server.tool(
   async (args) => unwatchProjectTool(args),
 );
 
+// --- Tool: codebase_overview ---
+server.tool(
+  'codebase_overview',
+  'Get a high-level overview of an indexed project: directory structure, language breakdown, entry points, detected frameworks, and key exports. Useful for understanding codebase architecture without reading every file.',
+  {
+    project_name: z.string().describe('Project name'),
+  },
+  async (args) => codebaseOverviewTool(args),
+);
+
+// --- Tool: file_summary ---
+server.tool(
+  'file_summary',
+  'Get a detailed summary of a specific file: purpose, exports, imports, files that depend on it, and complexity. More efficient than reading the full file.',
+  {
+    project_name: z.string().describe('Project name'),
+    file_path: z.string().describe('Relative file path within the project (e.g., "src/index.ts")'),
+  },
+  async (args) => fileSummaryTool(args),
+);
+
+// --- Tool: get_dependencies ---
+server.tool(
+  'get_dependencies',
+  'List all imports/dependencies of a specific file. Shows what this file depends on.',
+  {
+    project_name: z.string().describe('Project name'),
+    file_path: z.string().describe('Relative file path'),
+  },
+  async (args) => getDependenciesTool(args),
+);
+
+// --- Tool: get_dependents ---
+server.tool(
+  'get_dependents',
+  'List all files that import/depend on a specific file. Shows what would be affected if this file changes.',
+  {
+    project_name: z.string().describe('Project name'),
+    file_path: z.string().describe('Relative file path'),
+  },
+  async (args) => getDependentsTool(args),
+);
+
+// --- Tool: impact_analysis ---
+server.tool(
+  'impact_analysis',
+  'Analyze the transitive impact of changing a file. Uses BFS to find all direct and indirect dependents up to a configurable depth. Essential before refactoring.',
+  {
+    project_name: z.string().describe('Project name'),
+    file_path: z.string().describe('File to analyze impact of'),
+    depth: z.number().int().min(1).max(5).default(3).describe('Max traversal depth (default 3, max 5)'),
+  },
+  async (args) => impactAnalysisTool(args),
+);
+
+// --- Tool: recent_changes ---
+server.tool(
+  'recent_changes',
+  'Show recent git commits for a project with changed files cross-referenced against the index. Requires git.',
+  {
+    project_name: z.string().describe('Project name'),
+    days: z.number().int().min(1).max(90).default(7).describe('How many days back to look (default 7)'),
+    limit: z.number().int().min(1).max(100).default(20).describe('Max number of commits (default 20)'),
+  },
+  async (args) => recentChangesTool(args),
+);
+
+// --- Tool: smart_context ---
+server.tool(
+  'smart_context',
+  'Get comprehensive context for a file or query in a single call: file content preview, imports, dependents, exports, recent git history, and optionally related search results. Ideal before editing a file.',
+  {
+    project_name: z.string().describe('Project name'),
+    file_path: z.string().optional().describe('File to get context for'),
+    query: z.string().optional().describe('Search query for additional context'),
+  },
+  async (args) => smartContextTool(args),
+);
+
 // --- Start server ---
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started (v0.2.1)');
+  console.error('[vibe-hnindex] Server started (v0.3.0)');
 }
 
 main().catch((error) => {
