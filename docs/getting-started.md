@@ -1,5 +1,25 @@
 # Getting started
 
+Follow this page in order. If `npm install` fails on **Windows**, see **§ Before `npm install` (Windows)** below, then [Troubleshooting → Windows](troubleshooting.md#windows-npm-install).
+
+---
+
+## Before `npm install` (Windows)
+
+`vibe-hnindex` depends on **`better-sqlite3`** (native code). On Windows, npm may need to **compile** it if no prebuilt binary exists for your **Node version**.
+
+**Do this first (recommended):**
+
+- Use **Node.js 20.x or 22.x LTS** (from [nodejs.org](https://nodejs.org/) or [nvm-windows](https://github.com/coreybutler/nvm-windows)). Avoid very new versions (e.g. Node 24) if install fails without build tools.
+
+**If `npm install` / `npm i vibe-hnindex` still fails with `node-gyp` / “Visual Studio” / “Desktop development with C++”:**
+
+- Install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) with workload **“Desktop development with C++”**, then run `npm i` again.
+
+Details: [Troubleshooting](troubleshooting.md#windows-npm-install).
+
+---
+
 ## Prerequisites
 
 ### 1. Node.js ≥ 20
@@ -74,6 +94,20 @@ Add `QDRANT_API_KEY` and set `QDRANT_URL` to your cluster URL from the dashboard
   }
 }
 ```
+
+---
+
+## Google Antigravity: where to put the MCP JSON
+
+Antigravity reads MCP servers from **`mcp_config.json`** (not the same path as Cursor).
+
+| | |
+|--|--|
+| **Windows** | `C:\Users\<you>\.gemini\antigravity\mcp_config.json` |
+| **macOS / Linux** | `~/.gemini/antigravity/mcp_config.json` |
+| **From the app** | **⋮** → **MCP** → **Manage MCP Servers** → **View raw config** |
+
+Put the same top-level key **`mcpServers`** as in the examples above. Full notes and a copy-paste example: **[Integrations → Google Antigravity](integrations.md#google-antigravity)**.
 
 ---
 

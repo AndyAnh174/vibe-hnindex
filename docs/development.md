@@ -8,6 +8,8 @@ npm run build
 npm run dev   # tsx src/index.ts
 ```
 
+On **Windows**, if `npm install` fails on `better-sqlite3`, use **Node 20 or 22 LTS** or install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) (C++ workload). See [Troubleshooting](troubleshooting.md#windows-npm-install).
+
 ## Layout
 
 ```
