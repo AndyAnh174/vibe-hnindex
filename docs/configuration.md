@@ -13,6 +13,8 @@
 | `CHUNK_SIZE` | `60` | Target lines per chunk |
 | `CHUNK_OVERLAP` | `5` | Overlap lines between chunks |
 | `MAX_FILE_SIZE` | `1048576` | Max file size in bytes (1 MB) |
+| `SEARCH_AUTO_ROUTE` | `false` | When `true`, omitting `search`’s `mode` behaves like `mode: auto` (heuristic keyword vs hybrid). |
+| `SEARCH_KEYWORD_FALLBACK_SEMANTIC` | `true` | When not `false`, if `mode` is keyword and FTS returns no hits, run one semantic search when Ollama and Qdrant are available. |
 
 ---
 

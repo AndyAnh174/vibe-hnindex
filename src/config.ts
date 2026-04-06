@@ -27,6 +27,12 @@ export const config = {
 
   // Embedding batching
   embeddingBatchSize: 32,
+
+  // Search (v0.4.0)
+  /** When true and `mode` is omitted, behave like `mode: auto` (heuristic keyword/hybrid). */
+  searchAutoRoute: process.env.SEARCH_AUTO_ROUTE === 'true',
+  /** When keyword mode returns no hits, run semantic once if Ollama+Qdrant are OK. */
+  searchKeywordFallbackSemantic: process.env.SEARCH_KEYWORD_FALLBACK_SEMANTIC !== 'false',
 } as const;
 
 export function getCollectionName(projectName: string): string {

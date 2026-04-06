@@ -27,6 +27,7 @@ import {
   upsertPoints,
   deletePoints,
   healthCheck as qdrantHealthCheck,
+  verifyCollectionReady,
 } from '../services/qdrant.js';
 import { healthCheck as ollamaHealthCheck } from '../services/embeddings.js';
 
@@ -242,6 +243,19 @@ export async function indexCodebase(args: {
   const finalChunkCount = getProjectChunkCount(args.project_name);
   updateProjectStats(args.project_name, finalFileCount, finalChunkCount);
 
+  let ready = true;
+  let qdrantVectors: number | undefined;
+  let qdrantVerifyWarn: string | undefined;
+  if (qdrantAvailable) {
+    const verify = await verifyCollectionReady(args.project_name);
+    if (!verify.ok) {
+      ready = false;
+      qdrantVerifyWarn = `  ⚠ Qdrant collection verify failed: ${verify.error ?? 'unknown'}`;
+    } else {
+      qdrantVectors = verify.pointsCount;
+    }
+  }
+
   // Build summary
   const parts = [
     `Indexed project "${args.project_name}"`,
@@ -253,8 +267,18 @@ export async function indexCodebase(args: {
     `  Dependencies parsed: ${parsedDeps} files`,
   ];
 
+  if (qdrantVerifyWarn) {
+    parts.push(qdrantVerifyWarn);
+  }
+
   if (!qdrantAvailable) {
     parts.push(`  ⚠ Qdrant unavailable — semantic search disabled. Run: docker run -d -p 6333:6333 qdrant/qdrant`);
+    ready = false;
+  }
+
+  parts.push(`  Ready: ${ready ? 'yes' : 'no'}`);
+  if (qdrantVectors !== undefined) {
+    parts.push(`  qdrant_vectors: ${qdrantVectors}`);
   }
 
   if (skippedFiles > 0) {

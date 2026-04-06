@@ -37,6 +37,22 @@ export async function healthCheck(): Promise<boolean> {
   }
 }
 
+/** Best-effort verify collection exists after indexing (points count if available). */
+export async function verifyCollectionReady(projectName: string): Promise<{
+  ok: boolean;
+  pointsCount?: number;
+  error?: string;
+}> {
+  const collectionName = getCollectionName(projectName);
+  try {
+    const info = await getQdrantClient().getCollection(collectionName);
+    const pc = info.points_count;
+    return { ok: true, pointsCount: pc == null ? undefined : pc };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 export async function ensureCollection(projectName: string): Promise<void> {
   const collectionName = getCollectionName(projectName);
   const qdrant = getQdrantClient();

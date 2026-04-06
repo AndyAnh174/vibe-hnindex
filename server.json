@@ -6,12 +6,12 @@
     "url": "https://github.com/AndyAnh174/vibe-hnindex",
     "source": "github"
   },
-  "version": "0.3.3",
+  "version": "0.4.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "vibe-hnindex",
-      "version": "0.3.3",
+      "version": "0.4.0",
       "transport": {
         "type": "stdio"
       },
@@ -50,6 +50,20 @@
           "format": "string",
           "isSecret": false,
           "name": "STORAGE_PATH"
+        },
+        {
+          "description": "When true, omitting search mode uses auto (heuristic keyword/hybrid)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "SEARCH_AUTO_ROUTE"
+        },
+        {
+          "description": "When not false, keyword search with zero hits runs semantic fallback (default on)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "SEARCH_KEYWORD_FALLBACK_SEMANTIC"
         }
       ]
     }
