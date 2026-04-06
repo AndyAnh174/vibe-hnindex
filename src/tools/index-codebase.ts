@@ -30,10 +30,12 @@ import {
   verifyCollectionReady,
 } from '../services/qdrant.js';
 import { healthCheck as ollamaHealthCheck } from '../services/embeddings.js';
+import { startWatchingProject } from './watch-project.js';
 
 export async function indexCodebase(args: {
   path: string;
   project_name: string;
+  watch?: boolean;
 }): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
   const rootPath = path.resolve(args.path);
 
@@ -283,6 +285,15 @@ export async function indexCodebase(args: {
 
   if (skippedFiles > 0) {
     parts.push(`  ⚠ ${skippedFiles} files skipped due to errors`);
+  }
+
+  if (args.watch) {
+    const wr = await startWatchingProject(args.project_name);
+    parts.push('');
+    parts.push(wr.ok ? '  Watch:' : '  Watch (failed):');
+    for (const line of wr.message.split('\n')) {
+      parts.push(`  ${line}`);
+    }
   }
 
   return {
