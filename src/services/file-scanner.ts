@@ -3,6 +3,7 @@ import fsp from 'node:fs/promises';
 import path from 'node:path';
 import { config } from '../config.js';
 import type { FileEntry } from '../types.js';
+import { isIgnored, loadHnindexIgnore } from './hnindex-ignore.js';
 
 const SUPPORTED_EXTENSIONS = new Set([
   '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs',
@@ -59,7 +60,7 @@ const SKIP_DIRECTORIES = new Set([
   'bower_components',
   '.gradle', '.terraform',
   '.tox', '.mypy_cache', '.pytest_cache',
-  '.eggs', '*.egg-info',
+  '.eggs',
   'Pods',         // iOS
   '.dart_tool',
 ]);
@@ -168,6 +169,7 @@ function shouldIndexFile(filePath: string): boolean {
 
 export async function* scanDirectory(rootPath: string): AsyncGenerator<FileEntry> {
   const absoluteRoot = path.resolve(rootPath);
+  const ignorePatterns = loadHnindexIgnore(absoluteRoot);
 
   async function* walk(dir: string): AsyncGenerator<FileEntry> {
     let entries: fs.Dirent[];
@@ -216,6 +218,8 @@ export async function* scanDirectory(rootPath: string): AsyncGenerator<FileEntry
 
           const content = buffer.toString('utf-8');
           const relativePath = path.relative(absoluteRoot, fullPath).replace(/\\/g, '/');
+          if (isIgnored(relativePath, ignorePatterns)) continue;
+
           const language = detectLanguage(fullPath);
 
           yield { absolutePath: fullPath, relativePath, content, language };

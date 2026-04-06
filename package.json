@@ -1,6 +1,6 @@
 {
   "name": "vibe-hnindex",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "mcpName": "io.github.AndyAnh174/vibe-hnindex",
   "description": "MCP server for indexing and searching codebases with keyword + semantic search. Works with Claude, Cursor, Windsurf, Antigravity.",
   "type": "module",
@@ -20,6 +20,7 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "@qdrant/js-client-rest": "^1.13.0",
     "better-sqlite3": "^11.7.0",
+    "minimatch": "^10.2.5",
     "zod": "^3.24.0"
   },
   "devDependencies": {

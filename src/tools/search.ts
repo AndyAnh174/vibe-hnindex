@@ -11,6 +11,24 @@ interface SearchFilters {
   file_pattern?: string;
 }
 
+/** Keep the highest-scoring chunk per file path (first wins if scores tie). */
+function dedupeByFile(results: SearchResult[], limit: number): SearchResult[] {
+  const seen = new Set<string>();
+  const out: SearchResult[] = [];
+  for (const r of results) {
+    if (seen.has(r.filePath)) continue;
+    seen.add(r.filePath);
+    out.push(r);
+    if (out.length >= limit) break;
+  }
+  return out;
+}
+
+function keywordFetchLimit(limit: number, dedupe: boolean): number {
+  if (!dedupe) return Math.max(20, limit);
+  return Math.min(300, Math.max(40, limit * 25));
+}
+
 // Reciprocal Rank Fusion
 function rrfFuse(
   keywordResults: SearchResult[],
@@ -38,9 +56,12 @@ export async function search(args: {
   language?: string;
   file_pattern?: string;
   expand_context?: number;
+  dedupe_by_file?: boolean;
 }): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
   const mode = args.mode || 'hybrid';
   const limit = args.limit || 10;
+  const dedupeByFileEnabled = args.dedupe_by_file !== false;
+  const kwLimit = keywordFetchLimit(limit, dedupeByFileEnabled);
   const candidateLimit = 20; // fetch more candidates for RRF
   const expandContext = args.expand_context || 0;
 
@@ -64,10 +85,11 @@ export async function search(args: {
   let warnings: string[] = [];
   let actualMode = mode;
 
-  // Keyword search
+  // Keyword search (fetch more rows when deduping by file so we can still fill `limit` distinct files)
   if (mode === 'keyword' || mode === 'hybrid') {
     try {
-      keywordResults = searchKeyword(args.query, args.project_name, candidateLimit, filters);
+      const kwFetch = mode === 'keyword' ? kwLimit : Math.max(candidateLimit, kwLimit);
+      keywordResults = searchKeyword(args.query, args.project_name, kwFetch, filters);
     } catch (error) {
       console.error('[search] Keyword search error:', error);
       warnings.push('Keyword search failed.');
@@ -75,6 +97,10 @@ export async function search(args: {
   }
 
   // Semantic search
+  const semanticFetchLimit = dedupeByFileEnabled
+    ? Math.min(200, Math.max(limit * 20, limit))
+    : limit;
+
   if (mode === 'semantic' || mode === 'hybrid') {
     const ollamaOk = await ollamaHealthCheck();
     const qdrantOk = await qdrantHealthCheck();
@@ -106,7 +132,8 @@ export async function search(args: {
     } else {
       try {
         const queryVector = await embedSingle(args.query);
-        semanticResults = await searchSimilar(args.project_name, queryVector, candidateLimit, filters);
+        const semLimit = mode === 'hybrid' ? Math.max(candidateLimit, semanticFetchLimit) : semanticFetchLimit;
+        semanticResults = await searchSimilar(args.project_name, queryVector, semLimit, filters);
       } catch (error) {
         console.error('[search] Semantic search error:', error);
         warnings.push('Semantic search failed.');
@@ -119,10 +146,13 @@ export async function search(args: {
   let finalResults: SearchResult[];
 
   if (actualMode === 'keyword') {
-    finalResults = keywordResults.slice(0, limit);
+    const ranked = dedupeByFileEnabled
+      ? dedupeByFile(keywordResults, limit)
+      : keywordResults.slice(0, limit);
+    finalResults = ranked;
   } else if (actualMode === 'semantic') {
     // Fetch full chunk data from SQLite
-    const ids = semanticResults.slice(0, limit).map(r => r.id);
+    const ids = semanticResults.slice(0, semanticFetchLimit).map(r => r.id);
     const chunks = getChunksByIds(ids);
     const scoreMap = new Map(semanticResults.map(r => [r.id, r.score]));
     finalResults = chunks.map(c => ({
@@ -131,10 +161,16 @@ export async function search(args: {
       matchType: 'semantic' as const,
     }));
     finalResults.sort((a, b) => b.score - a.score);
+    if (dedupeByFileEnabled) {
+      finalResults = dedupeByFile(finalResults, limit);
+    } else {
+      finalResults = finalResults.slice(0, limit);
+    }
   } else {
     // Hybrid: RRF fusion
     const rrfScores = rrfFuse(keywordResults, semanticResults);
-    const sorted = [...rrfScores.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit);
+    const hybridPool = dedupeByFileEnabled ? kwLimit : limit;
+    const sorted = [...rrfScores.entries()].sort((a, b) => b[1] - a[1]).slice(0, hybridPool);
 
     // Build result map from keyword results
     const resultMap = new Map<string, SearchResult>();
@@ -159,6 +195,11 @@ export async function search(args: {
         }
         return acc;
       }, []);
+    if (dedupeByFileEnabled) {
+      finalResults = dedupeByFile(finalResults, limit);
+    } else {
+      finalResults = finalResults.slice(0, limit);
+    }
   }
 
   // Format output

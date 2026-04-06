@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { config } from '../config.js';
 import type { ChunkRecord, DependencyRecord, ExportRecord, ProjectInfo, SearchResult } from '../types.js';
+import { normalizeKeywordQuery } from './keyword-query.js';
 
 let db: Database.Database;
 
@@ -235,8 +236,7 @@ export function searchKeyword(
   limit: number,
   filters?: { language?: string; file_pattern?: string }
 ): SearchResult[] {
-  // Escape FTS5 special characters for safe querying
-  const safeQuery = query.replace(/['"]/g, ' ').trim();
+  const safeQuery = normalizeKeywordQuery(query);
   if (!safeQuery) return [];
 
   let sql = `

@@ -9,3 +9,4 @@ dist/
 mcp-publisher.exe
 mcp-publisher.tar.gz
 .mcp.json
+.vscode/mcp.json

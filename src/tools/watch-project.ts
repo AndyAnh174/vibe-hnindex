@@ -21,6 +21,7 @@ import {
   healthCheck as qdrantHealthCheck,
 } from '../services/qdrant.js';
 import { healthCheck as ollamaHealthCheck } from '../services/embeddings.js';
+import { isIgnored, loadHnindexIgnore } from '../services/hnindex-ignore.js';
 
 // Track active watchers per project
 const activeWatchers = new Map<string, { watcher: fs.FSWatcher; count: number }>();
@@ -157,6 +158,10 @@ const SKIP_DIRS = new Set([
   '.venv', 'venv', 'target', 'vendor', 'coverage', '.cache',
 ]);
 
+function pathHasEggInfoSegment(filename: string): boolean {
+  return filename.replace(/\\/g, '/').split('/').some(p => p.endsWith('.egg-info'));
+}
+
 export async function watchProjectTool(args: {
   project_name: string;
 }): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
@@ -181,6 +186,8 @@ export async function watchProjectTool(args: {
   }
 
   const rootPath = project.rootPath;
+  const resolvedRoot = path.resolve(rootPath);
+  const ignorePatterns = loadHnindexIgnore(resolvedRoot);
 
   const watcher = fs.watch(rootPath, { recursive: true }, (eventType, filename) => {
     if (!filename) return;
@@ -194,6 +201,7 @@ export async function watchProjectTool(args: {
     // Skip files in ignored directories
     const parts = filename.replace(/\\/g, '/').split('/');
     if (parts.some(p => SKIP_DIRS.has(p))) return;
+    if (pathHasEggInfoSegment(filename)) return;
 
     // Debounce: wait 1s after last change before re-indexing
     const existing = pendingFiles.get(fullPath);
@@ -202,9 +210,10 @@ export async function watchProjectTool(args: {
     pendingFiles.set(fullPath, setTimeout(async () => {
       pendingFiles.delete(fullPath);
 
+      const relativePath = path.relative(resolvedRoot, fullPath).replace(/\\/g, '/');
+
       if (!fs.existsSync(fullPath)) {
-        // File deleted — remove chunks
-        const relativePath = path.relative(rootPath, fullPath).replace(/\\/g, '/');
+        // File deleted — remove chunks (even if path now matches .hnindexignore)
         const oldIds = deleteFileChunks(args.project_name, relativePath);
         if (oldIds.length > 0) {
           const qdrantOk = await qdrantHealthCheck();
@@ -214,7 +223,9 @@ export async function watchProjectTool(args: {
         return;
       }
 
-      const result = await reindexFile(args.project_name, rootPath, fullPath);
+      if (isIgnored(relativePath, ignorePatterns)) return;
+
+      const result = await reindexFile(args.project_name, resolvedRoot, fullPath);
       if (result) {
         console.error(`[watch] Re-indexed: ${result}`);
       }

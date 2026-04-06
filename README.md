@@ -12,7 +12,13 @@
 
 **No cloud. No API keys. 100% local data.**
 
-**Status:** v0.3.0 — Codebase Intelligence. 16 MCP tools, dependency graph, git integration. Feedback and contributions are welcome!
+**Status:** v0.3.1 — Codebase Intelligence. 16 MCP tools, dependency graph, git integration. Feedback and contributions are welcome!
+
+### What’s new in v0.3.1
+
+- **Keyword query normalization** — punctuation-heavy queries (e.g. `products.urls`, `admin/products`) are tokenized for FTS5; semantic search still uses your original phrase.
+- **`dedupe_by_file`** — search can return at most one chunk per file (best score), on by default; set `dedupe_by_file: false` for multiple chunks per file.
+- **`.hnindexignore`** — optional file at the project root (same path you pass to `index_codebase`): gitignore-like patterns with `minimatch` (`*`, `**`, `/`). Excluded files are not scanned; `index_file` and `watch` respect the same rules. **Re-index** the project after changing this file. Negation (`!`) is not supported in v1.
 
 ### Use Cases
 
@@ -225,6 +231,8 @@ Search indexed code with 3 modes:
 search(query: "authentication middleware", project_name: "my-app", mode: "hybrid", limit: 10)
 ```
 
+**Search tips:** use a narrow `file_pattern` and a small `limit` on the first pass; try `mode: "keyword"` when you know exact symbols, then `hybrid` if needed. Use `dedupe_by_file: false` only when you need several chunks from the same file.
+
 ### `list_projects`
 
 List all indexed projects with metadata.
@@ -354,8 +362,8 @@ src/
 
 ## Roadmap
 
-- [ ] Watch mode — auto re-index on file changes
-- [ ] Search filters — by language, file path pattern
+- [x] Watch mode — auto re-index on file changes (`watch_project` / `unwatch_project`)
+- [ ] Richer search filters — by language, file path pattern (partially via `file_pattern` / `language`)
 - [ ] AST-based chunking for better code understanding
 - [ ] Web UI dashboard for managing indexed projects
 - [ ] Support for more embedding models

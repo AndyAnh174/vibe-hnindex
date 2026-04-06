@@ -29,6 +29,7 @@ import {
   deletePoints,
   healthCheck as qdrantHealthCheck,
 } from '../services/qdrant.js';
+import { isIgnored, loadHnindexIgnore } from '../services/hnindex-ignore.js';
 
 export async function indexFile(args: {
   file_path: string;
@@ -65,6 +66,17 @@ export async function indexFile(args: {
     };
   }
 
+  const relativePath = path.relative(resolvedRoot, absolutePath).replace(/\\/g, '/');
+  const ignorePatterns = loadHnindexIgnore(resolvedRoot);
+  if (isIgnored(relativePath, ignorePatterns)) {
+    return {
+      content: [{
+        type: 'text',
+        text: `Error: "${relativePath}" matches a pattern in .hnindexignore — skipped.`,
+      }],
+    };
+  }
+
   // Check Ollama
   const ollamaOk = await ollamaHealthCheck();
   if (!ollamaOk) {
@@ -89,7 +101,6 @@ export async function indexFile(args: {
   // Read file
   const content = fs.readFileSync(absolutePath, 'utf-8');
   const fileHash = crypto.createHash('sha256').update(content).digest('hex');
-  const relativePath = path.relative(project.rootPath, absolutePath).replace(/\\/g, '/');
   const language = detectLanguage(absolutePath);
 
   // Check if unchanged

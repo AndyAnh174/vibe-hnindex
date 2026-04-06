@@ -23,7 +23,7 @@ initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.3.0',
+  version: '0.3.1',
 });
 
 // --- Resource: knowledge://projects ---
@@ -86,15 +86,16 @@ server.tool(
 // --- Tool: search ---
 server.tool(
   'search',
-  'Search the indexed codebase. Returns matching code chunks with file paths, line numbers, and relevance scores. Supports keyword (FTS5/BM25), semantic (vector similarity), and hybrid (RRF fusion) modes. Can filter by language and file path pattern.',
+  'Search the indexed codebase. Returns matching code chunks with file paths, line numbers, and relevance scores. Supports keyword (FTS5/BM25), semantic (vector similarity), and hybrid (RRF fusion) modes. Keyword mode normalizes punctuation-heavy queries into tokens. Prefer a narrow file_pattern and a small limit for the first pass; try keyword before hybrid when you know exact symbols. Can filter by language and file path pattern.',
   {
     query: z.string().describe('Search query — natural language or keywords'),
     project_name: z.string().describe('Project to search in'),
     mode: z.enum(['keyword', 'semantic', 'hybrid']).default('hybrid').describe('Search mode: keyword (FTS5), semantic (vector), or hybrid (recommended)'),
     limit: z.number().int().min(1).max(50).default(10).describe('Maximum number of results to return'),
     language: z.string().optional().describe('Filter by language (e.g., "typescript", "python", "go")'),
-    file_pattern: z.string().optional().describe('Filter by file path glob pattern (e.g., "src/api/*", "*.ts", "services/**")'),
+    file_pattern: z.string().optional().describe('Filter by file path glob pattern (e.g., "src/api/*", "*.ts", "services/**") — use to reduce noise'),
     expand_context: z.number().int().min(0).max(5).default(0).describe('Number of adjacent chunks to include before/after each result for more context (0 = no expansion)'),
+    dedupe_by_file: z.boolean().default(true).describe('If true, at most one chunk per file (best score). Set false to allow multiple chunks from the same file.'),
   },
   async (args) => search(args),
 );
@@ -241,7 +242,7 @@ server.tool(
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started (v0.3.0)');
+  console.error('[vibe-hnindex] Server started (v0.3.1)');
 }
 
 main().catch((error) => {
