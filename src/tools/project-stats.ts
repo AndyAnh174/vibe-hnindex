@@ -1,9 +1,9 @@
-import { getProject, getProjectStats } from '../services/sqlite.js';
+import { getProjectWithRetry, getProjectStats } from '../services/sqlite.js';
 
 export async function projectStatsTool(args: {
   project_name: string;
 }): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
-  const project = getProject(args.project_name);
+  const project = await getProjectWithRetry(args.project_name);
   if (!project) {
     return {
       content: [{

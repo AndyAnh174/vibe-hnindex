@@ -54,7 +54,7 @@
 
   <!-- Title -->
   <text x="450" y="38" text-anchor="middle" fill="#e2e8f0" font-size="20" font-weight="700" letter-spacing="1">vibe-hnindex Architecture</text>
-  <text x="450" y="56" text-anchor="middle" fill="#64748b" font-size="12">v0.3.1 — Codebase Intelligence</text>
+  <text x="450" y="56" text-anchor="middle" fill="#64748b" font-size="12">v0.3.2 — Search UX</text>
 
   <!-- AI Client Box -->
   <rect x="180" y="72" width="540" height="72" rx="12" fill="url(#clientGrad)" filter="url(#shadow)" opacity="0.95"/>
@@ -221,6 +221,6 @@
   <text x="650" y="644" fill="#94a3b8" font-size="10">Semantic (Vector cosine)</text>
   <circle cx="640" cy="656" r="4" fill="#a855f7"/>
   <text x="650" y="660" fill="#94a3b8" font-size="10">Hybrid (RRF fusion)</text>
-  <text x="632" y="678" fill="#64748b" font-size="8.5">v0.3.1: keyword query normalized ·</text>
+  <text x="632" y="678" fill="#64748b" font-size="8.5">v0.3.2: snippet · OR fallback · path quality ·</text>
   <text x="632" y="690" fill="#64748b" font-size="8.5">optional dedupe_by_file (top chunk / file)</text>
 </svg>

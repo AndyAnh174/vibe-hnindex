@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeKeywordQuery } from '../src/services/keyword-query.js';
+import {
+  normalizeKeywordQuery,
+  tokenizeForFts,
+  buildFtsOrQuery,
+} from '../src/services/keyword-query.js';
 
 describe('normalizeKeywordQuery', () => {
   it('splits dotted and slashed identifiers into tokens', () => {
@@ -17,5 +21,27 @@ describe('normalizeKeywordQuery', () => {
 
   it('preserves unicode letters and numbers', () => {
     expect(normalizeKeywordQuery('café_42')).toBe('café 42');
+  });
+});
+
+describe('tokenizeForFts', () => {
+  it('matches normalizeKeywordQuery token split', () => {
+    expect(tokenizeForFts('products.urls')).toEqual(['products', 'urls']);
+    expect(tokenizeForFts('  a  b  ')).toEqual(['a', 'b']);
+  });
+
+  it('returns empty for whitespace-only', () => {
+    expect(tokenizeForFts('   ')).toEqual([]);
+  });
+});
+
+describe('buildFtsOrQuery', () => {
+  it('returns null for fewer than two tokens', () => {
+    expect(buildFtsOrQuery(['a'])).toBeNull();
+    expect(buildFtsOrQuery([])).toBeNull();
+  });
+
+  it('joins tokens with OR', () => {
+    expect(buildFtsOrQuery(['foo', 'bar', 'baz'])).toBe('foo OR bar OR baz');
   });
 });

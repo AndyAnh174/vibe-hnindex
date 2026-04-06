@@ -1,10 +1,22 @@
 import { config } from '../config.js';
 import type { SearchResult } from '../types.js';
-import { searchKeyword, getChunksByIds, getProject, getAdjacentChunks } from '../services/sqlite.js';
+import {
+  searchKeyword,
+  getChunksByIds,
+  getProject,
+  getAdjacentChunks,
+} from '../services/sqlite.js';
 import { searchSimilar, healthCheck as qdrantHealthCheck } from '../services/qdrant.js';
 import { embedSingle, healthCheck as ollamaHealthCheck } from '../services/embeddings.js';
+import { tokenizeForFts, buildFtsOrQuery } from '../services/keyword-query.js';
+import { applyPathQualityScores } from '../services/path-quality.js';
+import {
+  DEFAULT_MAX_CONTENT_CHARS,
+  truncateContentUnicode,
+} from '../services/snippet.js';
 
 type SearchMode = 'keyword' | 'semantic' | 'hybrid';
+type ContentMode = 'full' | 'compact';
 
 interface SearchFilters {
   language?: string;
@@ -57,6 +69,9 @@ export async function search(args: {
   file_pattern?: string;
   expand_context?: number;
   dedupe_by_file?: boolean;
+  content_mode?: ContentMode;
+  max_content_chars?: number;
+  deprioritize_generated_paths?: boolean;
 }): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
   const mode = args.mode || 'hybrid';
   const limit = args.limit || 10;
@@ -64,6 +79,9 @@ export async function search(args: {
   const kwLimit = keywordFetchLimit(limit, dedupeByFileEnabled);
   const candidateLimit = 20; // fetch more candidates for RRF
   const expandContext = args.expand_context || 0;
+  const contentMode: ContentMode = args.content_mode === 'full' ? 'full' : 'compact';
+  const maxContentChars = args.max_content_chars ?? DEFAULT_MAX_CONTENT_CHARS;
+  const deprioritizePaths = args.deprioritize_generated_paths !== false;
 
   const filters: SearchFilters = {};
   if (args.language) filters.language = args.language;
@@ -90,6 +108,20 @@ export async function search(args: {
     try {
       const kwFetch = mode === 'keyword' ? kwLimit : Math.max(candidateLimit, kwLimit);
       keywordResults = searchKeyword(args.query, args.project_name, kwFetch, filters);
+
+      const tokens = tokenizeForFts(args.query);
+      if (keywordResults.length === 0 && tokens.length >= 2) {
+        const orQ = buildFtsOrQuery(tokens);
+        if (orQ) {
+          const relaxedFetch = Math.min(400, Math.max(kwFetch * 2, kwFetch + 20));
+          keywordResults = searchKeyword(args.query, args.project_name, relaxedFetch, filters, {
+            ftsExpression: orQ,
+          });
+          if (keywordResults.length > 0) {
+            warnings.push('Keyword fallback: relaxed OR match used.');
+          }
+        }
+      }
     } catch (error) {
       console.error('[search] Keyword search error:', error);
       warnings.push('Keyword search failed.');
@@ -202,6 +234,8 @@ export async function search(args: {
     }
   }
 
+  finalResults = applyPathQualityScores(finalResults, deprioritizePaths);
+
   // Format output
   if (finalResults.length === 0) {
     const text = warnings.length > 0
@@ -214,12 +248,26 @@ export async function search(args: {
   const filterParts: string[] = [];
   if (args.language) filterParts.push(`language: ${args.language}`);
   if (args.file_pattern) filterParts.push(`path: ${args.file_pattern}`);
+  if (contentMode === 'compact') {
+    filterParts.push(`content: compact (max ~${maxContentChars} chars/chunk)`);
+  }
   const filterInfo = filterParts.length > 0 ? ` [filters: ${filterParts.join(', ')}]` : '';
 
   const header = `Found ${finalResults.length} results for "${args.query}" (mode: ${actualMode})${filterInfo}:\n`;
   const warningText = warnings.length > 0 ? `\n⚠ ${warnings.join('\n⚠ ')}\n` : '';
 
+  const expandCap =
+    expandContext > 0
+      ? Math.min(8000, Math.max(maxContentChars * 3, maxContentChars))
+      : maxContentChars;
+
   const resultTexts = finalResults.map((r, i) => {
+    const formatBody = (raw: string) => {
+      if (contentMode === 'full') return raw;
+      const cap = expandContext > 0 ? expandCap : maxContentChars;
+      return truncateContentUnicode(raw, cap);
+    };
+
     // Context expansion
     if (expandContext > 0) {
       const expanded = getAdjacentChunks(
@@ -232,7 +280,7 @@ export async function search(args: {
       return [
         `### ${i + 1}. ${r.filePath}:${startLine}-${endLine} (${r.language}) [score: ${r.score.toFixed(4)}]`,
         '```' + r.language,
-        mergedContent,
+        formatBody(mergedContent),
         '```',
       ].join('\n');
     }
@@ -240,7 +288,7 @@ export async function search(args: {
     return [
       `### ${i + 1}. ${r.filePath}:${r.startLine}-${r.endLine} (${r.language}) [score: ${r.score.toFixed(4)}]`,
       '```' + r.language,
-      r.content,
+      formatBody(r.content),
       '```',
     ].join('\n');
   });

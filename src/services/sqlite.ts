@@ -179,6 +179,21 @@ export function getProject(projectName: string): ProjectInfo | null {
   };
 }
 
+/** Mitigate rare WAL/connection races right after indexing. */
+export async function getProjectWithRetry(
+  projectName: string,
+  opts: { retries: number; delayMs: number } = { retries: 4, delayMs: 25 }
+): Promise<ProjectInfo | null> {
+  for (let i = 0; i < opts.retries; i++) {
+    const p = getProject(projectName);
+    if (p) return p;
+    if (i < opts.retries - 1) {
+      await new Promise((r) => setTimeout(r, opts.delayMs));
+    }
+  }
+  return null;
+}
+
 // --- Chunks ---
 
 export function insertChunks(chunks: ChunkRecord[]): void {
@@ -234,9 +249,10 @@ export function searchKeyword(
   query: string,
   projectName: string,
   limit: number,
-  filters?: { language?: string; file_pattern?: string }
+  filters?: { language?: string; file_pattern?: string },
+  options?: { ftsExpression?: string }
 ): SearchResult[] {
-  const safeQuery = normalizeKeywordQuery(query);
+  const safeQuery = options?.ftsExpression ?? normalizeKeywordQuery(query);
   if (!safeQuery) return [];
 
   let sql = `

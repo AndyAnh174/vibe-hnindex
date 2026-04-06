@@ -12,7 +12,14 @@
 
 **No cloud. No API keys. 100% local data.**
 
-**Status:** v0.3.1 — Codebase Intelligence. 16 MCP tools, dependency graph, git integration. Feedback and contributions are welcome!
+**Status:** v0.3.2 — Search UX (snippets, OR fallback, path quality). 16 MCP tools, dependency graph, git integration. Feedback and contributions are welcome!
+
+### What’s new in v0.3.2
+
+- **`content_mode` (default `compact`)** — truncates each chunk body to save tokens (~2000 chars, override with `max_content_chars`); use `content_mode: full` when you need the full stored chunk.
+- **Keyword OR fallback** — when strict FTS AND returns no rows and the query has multiple tokens, search retries with a relaxed `OR` match and adds a warning line.
+- **`deprioritize_generated_paths` (default on)** — down-ranks hits under paths like `dist/`, `.next/`, `build/`, `coverage/`, `*.min.js`, `node_modules` (post-score multiplier).
+- **`project_stats` retry** — short async retry when resolving the project row to reduce rare “not found” right after indexing.
 
 ### What’s new in v0.3.1
 

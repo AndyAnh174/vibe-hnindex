@@ -1,7 +1,7 @@
 {
   "name": "vibe-hnindex",
   "description": "Index source code into a local knowledge base, search with keyword + semantic + hybrid modes",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "author": {
     "name": "Ho Viet Anh (AndyAnh174)",
     "email": "hovietanh147@gmail.com"
