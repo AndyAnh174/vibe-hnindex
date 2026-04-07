@@ -1,6 +1,9 @@
 {
   "name": "vibe-hnindex",
   "version": "0.6.0",
+  "workspaces": [
+    "packages/*"
+  ],
   "mcpName": "io.github.AndyAnh174/vibe-hnindex",
   "description": "MCP server for indexing and searching codebases with keyword + semantic search. Works with Claude, Cursor, Windsurf, Antigravity.",
   "type": "module",
@@ -9,7 +12,7 @@
     "vibe-hnindex": "dist/index.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run build -w hnindex-cli",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
     "prepack": "tsc || true",

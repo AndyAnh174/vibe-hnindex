@@ -2,6 +2,7 @@
 
 ## v0.6.0
 
+- **`hnindex-cli`** (npm: `hnindex-cli`) — global CLI `hnindex`: `init --mcp <claude|claude-desktop|antigravity|cursor|cursor-project|windsurf|vscode>`, `update`, `version`; merges `vibe-hnindex` into the correct MCP JSON path on Windows, macOS, and Linux. Package: `packages/hnindex-cli`.
 - **Symbols table + indexing** — heuristic extraction (TS/JS/TSX/JSX, Python) on index/reindex/watch; SQLite `symbols` with lookup by name.
 - **`symbol_lookup` tool** — resolve symbols by name with optional kind / file pattern filters.
 - **`search` mode `symbol`** — find chunks via symbol name (explicit mode; `auto` does not route to symbol).

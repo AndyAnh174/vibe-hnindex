@@ -90,7 +90,7 @@ server.tool(
 // --- Tool: search ---
 server.tool(
   'search',
-  'Search the indexed codebase. Returns matching code chunks with file paths, line numbers, and relevance scores. Modes: keyword (FTS5), semantic (vector), hybrid (RRF fusion), auto (heuristic when SEARCH_AUTO_ROUTE), symbol (SQLite symbol index by identifier). Optional HTTP rerank via RERANK_URL; otherwise top results can be reordered by semantic score when available. Prefer a narrow file_pattern and a small limit for the first pass.',
+  'Search the indexed codebase. Returns matching code chunks with file paths, line numbers, and relevance scores. Modes: keyword (FTS5), semantic (vector), hybrid (RRF fusion), auto (heuristic when SEARCH_AUTO_ROUTE), symbol (SQLite symbol index by identifier). Post-retrieval ordering: if RERANK_URL is set, the server POSTs {query, documents} for optional cross-encoder-style scores; if not set, results are still reordered by Qdrant semantic similarity (no extra service). Ollama (OLLAMA_URL + OLLAMA_MODEL) is only for embeddings at index/query time—not the same as RERANK_URL. Agents: you do not need to "enable" rerank manually unless the user asks to skip it (use rerank:false) or tune env; default behavior is already optimal for most tasks. Prefer a narrow file_pattern and a small limit on the first pass.',
   {
     query: z.string().describe('Search query — natural language, keywords, or a symbol name when mode is symbol'),
     project_name: z.string().describe('Project to search in'),
@@ -107,7 +107,12 @@ server.tool(
     max_content_chars: z.number().int().optional().describe('Max characters per chunk body when content_mode is compact'),
     deprioritize_generated_paths: z.boolean().optional().describe('Down-rank generated/vendor paths (default true)'),
     explain: z.boolean().optional().describe('Include score breakdown in output'),
-    rerank: z.boolean().optional().describe('When false, skip rerank / semantic reorder (default: follow SEARCH_RERANK env)'),
+    rerank: z
+      .boolean()
+      .optional()
+      .describe(
+        'When false, skip post-retrieval reorder (HTTP rerank if RERANK_URL is set, else semantic reorder by Qdrant scores). Default follows SEARCH_RERANK. Use false for speed or when raw hybrid/semantic order is preferred.',
+      ),
   },
   async (args) => search(args),
 );

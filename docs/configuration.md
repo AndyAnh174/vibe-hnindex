@@ -15,6 +15,19 @@
 | `MAX_FILE_SIZE` | `1048576` | Max file size in bytes (1 MB) |
 | `SEARCH_AUTO_ROUTE` | `false` | When `true`, omitting `search`’s `mode` behaves like `mode: auto` (heuristic keyword vs hybrid). |
 | `SEARCH_KEYWORD_FALLBACK_SEMANTIC` | `true` | When not `false`, if `mode` is keyword and FTS returns no hits, run one semantic search when Ollama and Qdrant are available. |
+| `SEARCH_RERANK` | *(enabled)* | Set to `false` to disable post-retrieval reorder (both HTTP rerank and semantic reorder). |
+| `SEARCH_RERANK_POOL` | `50` | Max distinct results pulled into the rerank pool before trimming to `limit`. |
+| `RERANK_URL` | *(empty)* | If set, POST JSON `{ "query": string, "documents": string[] }`; expect JSON `{ "scores": number[] }` (same length as `documents`, higher = more relevant). |
+| `RERANK_TIMEOUT_MS` | `15000` | Timeout (ms) for the `RERANK_URL` request. |
+
+### Optional rerank
+
+**Ollama + `OLLAMA_MODEL` (e.g. `bge-m3:567m`)** handles **embeddings** only (index + query vectors). That is **not** `RERANK_URL`.
+
+- **No `RERANK_URL`:** after hybrid/semantic retrieval, the server **reorders** candidates using **Qdrant similarity scores**. No separate rerank service required.
+- **`RERANK_URL` set:** the server sends the query and top chunk texts to **your** HTTP endpoint for finer ranking (e.g. cross-encoder). Ollama’s HTTP API does **not** implement this contract; if you use an Ollama-hosted reranker model, run a tiny proxy that translates `{query, documents}` ↔ your model calls.
+
+**For AI agents:** do not ask users to set `RERANK_URL` unless they need a custom reranker. Default behavior (Qdrant reorder when no URL) is appropriate for normal code search. Use tool argument `rerank: false` only when skipping reorder is desired (speed or debugging).
 
 ---
 

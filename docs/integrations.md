@@ -2,8 +2,25 @@
 
 After you have the MCP JSON from [Getting started](getting-started.md), **this page only answers: which file to edit** for each product. The `mcpServers` / `servers` payload is the same idea everywhere:
 
+---
+
+## hnindex CLI
+
+Instead of pasting JSON by hand, install **[hnindex-cli](https://www.npmjs.com/package/hnindex-cli)** (`npm install -g hnindex-cli`) and run e.g.:
+
+```bash
+hnindex init --mcp antigravity
+hnindex init --mcp claude --cwd /path/to/repo
+hnindex init --mcp vscode --cwd /path/to/repo
+```
+
+See [Getting started → CLI installer](getting-started.md#cli-installer-hnindex) for all `--mcp` values and flags. The CLI merges the same `npx -y vibe-hnindex` block as the examples below.
+
+---
+
 - **Self-hosted Qdrant:** `OLLAMA_*`, `QDRANT_URL` (no API key).
 - **Qdrant Cloud:** also set `QDRANT_API_KEY` and an HTTPS `QDRANT_URL`.
+- **Optional HTTP rerank:** `RERANK_URL` (and `SEARCH_RERANK`, `SEARCH_RERANK_POOL`, `RERANK_TIMEOUT_MS`) — see [Configuration → Optional rerank](configuration.md#optional-rerank). Ollama-only setups do not require `RERANK_URL`.
 
 ---
 
