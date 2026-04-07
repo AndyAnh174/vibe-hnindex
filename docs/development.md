@@ -10,9 +10,23 @@ npm run dev   # tsx src/index.ts
 
 On **Windows**, if `npm install` fails on `better-sqlite3`, use **Node 20 or 22 LTS** or install [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) (C++ workload). See [Troubleshooting](troubleshooting.md#windows-npm-install).
 
+## Monorepo
+
+- **`vibe-hnindex`** (repo root) — MCP server (`npm publish` from root).
+- **`packages/hnindex-cli`** — `hnindex` CLI (`npm publish` from `packages/hnindex-cli` after `npm run build -w hnindex-cli`).
+
+Publish the CLI package:
+
+```bash
+cd packages/hnindex-cli
+npm run build
+npm publish
+```
+
 ## Layout
 
 ```
+packages/hnindex-cli/   # hnindex CLI (optional global install)
 src/
 ├── index.ts           # MCP server + tool registration
 ├── config.ts

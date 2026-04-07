@@ -1,0 +1,42 @@
+{
+  "name": "hnindex-cli",
+  "version": "0.6.0",
+  "description": "CLI to install vibe-hnindex MCP config for Claude, Cursor, Antigravity, Windsurf, VS Code — Windows, macOS, Linux",
+  "type": "module",
+  "bin": {
+    "hnindex": "./dist/cli.js"
+  },
+  "main": "./dist/cli.js",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "prepack": "tsc"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "mcp",
+    "vibe-hnindex",
+    "claude",
+    "cursor",
+    "antigravity",
+    "cli"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AndyAnh174/vibe-hnindex.git",
+    "directory": "packages/hnindex-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/AndyAnh174/vibe-hnindex/issues"
+  },
+  "homepage": "https://github.com/AndyAnh174/vibe-hnindex#readme",
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.7.0"
+  }
+}
