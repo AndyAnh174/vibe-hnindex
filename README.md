@@ -6,12 +6,13 @@
 
 *Keyword (SQLite FTS5) · Semantic (Qdrant + Ollama embeddings) · Hybrid — your code stays on disk*
 
-[![npm](https://img.shields.io/npm/v/vibe-hnindex.svg?style=flat-square&logo=npm&label=npm)](https://www.npmjs.com/package/vibe-hnindex)
+[![npm vibe-hnindex](https://img.shields.io/npm/v/vibe-hnindex.svg?style=flat-square&logo=npm&label=vibe-hnindex)](https://www.npmjs.com/package/vibe-hnindex)
+[![npm hnindex-cli](https://img.shields.io/npm/v/hnindex-cli.svg?style=flat-square&logo=npm&label=hnindex-cli)](https://www.npmjs.com/package/hnindex-cli)
 [![License](https://img.shields.io/badge/license-MIT-yellow?style=flat-square)](LICENSE)
 [![MCP](https://img.shields.io/badge/MCP-compatible-6366f1?style=flat-square)](https://modelcontextprotocol.io/)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
 
-**Latest release: v0.6.0**
+**Latest release: v0.6.0** · npm packages: [`vibe-hnindex`](https://www.npmjs.com/package/vibe-hnindex) (MCP server), [`hnindex-cli`](https://www.npmjs.com/package/hnindex-cli) (optional `hnindex` installer)
 
 </div>
 
