@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { config } from '../config.js';
-import type { ChunkRecord } from '../types.js';
+import type { ChunkRecord, DependencyRecord, ExportRecord } from '../types.js';
 import { chunkFile } from '../services/chunker.js';
 import { detectLanguage } from '../services/file-scanner.js';
 import { embed } from '../services/embeddings.js';
@@ -14,7 +14,16 @@ import {
   updateProjectStats,
   getProjectFileCount,
   getProjectChunkCount,
+  getAllProjectFiles,
+  insertDependencies,
+  insertExports,
+  insertSymbols,
+  deleteFileDependencies,
+  deleteFileExports,
+  deleteSymbolsForFile,
 } from '../services/sqlite.js';
+import { parseImports, parseExports, resolveImportPath } from '../services/dependency-parser.js';
+import { extractSymbols, toSymbolRecords } from '../services/symbol-extractor.js';
 import {
   upsertPoints,
   deletePoints,
@@ -134,6 +143,43 @@ async function reindexFile(
     insertChunks(records);
   }
 
+  try {
+    deleteFileDependencies(projectName, relativePath);
+    deleteFileExports(projectName, relativePath);
+    deleteSymbolsForFile(projectName, relativePath);
+
+    const projectFiles = getAllProjectFiles(projectName);
+    const imports = parseImports(content, language);
+    const depRecords: DependencyRecord[] = imports.map(imp => ({
+      id: crypto.randomUUID(),
+      projectName,
+      sourceFile: relativePath,
+      targetFile: resolveImportPath(imp.specifier, relativePath, projectFiles) ?? imp.specifier,
+      importSpecifiers: imp.specifiers,
+      importType: imp.importType,
+      language,
+    }));
+    if (depRecords.length > 0) insertDependencies(depRecords);
+
+    const parsedExports = parseExports(content, language);
+    const exportRecords: ExportRecord[] = parsedExports.map(exp => ({
+      id: crypto.randomUUID(),
+      projectName,
+      filePath: relativePath,
+      exportName: exp.name,
+      exportType: exp.exportType,
+      lineNumber: exp.lineNumber,
+      language,
+    }));
+    if (exportRecords.length > 0) insertExports(exportRecords);
+
+    const parsedSymbols = extractSymbols(content, language);
+    const symbolRecords = toSymbolRecords(projectName, relativePath, language, parsedSymbols);
+    if (symbolRecords.length > 0) insertSymbols(symbolRecords);
+  } catch (parseError) {
+    console.error(`[watch] Dependency/symbol parse failed for ${relativePath}:`, parseError);
+  }
+
   // Update stats
   const fileCount = getProjectFileCount(projectName);
   const chunkCount = getProjectChunkCount(projectName);
@@ -204,6 +250,9 @@ export async function startWatchingProject(projectName: string): Promise<{ ok: b
 
       if (!fs.existsSync(fullPath)) {
         const oldIds = deleteFileChunks(projectName, relativePath);
+        deleteFileDependencies(projectName, relativePath);
+        deleteFileExports(projectName, relativePath);
+        deleteSymbolsForFile(projectName, relativePath);
         if (oldIds.length > 0) {
           const qdrantOk = await qdrantHealthCheck();
           if (qdrantOk) await deletePoints(projectName, oldIds);

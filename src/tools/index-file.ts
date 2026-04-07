@@ -18,10 +18,13 @@ import {
   getAllProjectFiles,
   insertDependencies,
   insertExports,
+  insertSymbols,
   deleteFileDependencies,
   deleteFileExports,
+  deleteSymbolsForFile,
 } from '../services/sqlite.js';
 import { parseImports, parseExports, resolveImportPath } from '../services/dependency-parser.js';
+import { extractSymbols, toSymbolRecords } from '../services/symbol-extractor.js';
 import type { DependencyRecord, ExportRecord } from '../types.js';
 import {
   ensureCollection,
@@ -165,6 +168,7 @@ export async function indexFile(args: {
   try {
     deleteFileDependencies(args.project_name, relativePath);
     deleteFileExports(args.project_name, relativePath);
+    deleteSymbolsForFile(args.project_name, relativePath);
 
     const projectFiles = getAllProjectFiles(args.project_name);
 
@@ -191,6 +195,10 @@ export async function indexFile(args: {
       language,
     }));
     if (exportRecords.length > 0) insertExports(exportRecords);
+
+    const parsedSymbols = extractSymbols(content, language);
+    const symbolRecords = toSymbolRecords(args.project_name, relativePath, language, parsedSymbols);
+    if (symbolRecords.length > 0) insertSymbols(symbolRecords);
   } catch (parseError) {
     console.error(`[index-file] Dependency parsing failed for ${relativePath}:`, parseError);
   }

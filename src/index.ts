@@ -19,13 +19,14 @@ import { recentChangesTool } from './tools/recent-changes.js';
 import { smartContextTool } from './tools/smart-context.js';
 import { projectBriefingTool } from './tools/project-briefing.js';
 import { onboardingPromptTool } from './tools/onboarding-prompt.js';
+import { symbolLookupTool } from './tools/symbol-lookup.js';
 
 // Initialize database on startup
 initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.5.0',
+  version: '0.6.0',
 });
 
 // --- Resource: knowledge://projects ---
@@ -89,16 +90,29 @@ server.tool(
 // --- Tool: search ---
 server.tool(
   'search',
-  'Search the indexed codebase. Returns matching code chunks with file paths, line numbers, and relevance scores. Supports keyword (FTS5/BM25), semantic (vector similarity), and hybrid (RRF fusion) modes. Keyword mode normalizes punctuation-heavy queries into tokens. Prefer a narrow file_pattern and a small limit for the first pass; try keyword before hybrid when you know exact symbols. Can filter by language and file path pattern.',
+  'Search the indexed codebase. Returns matching code chunks with file paths, line numbers, and relevance scores. Modes: keyword (FTS5), semantic (vector), hybrid (RRF fusion), auto (heuristic when SEARCH_AUTO_ROUTE), symbol (SQLite symbol index by identifier). Post-retrieval ordering: if RERANK_URL is set, the server POSTs {query, documents} for optional cross-encoder-style scores; if not set, results are still reordered by Qdrant semantic similarity (no extra service). Ollama (OLLAMA_URL + OLLAMA_MODEL) is only for embeddings at index/query time—not the same as RERANK_URL. Agents: you do not need to "enable" rerank manually unless the user asks to skip it (use rerank:false) or tune env; default behavior is already optimal for most tasks. Prefer a narrow file_pattern and a small limit on the first pass.',
   {
-    query: z.string().describe('Search query — natural language or keywords'),
+    query: z.string().describe('Search query — natural language, keywords, or a symbol name when mode is symbol'),
     project_name: z.string().describe('Project to search in'),
-    mode: z.enum(['keyword', 'semantic', 'hybrid']).default('hybrid').describe('Search mode: keyword (FTS5), semantic (vector), or hybrid (recommended)'),
+    mode: z
+      .enum(['keyword', 'semantic', 'hybrid', 'auto', 'symbol'])
+      .default('hybrid')
+      .describe('keyword | semantic | hybrid | auto (needs SEARCH_AUTO_ROUTE) | symbol (lookup by symbol name)'),
     limit: z.number().int().min(1).max(50).default(10).describe('Maximum number of results to return'),
     language: z.string().optional().describe('Filter by language (e.g., "typescript", "python", "go")'),
     file_pattern: z.string().optional().describe('Filter by file path glob pattern (e.g., "src/api/*", "*.ts", "services/**") — use to reduce noise'),
     expand_context: z.number().int().min(0).max(5).default(0).describe('Number of adjacent chunks to include before/after each result for more context (0 = no expansion)'),
     dedupe_by_file: z.boolean().default(true).describe('If true, at most one chunk per file (best score). Set false to allow multiple chunks from the same file.'),
+    content_mode: z.enum(['full', 'compact']).optional().describe('Snippet length: compact (default) or full chunk text'),
+    max_content_chars: z.number().int().optional().describe('Max characters per chunk body when content_mode is compact'),
+    deprioritize_generated_paths: z.boolean().optional().describe('Down-rank generated/vendor paths (default true)'),
+    explain: z.boolean().optional().describe('Include score breakdown in output'),
+    rerank: z
+      .boolean()
+      .optional()
+      .describe(
+        'When false, skip post-retrieval reorder (HTTP rerank if RERANK_URL is set, else semantic reorder by Qdrant scores). Default follows SEARCH_RERANK. Use false for speed or when raw hybrid/semantic order is preferred.',
+      ),
   },
   async (args) => search(args),
 );
@@ -193,6 +207,22 @@ server.tool(
     include_recent: z.boolean().optional().default(true).describe('Include a short recent-commits section (default true)'),
   },
   async (args) => onboardingPromptTool(args),
+);
+
+// --- Tool: symbol_lookup ---
+server.tool(
+  'symbol_lookup',
+  'Find symbol definitions (classes, functions, interfaces, methods) by name in the indexed symbol table. Faster than full-text search for exact identifiers. Re-index the project if results are empty.',
+  {
+    project_name: z.string().describe('Project name'),
+    symbol: z.string().describe('Symbol name to find (e.g., ProxyService, checkQuota)'),
+    kind: z
+      .enum(['class', 'function', 'interface', 'type', 'enum', 'method', 'variable', 'namespace'])
+      .optional()
+      .describe('Optional filter by symbol kind'),
+    file_pattern: z.string().optional().describe('Optional glob to limit files (e.g., "apps/gateway/**")'),
+  },
+  async (args) => symbolLookupTool(args),
 );
 
 // --- Tool: file_summary ---

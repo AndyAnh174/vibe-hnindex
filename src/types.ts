@@ -22,7 +22,7 @@ export interface SearchResult {
   content: string;
   language: string;
   score: number;
-  matchType: 'keyword' | 'semantic' | 'hybrid';
+  matchType: 'keyword' | 'semantic' | 'hybrid' | 'symbol';
 }
 
 export interface ProjectInfo {
@@ -64,6 +64,29 @@ export interface ExportRecord {
   exportName: string;
   exportType: 'function' | 'class' | 'variable' | 'type' | 'interface' | 'enum' | 'default';
   lineNumber: number;
+  language: string;
+}
+
+export type SymbolKind =
+  | 'class'
+  | 'function'
+  | 'interface'
+  | 'type'
+  | 'enum'
+  | 'variable'
+  | 'method'
+  | 'namespace';
+
+export interface SymbolRecord {
+  id: string;
+  projectName: string;
+  filePath: string;
+  name: string;
+  kind: SymbolKind;
+  lineNumber: number;
+  signature: string | null;
+  parentName: string | null;
+  exported: boolean;
   language: string;
 }
 

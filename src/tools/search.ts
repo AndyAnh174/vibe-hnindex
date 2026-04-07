@@ -5,7 +5,10 @@ import {
   getChunksByIds,
   getProjectWithRetry,
   getAdjacentChunks,
+  searchSymbolsByName,
+  findChunkIdForLine,
 } from '../services/sqlite.js';
+import { rerankSearchResults } from '../services/rerank.js';
 import { searchSimilar, healthCheck as qdrantHealthCheck } from '../services/qdrant.js';
 import { embedSingle, healthCheck as ollamaHealthCheck } from '../services/embeddings.js';
 import { tokenizeForFts, buildFtsOrQuery } from '../services/keyword-query.js';
@@ -16,7 +19,7 @@ import {
 } from '../services/snippet.js';
 import { resolveSearchMode } from '../services/query-router.js';
 
-type SearchMode = 'keyword' | 'semantic' | 'hybrid' | 'auto';
+type SearchMode = 'keyword' | 'semantic' | 'hybrid' | 'auto' | 'symbol';
 type ContentMode = 'full' | 'compact';
 
 interface SearchFilters {
@@ -81,10 +84,13 @@ export async function search(args: {
   max_content_chars?: number;
   deprioritize_generated_paths?: boolean;
   explain?: boolean;
+  /** When false, skip rerank / semantic reorder. Default: enabled when SEARCH_RERANK is not false. */
+  rerank?: boolean;
 }): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
   const rawMode =
     args.mode !== undefined ? args.mode : config.searchAutoRoute ? 'auto' : 'hybrid';
-  const effectiveMode = resolveSearchMode(args.query, rawMode);
+  const effectiveMode: SearchMode =
+    rawMode === 'symbol' ? 'symbol' : resolveSearchMode(args.query, rawMode);
   const limit = args.limit || 10;
   const dedupeByFileEnabled = args.dedupe_by_file !== false;
   const kwLimit = keywordFetchLimit(limit, dedupeByFileEnabled);
@@ -94,6 +100,11 @@ export async function search(args: {
   const maxContentChars = args.max_content_chars ?? DEFAULT_MAX_CONTENT_CHARS;
   const deprioritizePaths = args.deprioritize_generated_paths !== false;
   const explain = args.explain === true;
+  const useRerank = args.rerank !== false && config.searchRerankEnabled;
+  const poolCap = useRerank
+    ? Math.min(config.searchRerankPool, Math.max(limit, Math.min(50, limit * 5)))
+    : limit;
+  const dedupeTarget = useRerank ? poolCap : limit;
 
   const filters: SearchFilters = {};
   if (args.language) filters.language = args.language;
@@ -118,6 +129,10 @@ export async function search(args: {
     ? Math.min(200, Math.max(limit * 20, limit))
     : limit;
 
+  let keywordFallbackRan = false;
+
+  // Keyword / semantic / hybrid (symbol mode uses SQLite symbols table only)
+  if (effectiveMode !== 'symbol') {
   // Keyword search (fetch more rows when deduping by file so we can still fill `limit` distinct files)
   if (effectiveMode === 'keyword' || effectiveMode === 'hybrid') {
     try {
@@ -142,8 +157,6 @@ export async function search(args: {
       warnings.push('Keyword search failed.');
     }
   }
-
-  let keywordFallbackRan = false;
 
   if (
     effectiveMode === 'keyword' &&
@@ -214,6 +227,7 @@ export async function search(args: {
       }
     }
   }
+  } // end effectiveMode !== 'symbol'
 
   // Combine results
   let finalResults: SearchResult[];
@@ -222,7 +236,47 @@ export async function search(args: {
   const keywordRankById = new Map(keywordResults.map((r, i) => [r.id, i + 1]));
   const semanticRankById = new Map(semanticResults.map((r, i) => [r.id, i + 1]));
 
-  if (keywordFallbackRan && semanticResults.length > 0) {
+  if (effectiveMode === 'symbol') {
+    const nameQ = args.query.trim();
+    if (!nameQ) {
+      return {
+        content: [{
+          type: 'text',
+          text: 'Error: mode "symbol" requires a non-empty query (symbol / identifier name).',
+        }],
+      };
+    }
+    let symbols = searchSymbolsByName(args.project_name, nameQ, {
+      filePattern: args.file_pattern,
+      limit: 200,
+    });
+    if (args.language) {
+      const lang = args.language.toLowerCase();
+      symbols = symbols.filter((s) => s.language.toLowerCase() === lang);
+    }
+    const seenFiles = new Set<string>();
+    const built: SearchResult[] = [];
+    let rank = 0;
+    for (const sym of symbols) {
+      const cid = findChunkIdForLine(args.project_name, sym.filePath, sym.lineNumber);
+      if (!cid) continue;
+      if (dedupeByFileEnabled) {
+        if (seenFiles.has(sym.filePath)) continue;
+        seenFiles.add(sym.filePath);
+      }
+      const chunks = getChunksByIds([cid]);
+      const c = chunks[0];
+      if (!c) continue;
+      rank += 1;
+      built.push({
+        ...c,
+        score: 1 / rank,
+        matchType: 'symbol',
+      });
+      if (built.length >= poolCap) break;
+    }
+    finalResults = dedupeByFileEnabled ? built : built.slice(0, limit);
+  } else if (keywordFallbackRan && semanticResults.length > 0) {
     actualMode = 'semantic';
     const ids = semanticResults.slice(0, semanticFetchLimit).map((r) => r.id);
     const chunks = getChunksByIds(ids);
@@ -234,14 +288,14 @@ export async function search(args: {
     }));
     finalResults.sort((a, b) => b.score - a.score);
     if (dedupeByFileEnabled) {
-      finalResults = dedupeByFile(finalResults, limit);
+      finalResults = dedupeByFile(finalResults, dedupeTarget);
     } else {
-      finalResults = finalResults.slice(0, limit);
+      finalResults = finalResults.slice(0, dedupeTarget);
     }
   } else if (actualMode === 'keyword') {
     const ranked = dedupeByFileEnabled
-      ? dedupeByFile(keywordResults, limit)
-      : keywordResults.slice(0, limit);
+      ? dedupeByFile(keywordResults, dedupeTarget)
+      : keywordResults.slice(0, dedupeTarget);
     finalResults = ranked;
   } else if (actualMode === 'semantic') {
     const ids = semanticResults.slice(0, semanticFetchLimit).map((r) => r.id);
@@ -254,9 +308,9 @@ export async function search(args: {
     }));
     finalResults.sort((a, b) => b.score - a.score);
     if (dedupeByFileEnabled) {
-      finalResults = dedupeByFile(finalResults, limit);
+      finalResults = dedupeByFile(finalResults, dedupeTarget);
     } else {
-      finalResults = finalResults.slice(0, limit);
+      finalResults = finalResults.slice(0, dedupeTarget);
     }
   } else {
     // Hybrid: RRF fusion
@@ -294,9 +348,9 @@ export async function search(args: {
       return acc;
     }, []);
     if (dedupeByFileEnabled) {
-      finalResults = dedupeByFile(finalResults, limit);
+      finalResults = dedupeByFile(finalResults, dedupeTarget);
     } else {
-      finalResults = finalResults.slice(0, limit);
+      finalResults = finalResults.slice(0, dedupeTarget);
     }
   }
 
@@ -304,6 +358,11 @@ export async function search(args: {
   const pathMulById = new Map(finalResults.map((r) => [r.id, deprioritizeMultiplier(r.filePath)]));
 
   finalResults = applyPathQualityScores(finalResults, deprioritizePaths);
+
+  if (useRerank) {
+    finalResults = await rerankSearchResults(args.query, finalResults, semanticRawById);
+  }
+  finalResults = finalResults.slice(0, limit);
 
   // Format output
   if (finalResults.length === 0) {
@@ -361,6 +420,9 @@ export async function search(args: {
             parts.push(`semantic_raw=${h.semanticRawScore.toFixed(6)}`);
           }
         }
+      }
+      if (r.matchType === 'symbol') {
+        parts.push('source=symbols_table');
       }
       explainLine = `\nexplain: ${parts.join(' ')}`;
     }

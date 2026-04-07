@@ -133,34 +133,82 @@ export function detectEntryPoints(files: string[]): string[] {
   return entries;
 }
 
+function readPackageJson(projectName: string, files: string[]): Record<string, unknown> | null {
+  const fileSet = new Set(files.map((f) => f.replace(/\\/g, '/')));
+  if (!fileSet.has('package.json')) return null;
+  const chunks = getFileChunks(projectName, 'package.json');
+  if (chunks.length === 0) return null;
+  const content = chunks.map((c) => c.content).join('');
+  try {
+    return JSON.parse(content) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+}
+
+function depVersion(pkg: Record<string, unknown>, name: string): string | undefined {
+  const deps = { ...(pkg.dependencies as Record<string, string> | undefined), ...(pkg.devDependencies as Record<string, string> | undefined) };
+  return deps?.[name];
+}
+
 export function detectFrameworks(projectName: string, files: string[]): string[] {
   const detected: string[] = [];
   const fileSet = new Set(files.map(f => f.replace(/\\/g, '/')));
 
-  // Check for package.json
-  if (fileSet.has('package.json')) {
-    const chunks = getFileChunks(projectName, 'package.json');
-    if (chunks.length > 0) {
-      const content = chunks.map(c => c.content).join('');
-      try {
-        const pkg = JSON.parse(content);
-        const allDeps = { ...pkg.dependencies, ...pkg.devDependencies };
-        if (allDeps['react']) detected.push('React');
-        if (allDeps['next']) detected.push('Next.js');
-        if (allDeps['vue']) detected.push('Vue.js');
-        if (allDeps['svelte']) detected.push('Svelte');
-        if (allDeps['express']) detected.push('Express.js');
-        if (allDeps['fastify']) detected.push('Fastify');
-        if (allDeps['@nestjs/core']) detected.push('NestJS');
-        if (allDeps['@angular/core']) detected.push('Angular');
-        if (allDeps['vitest']) detected.push('Vitest (testing)');
-        if (allDeps['jest']) detected.push('Jest (testing)');
-        if (allDeps['typescript']) detected.push('TypeScript');
-        if (pkg.type === 'module') detected.push('ESM modules');
-      } catch {
-        // package.json might be chunked/incomplete
-      }
+  const pkg = readPackageJson(projectName, files);
+  if (pkg) {
+    const allDeps = { ...(pkg.dependencies as Record<string, string> | undefined), ...(pkg.devDependencies as Record<string, string> | undefined) };
+    if (allDeps['react']) {
+      const v = depVersion(pkg, 'react');
+      detected.push(v ? `React (${v})` : 'React');
     }
+    if (allDeps['next']) {
+      const v = depVersion(pkg, 'next');
+      detected.push(v ? `Next.js (${v})` : 'Next.js');
+    }
+    if (allDeps['vue']) detected.push('Vue.js');
+    if (allDeps['svelte']) detected.push('Svelte');
+    if (allDeps['express']) detected.push('Express.js');
+    if (allDeps['fastify']) detected.push('Fastify');
+    if (allDeps['@nestjs/core']) detected.push('NestJS');
+    if (allDeps['@angular/core']) detected.push('Angular');
+    if (allDeps['@prisma/client'] || fileSet.has('prisma/schema.prisma')) {
+      const v = depVersion(pkg, '@prisma/client') ?? depVersion(pkg, 'prisma');
+      detected.push(v ? `Prisma (${v})` : 'Prisma');
+    }
+    if (allDeps['tailwindcss']) {
+      const v = depVersion(pkg, 'tailwindcss');
+      detected.push(v ? `Tailwind CSS (${v})` : 'Tailwind CSS');
+    }
+    if (allDeps['turbo']) {
+      const v = depVersion(pkg, 'turbo');
+      detected.push(v ? `Turborepo (${v})` : 'Turborepo');
+    }
+    if (allDeps['nx'] || fileSet.has('nx.json')) {
+      const v = depVersion(pkg, 'nx');
+      detected.push(v ? `Nx (${v})` : 'Nx');
+    }
+    if (fileSet.has('components.json')) {
+      detected.push('shadcn/ui (components.json)');
+    }
+    if (allDeps['vitest']) detected.push('Vitest (testing)');
+    if (allDeps['jest']) detected.push('Jest (testing)');
+    if (allDeps['typescript']) detected.push('TypeScript');
+    if (pkg.type === 'module') detected.push('ESM modules');
+  }
+
+  if (fileSet.has('pnpm-lock.yaml')) detected.push('Package manager: pnpm (lockfile)');
+  else if (fileSet.has('yarn.lock')) detected.push('Package manager: Yarn (lockfile)');
+  else if (fileSet.has('package-lock.json')) detected.push('Package manager: npm (lockfile)');
+
+  if (fileSet.has('turbo.json') && !detected.some((d) => d.startsWith('Turborepo'))) {
+    detected.push('Turborepo (turbo.json)');
+  }
+  if (fileSet.has('nx.json') && !detected.some((d) => d.startsWith('Nx'))) {
+    detected.push('Nx (nx.json)');
+  }
+  if (fileSet.has('pnpm-workspace.yaml') || fileSet.has('lerna.json')) {
+    detected.push('Monorepo (workspace root)');
   }
 
   if (fileSet.has('requirements.txt') || fileSet.has('pyproject.toml')) {

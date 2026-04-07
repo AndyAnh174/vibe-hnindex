@@ -33,6 +33,14 @@ export const config = {
   searchAutoRoute: process.env.SEARCH_AUTO_ROUTE === 'true',
   /** When keyword mode returns no hits, run semantic once if Ollama+Qdrant are OK. */
   searchKeywordFallbackSemantic: process.env.SEARCH_KEYWORD_FALLBACK_SEMANTIC !== 'false',
+
+  /** Rerank top results after hybrid/semantic path scoring (HTTP and/or semantic reorder). */
+  searchRerankEnabled: process.env.SEARCH_RERANK !== 'false',
+  /** Max distinct files before rerank trim (then cut to `limit`). */
+  searchRerankPool: parseInt(process.env.SEARCH_RERANK_POOL || '50', 10),
+  /** POST JSON `{ query, documents }` → `{ scores: number[] }`. Same length as documents. */
+  rerankUrl: process.env.RERANK_URL?.trim() || '',
+  rerankTimeoutMs: parseInt(process.env.RERANK_TIMEOUT_MS || '15000', 10),
 } as const;
 
 export function getCollectionName(projectName: string): string {

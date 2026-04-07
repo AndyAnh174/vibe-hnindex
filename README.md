@@ -11,7 +11,7 @@
 [![MCP](https://img.shields.io/badge/MCP-compatible-6366f1?style=flat-square)](https://modelcontextprotocol.io/)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
 
-**Latest release: v0.5.0**
+**Latest release: v0.6.0**
 
 </div>
 
@@ -28,12 +28,27 @@
 | Step | Doc | Purpose |
 |------|-----|---------|
 | **1** | **[Getting started](docs/getting-started.md)** | Install Node, Ollama, Qdrant; paste MCP JSON; first chat commands |
-| **2** | **[Integrations](docs/integrations.md)** | Where to put the JSON — **including [Google Antigravity](docs/integrations.md#google-antigravity)** (`mcp_config.json`) |
+| **2** | **[Integrations](docs/integrations.md)** | Where to put the JSON — **including [Google Antigravity](docs/integrations.md#google-antigravity)** (`mcp_config.json`) — or use **[hnindex CLI](docs/getting-started.md#cli-installer-hnindex)** |
 | **3** | **[Tools reference](docs/tools-reference.md)** | What each tool does (`index_codebase`, `search`, …) |
 
 Everything else is optional: [Configuration](docs/configuration.md), [How it works](docs/how-it-works.md), [Troubleshooting](docs/troubleshooting.md).
 
 **Full index:** [docs/README.md](docs/README.md)
+
+---
+
+## CLI installer (`hnindex`)
+
+Optional — writes the MCP JSON for you (merge-safe, same `npx -y vibe-hnindex` block as in the docs):
+
+```bash
+npm install -g hnindex-cli
+hnindex init --mcp antigravity    # or: claude, claude-desktop, cursor, cursor-project, windsurf, vscode
+hnindex init --list               # show all targets and paths
+hnindex update                    # npm update -g hnindex-cli
+```
+
+See **[Getting started → CLI](docs/getting-started.md#cli-installer-hnindex)** and [Integrations → hnindex CLI](docs/integrations.md#hnindex-cli).
 
 ---
 
@@ -64,6 +79,22 @@ Everything else is optional: [Configuration](docs/configuration.md), [How it wor
 
 For **Qdrant Cloud**, add `QDRANT_API_KEY` and set `QDRANT_URL` to your HTTPS cluster URL — details in [Getting started](docs/getting-started.md).
 
+### Optional rerank (`RERANK_URL`)
+
+Semantic/hybrid search already uses **Ollama** (`OLLAMA_URL`, `OLLAMA_MODEL` e.g. `bge-m3:567m`) for query vectors and **Qdrant** for retrieval. After that, the server can **reorder** the top pool of hits:
+
+- **Without `RERANK_URL`:** reorder by **Qdrant semantic scores** (no extra network service). This is enough for most setups, including when you only run Ollama + Qdrant.
+- **With `RERANK_URL`:** POST JSON `{ "query", "documents" }` to your URL; response `{ "scores": number[] }` (same length as `documents`). Use a **small HTTP service** you host that wraps your reranker; Ollama does not expose this contract on `:11434` by default.
+
+**Ollama vs rerank:** pulling a reranker model in Ollama (e.g. `qllama/bge-reranker-v2-m3`) does **not** replace `RERANK_URL`—you still need an adapter service unless you only rely on the built-in Qdrant reorder. See [Configuration → Rerank](docs/configuration.md#optional-rerank).
+
+| Env | Role |
+|-----|------|
+| `SEARCH_RERANK` | `false` disables post-retrieval reorder entirely (default: enabled). |
+| `SEARCH_RERANK_POOL` | Max candidates considered before trim (default `50`). |
+| `RERANK_URL` | Full URL of your `{query, documents}` → `{scores}` API (optional). |
+| `RERANK_TIMEOUT_MS` | Timeout for that POST (default `15000`). |
+
 ### Google Antigravity
 
 Use the **same** `mcpServers` block as above, but save it in Antigravity’s MCP file:
@@ -83,7 +114,7 @@ Step-by-step: [Integrations → Google Antigravity](docs/integrations.md#google-
 
 | | |
 |--|--|
-| **Search** | Keyword (FTS5), semantic (vectors), hybrid (RRF fusion) |
+| **Search** | Keyword (FTS5), semantic (vectors), hybrid (RRF fusion); optional post-retrieval reorder (Qdrant scores, or `RERANK_URL`) |
 | **Storage** | SQLite on disk; Qdrant for vectors |
 | **Indexing** | Incremental (hash per file), many languages, `.hnindexignore` |
 | **Resilience** | If Qdrant/Ollama unavailable, keyword search can still work |

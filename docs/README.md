@@ -6,7 +6,7 @@ Use this page to pick **one** path, or jump to a topic.
 
 ## Recommended reading order
 
-1. **[Getting started](getting-started.md)** — prerequisites (Node, Ollama, Qdrant), copy-paste MCP JSON, first commands in chat.
+1. **[Getting started](getting-started.md)** — prerequisites (Node, Ollama, Qdrant), optional **[hnindex CLI](getting-started.md#cli-installer-hnindex)**, copy-paste MCP JSON, first commands in chat.
 2. **[Integrations](integrations.md)** — where to paste that JSON (**[Google Antigravity](integrations.md#google-antigravity)** uses `~/.gemini/antigravity/mcp_config.json`; Cursor, Claude, VS Code, etc. have their own paths).
 3. **[Tools reference](tools-reference.md)** — what each MCP tool does and example calls.
 

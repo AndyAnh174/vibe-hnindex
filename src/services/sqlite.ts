@@ -2,7 +2,15 @@ import Database from 'better-sqlite3';
 import fs from 'node:fs';
 import path from 'node:path';
 import { config } from '../config.js';
-import type { ChunkRecord, DependencyRecord, ExportRecord, ProjectInfo, SearchResult } from '../types.js';
+import type {
+  ChunkRecord,
+  DependencyRecord,
+  ExportRecord,
+  ProjectInfo,
+  SearchResult,
+  SymbolKind,
+  SymbolRecord,
+} from '../types.js';
 import { normalizeKeywordQuery } from './keyword-query.js';
 
 let db: Database.Database;
@@ -78,6 +86,22 @@ export function initDatabase(): void {
 
     CREATE INDEX IF NOT EXISTS idx_exports_file ON exports(project_name, file_path);
     CREATE INDEX IF NOT EXISTS idx_exports_name ON exports(project_name, export_name);
+
+    CREATE TABLE IF NOT EXISTS symbols (
+      id TEXT PRIMARY KEY,
+      project_name TEXT NOT NULL,
+      file_path TEXT NOT NULL,
+      name TEXT NOT NULL,
+      kind TEXT NOT NULL,
+      line_number INTEGER NOT NULL,
+      signature TEXT,
+      parent_name TEXT,
+      exported INTEGER NOT NULL DEFAULT 0,
+      language TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_symbols_project_name ON symbols(project_name, name);
+    CREATE INDEX IF NOT EXISTS idx_symbols_project_file ON symbols(project_name, file_path);
   `);
 
   // Cached project briefing (rule-based; invalidated when cache_key changes)
@@ -241,6 +265,7 @@ export function deleteProject(projectName: string): void {
   const d = getDb();
   d.prepare('DELETE FROM dependencies WHERE project_name = ?').run(projectName);
   d.prepare('DELETE FROM exports WHERE project_name = ?').run(projectName);
+  d.prepare('DELETE FROM symbols WHERE project_name = ?').run(projectName);
   d.prepare('DELETE FROM chunks WHERE project_name = ?').run(projectName);
   d.prepare('DELETE FROM project_briefings WHERE project_name = ?').run(projectName);
   d.prepare('DELETE FROM projects WHERE project_name = ?').run(projectName);
@@ -625,6 +650,131 @@ export function getExportsByFile(projectName: string, filePath: string): ExportR
     lineNumber: r.line_number,
     language: r.language,
   }));
+}
+
+// --- Symbols ---
+
+export function insertSymbols(records: SymbolRecord[]): void {
+  if (records.length === 0) return;
+
+  const insert = getDb().prepare(`
+    INSERT OR REPLACE INTO symbols (
+      id, project_name, file_path, name, kind, line_number, signature, parent_name, exported, language
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  const transaction = getDb().transaction((items: SymbolRecord[]) => {
+    for (const s of items) {
+      insert.run(
+        s.id,
+        s.projectName,
+        s.filePath,
+        s.name,
+        s.kind,
+        s.lineNumber,
+        s.signature,
+        s.parentName,
+        s.exported ? 1 : 0,
+        s.language
+      );
+    }
+  });
+
+  transaction(records);
+}
+
+export function deleteSymbolsForFile(projectName: string, filePath: string): void {
+  getDb().prepare('DELETE FROM symbols WHERE project_name = ? AND file_path = ?').run(projectName, filePath);
+}
+
+export function lookupSymbols(args: {
+  projectName: string;
+  name: string;
+  kind?: SymbolKind;
+  filePattern?: string;
+  limit?: number;
+}): SymbolRecord[] {
+  const limit = Math.min(args.limit ?? 50, 200);
+  const nameNorm = args.name.trim();
+  if (!nameNorm) return [];
+
+  let sql = `
+    SELECT id, project_name, file_path, name, kind, line_number, signature, parent_name, exported, language
+    FROM symbols
+    WHERE project_name = ? AND (
+      name = ? COLLATE NOCASE OR instr(lower(name), lower(?)) > 0
+    )
+  `;
+  const params: unknown[] = [args.projectName, nameNorm, nameNorm];
+
+  if (args.kind) {
+    sql += ` AND kind = ?`;
+    params.push(args.kind);
+  }
+  if (args.filePattern) {
+    sql += ` AND file_path GLOB ?`;
+    params.push(args.filePattern);
+  }
+
+  sql += ` ORDER BY CASE WHEN name = ? COLLATE NOCASE THEN 0 ELSE 1 END, file_path, line_number LIMIT ?`;
+  params.push(nameNorm, limit);
+
+  const rows = getDb().prepare(sql).all(...params) as Array<{
+    id: string;
+    project_name: string;
+    file_path: string;
+    name: string;
+    kind: string;
+    line_number: number;
+    signature: string | null;
+    parent_name: string | null;
+    exported: number;
+    language: string;
+  }>;
+
+  return rows.map((r) => ({
+    id: r.id,
+    projectName: r.project_name,
+    filePath: r.file_path,
+    name: r.name,
+    kind: r.kind as SymbolRecord['kind'],
+    lineNumber: r.line_number,
+    signature: r.signature,
+    parentName: r.parent_name,
+    exported: r.exported === 1,
+    language: r.language,
+  }));
+}
+
+export function searchSymbolsByName(
+  projectName: string,
+  nameQuery: string,
+  opts?: { filePattern?: string; limit?: number }
+): SymbolRecord[] {
+  const q = nameQuery.trim();
+  if (!q) return [];
+  return lookupSymbols({
+    projectName,
+    name: q,
+    filePattern: opts?.filePattern,
+    limit: opts?.limit ?? 80,
+  });
+}
+
+/** First chunk whose line range contains `lineNumber` (1-based). */
+export function findChunkIdForLine(
+  projectName: string,
+  filePath: string,
+  lineNumber: number
+): string | null {
+  const row = getDb().prepare(`
+    SELECT id FROM chunks
+    WHERE project_name = ? AND file_path = ?
+      AND start_line <= ? AND end_line >= ?
+    ORDER BY chunk_index
+    LIMIT 1
+  `).get(projectName, filePath, lineNumber, lineNumber) as { id: string } | undefined;
+  return row?.id ?? null;
 }
 
 export function getExportsByProject(projectName: string, limit = 50): ExportRecord[] {

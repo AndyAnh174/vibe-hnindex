@@ -52,6 +52,32 @@ docker run -d --name qdrant -p 6333:6333 -v qdrant_storage:/qdrant/storage qdran
 
 ---
 
+## CLI installer (hnindex)
+
+Install the helper globally (Windows, macOS, Linux — needs Node ≥ 20):
+
+```bash
+npm install -g hnindex-cli
+```
+
+Pick your editor and merge **vibe-hnindex** into the correct config file (creates folders if needed; does not remove other MCP servers):
+
+| Command | Writes to |
+|---------|-----------|
+| `hnindex init --mcp claude` | `.mcp.json` in the current directory (Claude Code) |
+| `hnindex init --mcp claude-desktop` | Claude Desktop user config (path varies by OS — see [Integrations](integrations.md#claude-desktop)) |
+| `hnindex init --mcp antigravity` | `~/.gemini/antigravity/mcp_config.json` |
+| `hnindex init --mcp cursor` | Cursor **global** MCP file (see [Integrations → Cursor](integrations.md#cursor)) |
+| `hnindex init --mcp cursor-project` | `.cursor/mcp.json` under `--cwd` (project-scoped) |
+| `hnindex init --mcp windsurf` | `~/.windsurf/mcp_config.json` |
+| `hnindex init --mcp vscode` | `.vscode/mcp.json` under `--cwd` (uses `servers` key for Copilot) |
+
+Useful flags: `--cwd <dir>` for project-based targets, `--ollama-url`, `--ollama-model`, `--qdrant-url`, `--qdrant-api-key` (Qdrant Cloud), `--dry-run` (print JSON only), `--output <file>` (override path). `hnindex update` runs `npm update -g hnindex-cli`.
+
+List all targets: `hnindex init --list`.
+
+---
+
 ## MCP configuration
 
 ### Self-hosted Qdrant (Docker / local)
