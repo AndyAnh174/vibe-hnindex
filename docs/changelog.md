@@ -1,5 +1,14 @@
 # Changelog (highlights)
 
+## v0.6.0
+
+- **Symbols table + indexing** — heuristic extraction (TS/JS/TSX/JSX, Python) on index/reindex/watch; SQLite `symbols` with lookup by name.
+- **`symbol_lookup` tool** — resolve symbols by name with optional kind / file pattern filters.
+- **`search` mode `symbol`** — find chunks via symbol name (explicit mode; `auto` does not route to symbol).
+- **Optional rerank** — `RERANK_URL` POST `{ query, documents }` → `{ scores }`; if unset or on failure, reorder pool by Qdrant semantic score when available. Env: `SEARCH_RERANK`, `SEARCH_RERANK_POOL`, `RERANK_TIMEOUT_MS`.
+- **`codebase_overview`** — richer detection: Prisma, Tailwind, shadcn (`components.json`), Turborepo/Nx, lockfile → package manager, monorepo hints.
+- **MCP / package** — version **0.6.0**.
+
 ## v0.4.0
 
 - **`search` — project race** — uses `getProjectWithRetry` so “project not found” right after `index_codebase` is rare.

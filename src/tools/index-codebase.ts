@@ -17,10 +17,13 @@ import {
   getAllProjectFiles,
   insertDependencies,
   insertExports,
+  insertSymbols,
   deleteFileDependencies,
   deleteFileExports,
+  deleteSymbolsForFile,
 } from '../services/sqlite.js';
 import { parseImports, parseExports, resolveImportPath } from '../services/dependency-parser.js';
+import { extractSymbols, toSymbolRecords } from '../services/symbol-extractor.js';
 import type { DependencyRecord, ExportRecord } from '../types.js';
 import {
   ensureCollection,
@@ -193,9 +196,10 @@ export async function indexCodebase(args: {
       if (existingHash !== fileHash) continue; // only parse files that were just indexed (hash now matches)
 
       try {
-        // Clear old deps/exports for this file
+        // Clear old deps/exports/symbols for this file
         deleteFileDependencies(args.project_name, file.relativePath);
         deleteFileExports(args.project_name, file.relativePath);
+        deleteSymbolsForFile(args.project_name, file.relativePath);
 
         // Parse imports
         const imports = parseImports(file.content, file.language);
@@ -229,6 +233,17 @@ export async function indexCodebase(args: {
         }));
         if (exportRecords.length > 0) {
           insertExports(exportRecords);
+        }
+
+        const parsedSymbols = extractSymbols(file.content, file.language);
+        const symbolRecords = toSymbolRecords(
+          args.project_name,
+          file.relativePath,
+          file.language,
+          parsedSymbols
+        );
+        if (symbolRecords.length > 0) {
+          insertSymbols(symbolRecords);
         }
 
         parsedDeps++;
