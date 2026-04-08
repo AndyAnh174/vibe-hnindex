@@ -33,6 +33,13 @@ export async function embed(texts: string[]): Promise<number[][]> {
     }
 
     const data = (await response.json()) as EmbedResponse;
+    for (const row of data.embeddings) {
+      if (row.length !== config.embeddingDimensions) {
+        throw new Error(
+          `Embedding returned invalid dimensions: expected ${config.embeddingDimensions}, got ${row.length}. Set EMBEDDING_DIMENSIONS to match Ollama output for "${config.embeddingModel}" (and re-index if you changed it).`
+        );
+      }
+    }
     results.push(...data.embeddings);
   }
 

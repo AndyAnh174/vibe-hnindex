@@ -43,6 +43,7 @@ Init options:
   --name <label>         Server key in JSON (default: vibe-hnindex)
   --ollama-url <url>     Default: http://localhost:11434
   --ollama-model <name> Default: bge-m3:567m
+  --embedding-dimensions <n>  Vector size from Ollama for this model (default: 1024). Set e.g. 768 for nomic-embed-text-v2-moe.
   --qdrant-url <url>     Default: http://localhost:6333
   --qdrant-api-key <k>   Optional (Qdrant Cloud)
   --cwd <dir>            Working directory for project-scoped files (default: .)
@@ -100,6 +101,7 @@ function main(): void {
         name: { type: 'string' },
         'ollama-url': { type: 'string' },
         'ollama-model': { type: 'string' },
+        'embedding-dimensions': { type: 'string' },
         'qdrant-url': { type: 'string' },
         'qdrant-api-key': { type: 'string' },
         cwd: { type: 'string' },
@@ -132,6 +134,19 @@ function main(): void {
   const cwdOpt = optStr(values.cwd);
   const cwd = cwdOpt ? join(process.cwd(), cwdOpt) : process.cwd();
 
+  const embDimRaw = optStr(values['embedding-dimensions'])?.trim();
+  let embeddingDimensions: number | undefined;
+  if (embDimRaw !== undefined) {
+    const n = parseInt(embDimRaw, 10);
+    if (!Number.isFinite(n) || n < 1 || n > 16384) {
+      console.error(
+        'Invalid --embedding-dimensions: expected integer 1–16384 (e.g. 768 for nomic-embed-text-v2-moe)'
+      );
+      process.exit(1);
+    }
+    embeddingDimensions = n;
+  }
+
   try {
     const dryRun = values['dry-run'] === true;
     const result = runInit({
@@ -142,6 +157,7 @@ function main(): void {
       ollamaModel: optStr(values['ollama-model'])?.trim() || 'bge-m3:567m',
       qdrantUrl: optStr(values['qdrant-url'])?.trim() || 'http://localhost:6333',
       qdrantApiKey: optStr(values['qdrant-api-key'])?.trim(),
+      embeddingDimensions,
       dryRun,
       output: optStr(values.output)?.trim(),
     });

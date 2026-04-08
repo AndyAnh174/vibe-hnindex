@@ -15,6 +15,8 @@ export function defaultEnv(options: {
   ollamaModel: string;
   qdrantUrl: string;
   qdrantApiKey?: string;
+  /** When set, written as EMBEDDING_DIMENSIONS for non–1024-dim models (e.g. 768). */
+  embeddingDimensions?: number;
 }): Record<string, string> {
   const env: Record<string, string> = {
     OLLAMA_URL: options.ollamaUrl,
@@ -23,6 +25,9 @@ export function defaultEnv(options: {
   };
   if (options.qdrantApiKey) {
     env.QDRANT_API_KEY = options.qdrantApiKey;
+  }
+  if (options.embeddingDimensions != null && options.embeddingDimensions > 0) {
+    env.EMBEDDING_DIMENSIONS = String(options.embeddingDimensions);
   }
   return env;
 }

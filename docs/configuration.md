@@ -6,6 +6,7 @@
 |----------|---------|-------------|
 | `OLLAMA_URL` | `http://localhost:11434` | Ollama server URL |
 | `OLLAMA_MODEL` | `bge-m3:567m` | Embedding model name |
+| `EMBEDDING_DIMENSIONS` | `1024` | Vector size returned by `OLLAMA_MODEL` (must match Ollama output). Use e.g. `768` for [nomic-embed-text-v2-moe](https://ollama.com/library/nomic-embed-text-v2-moe). With **[hnindex CLI](getting-started.md#cli-installer-hnindex)**, pass `--embedding-dimensions <n>` on `hnindex init`; re-running `init` **merges** env and keeps a previous `EMBEDDING_DIMENSIONS` if you omit the flag. **After changing:** delete or recreate the project’s Qdrant collection and **re-index** (existing collections are fixed at creation size). |
 | `STORAGE_PATH` | `~/.vibe-hnindex` | SQLite database directory |
 | `QDRANT_URL` | `http://localhost:6333` | Qdrant REST URL. For **Qdrant Cloud**, use the full HTTPS URL from the cluster page (often includes `:6333`). |
 | `QDRANT_API_KEY` | *(unset)* | **Required** for Qdrant Cloud and any cluster that checks the `api-key` header. Omit for local Docker with no auth. |

@@ -1,11 +1,25 @@
 import path from 'node:path';
 import os from 'node:os';
 
+function parseEmbeddingDimensions(): number {
+  const raw = process.env.EMBEDDING_DIMENSIONS?.trim();
+  if (raw === undefined || raw === '') return 1024;
+  const n = parseInt(raw, 10);
+  if (!Number.isFinite(n) || n < 1 || n > 16384) {
+    console.warn(
+      `[config] Invalid EMBEDDING_DIMENSIONS "${raw}" — must be 1–16384; using 1024`
+    );
+    return 1024;
+  }
+  return n;
+}
+
 export const config = {
   // Ollama
   ollamaUrl: process.env.OLLAMA_URL || 'http://localhost:11434',
   embeddingModel: process.env.OLLAMA_MODEL || 'bge-m3:567m',
-  embeddingDimensions: 1024,
+  /** Must match the vector size returned by `OLLAMA_MODEL` (Qdrant collection size). Change only with a new model + re-index / new Qdrant collection. */
+  embeddingDimensions: parseEmbeddingDimensions(),
 
   // Storage (SQLite)
   storagePath: process.env.STORAGE_PATH || path.join(os.homedir(), '.vibe-hnindex'),

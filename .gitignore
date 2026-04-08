@@ -11,3 +11,6 @@ mcp-publisher.tar.gz
 .mcp.json
 .vscode/mcp.json
 feature/
+changelog-template/
+dev-tool/
+.cursor/

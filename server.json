@@ -6,12 +6,12 @@
     "url": "https://github.com/AndyAnh174/vibe-hnindex",
     "source": "github"
   },
-  "version": "0.6.0",
+  "version": "0.6.1",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "vibe-hnindex",
-      "version": "0.6.0",
+      "version": "0.6.1",
       "transport": {
         "type": "stdio"
       },
@@ -29,6 +29,13 @@
           "format": "string",
           "isSecret": false,
           "name": "OLLAMA_MODEL"
+        },
+        {
+          "description": "Embedding vector size — must match Ollama output for OLLAMA_MODEL (default: 1024). Set via hnindex init --embedding-dimensions or manually.",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "EMBEDDING_DIMENSIONS"
         },
         {
           "description": "Qdrant vector database URL",

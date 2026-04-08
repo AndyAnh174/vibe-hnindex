@@ -72,7 +72,7 @@ Pick your editor and merge **vibe-hnindex** into the correct config file (create
 | `hnindex init --mcp windsurf` | `~/.windsurf/mcp_config.json` |
 | `hnindex init --mcp vscode` | `.vscode/mcp.json` under `--cwd` (uses `servers` key for Copilot) |
 
-Useful flags: `--cwd <dir>` for project-based targets, `--ollama-url`, `--ollama-model`, `--qdrant-url`, `--qdrant-api-key` (Qdrant Cloud), `--dry-run` (print JSON only), `--output <file>` (override path). `hnindex update` runs `npm update -g hnindex-cli`.
+Useful flags: `--cwd <dir>` for project-based targets, `--ollama-url`, `--ollama-model`, `--embedding-dimensions` (must match Ollama vector length for that model), `--qdrant-url`, `--qdrant-api-key` (Qdrant Cloud), `--dry-run` (print JSON only), `--output <file>` (override path). Re-running `init` merges env into the existing server entry (keeps prior `EMBEDDING_DIMENSIONS` if you omit the flag). `hnindex update` runs `npm update -g hnindex-cli`.
 
 List all targets: `hnindex init --list`.
 

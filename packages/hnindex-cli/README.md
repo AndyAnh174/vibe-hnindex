@@ -73,6 +73,7 @@ hnindex init --list
 | `--name <label>` | JSON key for the server (default: `vibe-hnindex`). |
 | `--ollama-url <url>` | Default: `http://localhost:11434` |
 | `--ollama-model <name>` | Default: `bge-m3:567m` |
+| `--embedding-dimensions <n>` | Writes `EMBEDDING_DIMENSIONS` for vibe-hnindex (must match Ollama output for that model, e.g. `768`). Re-running `init` **merges** env: if you omit this flag, a previous `EMBEDDING_DIMENSIONS` in the MCP file is kept. |
 | `--qdrant-url <url>` | Default: `http://localhost:6333` |
 | `--qdrant-api-key <key>` | Optional; use with Qdrant Cloud. |
 | `--cwd <dir>` | Base directory for project-scoped files (default: current directory). |

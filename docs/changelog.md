@@ -1,5 +1,10 @@
 # Changelog (highlights)
 
+## v0.6.1 (vibe-hnindex) / hnindex-cli v0.6.2
+
+- **`EMBEDDING_DIMENSIONS`** — documented in MCP `server.json`; `hnindex init` **merges** with existing MCP `env` so `EMBEDDING_DIMENSIONS` (and other keys) persist when you re-run init without `--embedding-dimensions`.
+- **Startup log** — MCP server stderr shows **v0.6.1**.
+
 ## v0.6.0
 
 - **`hnindex-cli`** (npm: `hnindex-cli`) — global CLI `hnindex`: `init --mcp <claude|claude-desktop|antigravity|cursor|cursor-project|windsurf|vscode>`, `update`, `version`; merges `vibe-hnindex` into the correct MCP JSON path on Windows, macOS, and Linux. Package: `packages/hnindex-cli`.
