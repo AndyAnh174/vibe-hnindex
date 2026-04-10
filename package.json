@@ -1,6 +1,6 @@
 {
   "name": "vibe-hnindex",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "workspaces": [
     "packages/*"
   ],
@@ -17,7 +17,9 @@
     "start": "node dist/index.js",
     "prepack": "tsc || true",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "bench:perf": "node scripts/perf-compare.mjs",
+    "bench:mcp": "node scripts/mcp-search-benchmark.mjs"
   },
   "dependencies": {
     "ajv": "^8.17.1",

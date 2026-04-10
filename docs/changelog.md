@@ -1,5 +1,12 @@
 # Changelog (highlights)
 
+## v0.7.0 (vibe-hnindex) / hnindex-cli v0.7.0
+
+- **`server_diagnostics`** — one call checks Ollama, Qdrant, config summary, optional embedding probe; optional **`project_name`** compares SQLite chunk count vs Qdrant collection points (`match` / `mismatch` / `unknown`).
+- **`agent_rules_stub`** — short markdown for CLAUDE.md / AGENTS.md (optional **`format`**: `agents` | `claude` | `generic`): path, last index time, top language + stats, `package.json` script hints (`npm test`, `npm run build`, `npm run lint` when present), rule-based bullets — not a full `project_briefing`.
+- **Git index freshness** — SQLite `projects.indexed_git_head` stores `git rev-parse HEAD` after successful `index_codebase`, `index_file`, and watch reindex; **`onboarding_prompt`** adds **Index freshness** when current HEAD differs from stored head; **`project_briefing` cache key** includes git head so briefings refresh after re-index.
+- **Versions** — MCP `server.json`, `.claude-plugin` plugin + marketplace metadata, root npm package, **`hnindex-cli`** npm package, and startup log **v0.7.0**.
+
 ## v0.6.1 (vibe-hnindex) / hnindex-cli v0.6.2
 
 - **`EMBEDDING_DIMENSIONS`** — documented in MCP `server.json`; `hnindex init` **merges** with existing MCP `env` so `EMBEDDING_DIMENSIONS` (and other keys) persist when you re-run init without `--embedding-dimensions`.

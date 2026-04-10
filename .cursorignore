@@ -1,0 +1,12 @@
+﻿# Cursor index: exclude build deps and lockfile
+node_modules/
+dist/
+coverage/
+.next/
+build/
+out/
+.nuxt/
+**/.cache/
+**/coverage/
+**/node_modules/
+package-lock.json

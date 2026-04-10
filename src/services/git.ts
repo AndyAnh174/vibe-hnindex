@@ -22,6 +22,17 @@ export async function isGitRepo(dirPath: string): Promise<boolean> {
   }
 }
 
+/** Current `git rev-parse HEAD` at `dirPath`, or null if not a repo or git fails. */
+export async function getGitHead(dirPath: string): Promise<string | null> {
+  try {
+    const out = await runGit(dirPath, ['rev-parse', 'HEAD']);
+    const h = out.trim().split(/\r?\n/)[0]?.trim();
+    return h && /^[0-9a-f]{7,40}$/i.test(h) ? h : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function getRecentCommits(
   dirPath: string,
   days: number,

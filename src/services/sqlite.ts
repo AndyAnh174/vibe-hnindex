@@ -148,7 +148,16 @@ export function initDatabase(): void {
     END;
   `);
 
+  migrateProjectsIndexedGitHead(db);
+
   console.error('[sqlite] Database initialized at', config.sqlitePath);
+}
+
+function migrateProjectsIndexedGitHead(db: Database.Database): void {
+  const cols = db.prepare(`PRAGMA table_info(projects)`).all() as Array<{ name: string }>;
+  if (!cols.some((c) => c.name === 'indexed_git_head')) {
+    db.exec(`ALTER TABLE projects ADD COLUMN indexed_git_head TEXT`);
+  }
 }
 
 // --- Projects ---
@@ -170,9 +179,15 @@ export function updateProjectStats(projectName: string, fileCount: number, chunk
   `).run(fileCount, chunkCount, new Date().toISOString(), projectName);
 }
 
+export function setProjectIndexedGitHead(projectName: string, head: string | null): void {
+  getDb().prepare(`
+    UPDATE projects SET indexed_git_head = ? WHERE project_name = ?
+  `).run(head, projectName);
+}
+
 export function listProjects(): ProjectInfo[] {
   const rows = getDb().prepare(`
-    SELECT project_name, root_path, file_count, chunk_count, last_indexed_at
+    SELECT project_name, root_path, file_count, chunk_count, last_indexed_at, indexed_git_head
     FROM projects ORDER BY last_indexed_at DESC
   `).all() as Array<{
     project_name: string;
@@ -180,6 +195,7 @@ export function listProjects(): ProjectInfo[] {
     file_count: number;
     chunk_count: number;
     last_indexed_at: string;
+    indexed_git_head: string | null;
   }>;
 
   return rows.map(r => ({
@@ -188,12 +204,13 @@ export function listProjects(): ProjectInfo[] {
     fileCount: r.file_count,
     chunkCount: r.chunk_count,
     lastIndexedAt: r.last_indexed_at,
+    indexedGitHead: r.indexed_git_head ?? null,
   }));
 }
 
 export function getProject(projectName: string): ProjectInfo | null {
   const row = getDb().prepare(`
-    SELECT project_name, root_path, file_count, chunk_count, last_indexed_at
+    SELECT project_name, root_path, file_count, chunk_count, last_indexed_at, indexed_git_head
     FROM projects WHERE project_name = ?
   `).get(projectName) as {
     project_name: string;
@@ -201,6 +218,7 @@ export function getProject(projectName: string): ProjectInfo | null {
     file_count: number;
     chunk_count: number;
     last_indexed_at: string;
+    indexed_git_head: string | null;
   } | undefined;
 
   if (!row) return null;
@@ -210,6 +228,7 @@ export function getProject(projectName: string): ProjectInfo | null {
     fileCount: row.file_count,
     chunkCount: row.chunk_count,
     lastIndexedAt: row.last_indexed_at,
+    indexedGitHead: row.indexed_git_head ?? null,
   };
 }
 

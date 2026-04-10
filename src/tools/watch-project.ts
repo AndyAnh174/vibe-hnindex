@@ -12,6 +12,7 @@ import {
   deleteFileChunks,
   getExistingFileHash,
   updateProjectStats,
+  setProjectIndexedGitHead,
   getProjectFileCount,
   getProjectChunkCount,
   getAllProjectFiles,
@@ -31,6 +32,7 @@ import {
 } from '../services/qdrant.js';
 import { healthCheck as ollamaHealthCheck } from '../services/embeddings.js';
 import { isIgnored, loadHnindexIgnore } from '../services/hnindex-ignore.js';
+import { getGitHead } from '../services/git.js';
 
 // Track active watchers per project
 const activeWatchers = new Map<string, { watcher: fs.FSWatcher; count: number }>();
@@ -184,6 +186,7 @@ async function reindexFile(
   const fileCount = getProjectFileCount(projectName);
   const chunkCount = getProjectChunkCount(projectName);
   updateProjectStats(projectName, fileCount, chunkCount);
+  setProjectIndexedGitHead(projectName, await getGitHead(rootPath));
 
   return relativePath;
 }

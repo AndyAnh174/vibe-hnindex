@@ -12,6 +12,7 @@ import {
   deleteFileChunks,
   getExistingFileHash,
   updateProjectStats,
+  setProjectIndexedGitHead,
   getProjectFileCount,
   getProjectChunkCount,
   getAllProjectFiles,
@@ -22,6 +23,7 @@ import {
   deleteFileExports,
   deleteSymbolsForFile,
 } from '../services/sqlite.js';
+import { getGitHead } from '../services/git.js';
 import { parseImports, parseExports, resolveImportPath } from '../services/dependency-parser.js';
 import { extractSymbols, toSymbolRecords } from '../services/symbol-extractor.js';
 import type { DependencyRecord, ExportRecord } from '../types.js';
@@ -259,6 +261,7 @@ export async function indexCodebase(args: {
   const finalFileCount = getProjectFileCount(args.project_name);
   const finalChunkCount = getProjectChunkCount(args.project_name);
   updateProjectStats(args.project_name, finalFileCount, finalChunkCount);
+  setProjectIndexedGitHead(args.project_name, await getGitHead(rootPath));
 
   let ready = true;
   let qdrantVectors: number | undefined;

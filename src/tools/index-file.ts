@@ -13,6 +13,7 @@ import {
   deleteFileChunks,
   getExistingFileHash,
   updateProjectStats,
+  setProjectIndexedGitHead,
   getProjectFileCount,
   getProjectChunkCount,
   getAllProjectFiles,
@@ -33,6 +34,7 @@ import {
   healthCheck as qdrantHealthCheck,
 } from '../services/qdrant.js';
 import { isIgnored, loadHnindexIgnore } from '../services/hnindex-ignore.js';
+import { getGitHead } from '../services/git.js';
 
 export async function indexFile(args: {
   file_path: string;
@@ -207,6 +209,7 @@ export async function indexFile(args: {
   const fileCount = getProjectFileCount(args.project_name);
   const chunkCount = getProjectChunkCount(args.project_name);
   updateProjectStats(args.project_name, fileCount, chunkCount);
+  setProjectIndexedGitHead(args.project_name, await getGitHead(resolvedRoot));
 
   const parts = [
     `Indexed file "${relativePath}" in project "${args.project_name}"`,
