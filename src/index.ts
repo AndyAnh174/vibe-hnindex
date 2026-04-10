@@ -20,13 +20,15 @@ import { smartContextTool } from './tools/smart-context.js';
 import { projectBriefingTool } from './tools/project-briefing.js';
 import { onboardingPromptTool } from './tools/onboarding-prompt.js';
 import { symbolLookupTool } from './tools/symbol-lookup.js';
+import { serverDiagnosticsTool } from './tools/server-diagnostics.js';
+import { agentRulesStubTool } from './tools/agent-rules-stub.js';
 
 // Initialize database on startup
 initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.6.1',
+  version: '0.7.0',
 });
 
 // --- Resource: knowledge://projects ---
@@ -71,7 +73,7 @@ server.tool(
   {
     path: z.string().describe('Absolute path to the codebase directory'),
     project_name: z.string().describe('Unique name for this project'),
-    watch: z.boolean().optional().default(false).describe('After a successful index, start watching the project for file changes (same behavior as watch_project)'),
+    watch: z.boolean().optional().default(true).describe('After a successful index, start watching the project for file changes (same behavior as watch_project); default on'),
   },
   async (args) => indexCodebase(args),
 );
@@ -123,6 +125,27 @@ server.tool(
   'List all indexed projects with their metadata including file count, chunk count, and last indexed time.',
   {},
   async () => listProjectsTool(),
+);
+
+// --- Tool: server_diagnostics ---
+server.tool(
+  'server_diagnostics',
+  'Health check: Ollama, Qdrant, embedding probe, and config summary. Optionally pass project_name to compare SQLite chunk count with Qdrant point count.',
+  {
+    project_name: z.string().optional().describe('If set, compare indexed chunks vs Qdrant vectors for this project'),
+  },
+  async (args) => serverDiagnosticsTool(args),
+);
+
+// --- Tool: agent_rules_stub ---
+server.tool(
+  'agent_rules_stub',
+  'Short markdown stub for CLAUDE.md / AGENTS.md: project path, index stats, optional package.json script hints (test/build/lint), rule-based bullets — not a full project_briefing.',
+  {
+    project_name: z.string().describe('Project name'),
+    format: z.enum(['agents', 'claude', 'generic']).optional().describe('Heading style'),
+  },
+  async (args) => agentRulesStubTool(args),
 );
 
 // --- Tool: delete_project ---
@@ -298,7 +321,7 @@ server.tool(
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started (v0.6.1)');
+  console.error('[vibe-hnindex] Server started (v0.7.0)');
 }
 
 main().catch((error) => {

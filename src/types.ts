@@ -31,6 +31,8 @@ export interface ProjectInfo {
   fileCount: number;
   chunkCount: number;
   lastIndexedAt: string;
+  /** Git `HEAD` at last successful index (full or incremental); null if not a git repo or unknown. */
+  indexedGitHead: string | null;
 }
 
 export interface FileEntry {

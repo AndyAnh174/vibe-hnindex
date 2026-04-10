@@ -14,7 +14,8 @@ import { buildDirTree, detectEntryPoints, detectFrameworks } from './codebase-ov
 const MAX_READ = 256 * 1024;
 
 export function buildBriefingCacheKey(project: ProjectInfo): string {
-  return `${project.fileCount}|${project.chunkCount}|${project.lastIndexedAt}`;
+  const head = project.indexedGitHead ?? '';
+  return `${project.fileCount}|${project.chunkCount}|${project.lastIndexedAt}|${head}`;
 }
 
 function readTextFileIfExists(absPath: string): string | null {

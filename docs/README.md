@@ -22,7 +22,7 @@ Use this page to pick **one** path, or jump to a topic.
 | [Integrations](integrations.md) | Config file paths per editor / assistant |
 | [Configuration](configuration.md) | Environment variables, `.hnindexignore` |
 | [Tools reference](tools-reference.md) | MCP tools (`index_codebase`, `search`, …) |
-| [How it works](how-it-works.md) | Pipeline, hybrid RRF, where data lives |
+| [How it works](how-it-works.md) | Indexing pipeline, hybrid RRF, search pipeline, where data lives |
 | [Changelog](changelog.md) | What changed per release |
 | [Development](development.md) | Clone repo, build, layout |
 | [Troubleshooting](troubleshooting.md) | Errors, degraded mode, **Windows install issues** |

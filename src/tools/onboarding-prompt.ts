@@ -1,4 +1,5 @@
 import { getProject } from '../services/sqlite.js';
+import { getGitHead } from '../services/git.js';
 import { getOrBuildBriefingMarkdown } from './project-briefing.js';
 import { formatProjectStatsSection } from './project-stats.js';
 import { formatRecentChangesSection } from './recent-changes.js';
@@ -35,11 +36,27 @@ export async function onboardingPromptTool(args: {
   const parts: string[] = [
     `# Onboarding: ${args.project_name}`,
     '',
-    briefing,
-    '',
-    '## Stack & stats',
-    statsPart,
   ];
+
+  const currentHead = await getGitHead(project.rootPath);
+  const indexedHead = project.indexedGitHead;
+  if (
+    currentHead &&
+    indexedHead &&
+    currentHead !== indexedHead
+  ) {
+    parts.push('## Index freshness');
+    parts.push('');
+    parts.push(
+      `The index was built at git commit \`${indexedHead.slice(0, 7)}\`, but the repository HEAD is now \`${currentHead.slice(0, 7)}\`. Run \`index_codebase\` again after pulling or merging so search matches the current tree.`,
+    );
+    parts.push('');
+  }
+
+  parts.push(briefing);
+  parts.push('');
+  parts.push('## Stack & stats');
+  parts.push(statsPart);
 
   if (includeRecent && recentPart) {
     parts.push('');
