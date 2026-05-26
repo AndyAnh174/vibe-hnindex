@@ -12,7 +12,7 @@
 [![MCP](https://img.shields.io/badge/MCP-compatible-6366f1?style=flat-square)](https://modelcontextprotocol.io/)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
 
-**MCP server (`vibe-hnindex`) latest: v0.7.0** · [`hnindex-cli`](https://www.npmjs.com/package/hnindex-cli) **v0.7.0+** (CLI-only patches). Shields badges read npm in real time; GitHub Releases only update when you publish a new tag/release.
+**MCP server (`vibe-hnindex`) latest: v0.7.2** · [`hnindex-cli`](https://www.npmjs.com/package/hnindex-cli) **v0.7.0+** (CLI-only patches). Shields badges read npm in real time; GitHub Releases only update when you publish a new tag/release.
 
 </div>
 
@@ -95,6 +95,18 @@ Semantic/hybrid search already uses **Ollama** (`OLLAMA_URL`, `OLLAMA_MODEL` e.g
 | `SEARCH_RERANK_POOL` | Max candidates considered before trim (default `50`). |
 | `RERANK_URL` | Full URL of your `{query, documents}` → `{scores}` API (optional). |
 | `RERANK_TIMEOUT_MS` | Timeout for that POST (default `15000`). |
+
+### Timeouts
+
+To prevent hanging when Ollama or Qdrant are unresponsive, vibe-hnindex applies timeouts on all external calls. You can tune these via environment variables:
+
+| Env | Default | Controls |
+|-----|---------|----------|
+| `OLLAMA_TIMEOUT_MS` | `30000` (30s) | Max wait for Ollama `/api/embed` and `/api/tags` calls |
+| `QDRANT_TIMEOUT_MS` | `15000` (15s) | Max wait for Qdrant API calls (search, upsert, etc.) |
+| `SEARCH_TIMEOUT_MS` | `60000` (60s) | Overall timeout for the entire search operation |
+
+Set any of these to a higher value if you have a slow machine or large dataset. Set to `0` to disable the timeout for that layer (not recommended).
 
 ### Google Antigravity
 
