@@ -1,0 +1,114 @@
+{
+  "nav": {
+    "changelog": "Changelog",
+    "github": "GitHub",
+    "npm": "npm"
+  },
+  "hero": {
+    "badge": "v0.7.2 · Open Source · MIT",
+    "title": "Index Once,",
+    "titleHighlight": "Search Every Session",
+    "subtitle": "A local MCP server that indexes your codebase and lets any AI assistant search it with paths, line ranges, and semantic understanding. Your code stays on your machine.",
+    "getStarted": "Get Started",
+    "viewOnGithub": "View on GitHub",
+    "terminal": "npx -y vibe-hnindex"
+  },
+  "stats": {
+    "languages": "Languages",
+    "integrations": "IDE Integrations",
+    "tools": "MCP Tools"
+  },
+  "features": {
+    "title": "Everything You Need to Index & Search",
+    "subtitle": "From chunking to embeddings to hybrid search — all in one MCP server.",
+    "items": [
+      {
+        "title": "Hybrid Search",
+        "desc": "Combine keyword (FTS5 + BM25) with semantic search (Qdrant embeddings) via Reciprocal Rank Fusion for the best results."
+      },
+      {
+        "title": "Local-First Storage",
+        "desc": "SQLite for metadata + FTS, Qdrant for vectors. All data stays on your machine — no cloud required."
+      },
+      {
+        "title": "Incremental Indexing",
+        "desc": "SHA-256 file hashing skips unchanged files. Index once, re-index only what changed."
+      },
+      {
+        "title": "AI-Native",
+        "desc": "Built for Model Context Protocol. Works with Claude, Cursor, Windsurf, Antigravity, and more."
+      },
+      {
+        "title": "40+ Languages",
+        "desc": "TypeScript, Python, Go, Rust, Java, C#, and more. Dependencies, symbols, exports — all indexed."
+      },
+      {
+        "title": "Smart Context",
+        "desc": "Auto-detect frameworks, package managers, monorepos. Generate agent rules and project briefings."
+      }
+    ]
+  },
+  "install": {
+    "title": "Get Started in 2 Minutes",
+    "subtitle": "Install dependencies, paste config, index your project, and search."
+  },
+  "integrations": {
+    "title": "Works With Your Favorite Tools"
+  },
+  "architecture": {
+    "title": "How It Works",
+    "yourCodebase": "Your Codebase",
+    "mcpServer": "vibe-hnindex",
+    "mcpSubtitle": "MCP Server",
+    "ollama": "Ollama",
+    "ollamaModel": "bge-m3",
+    "sqlite": "SQLite",
+    "sqliteSubtitle": "FTS5 · BM25",
+    "keyword": "Keyword",
+    "qdrant": "Qdrant",
+    "qdrantSubtitle": "1024-dim Vectors",
+    "semantic": "Semantic",
+    "hybrid": "Hybrid RRF Search",
+    "hybridSubtitle": "Reciprocal Rank Fusion"
+  },
+  "faq": {
+    "title": "FAQ",
+    "items": [
+      {
+        "q": "Do I need an API key?",
+        "a": "No. vibe-hnindex runs entirely on your machine. Ollama provides local embeddings, and Qdrant stores vectors locally. No cloud API keys needed."
+      },
+      {
+        "q": "Can I use it without Qdrant?",
+        "a": "Yes! Without Qdrant, vibe-hnindex falls back to keyword-only search (SQLite FTS5). Semantic and hybrid modes require Qdrant."
+      },
+      {
+        "q": "How is this different from Cursor's codebase indexing?",
+        "a": "vibe-hnindex is IDE-agnostic — it works with any MCP-compatible assistant (Claude, Cursor, Windsurf, Antigravity, VS Code). You index once and search from any tool."
+      },
+      {
+        "q": "Does it work on Windows?",
+        "a": "Yes! vibe-hnindex supports Windows, macOS, and Linux. On Windows, Node 20 or 22 LTS is recommended to avoid C++ compiler issues."
+      }
+    ]
+  },
+  "cta": {
+    "title": "Ready to Supercharge Your AI Coding?",
+    "subtitle": "Install vibe-hnindex and give your AI assistant deep knowledge of your entire codebase.",
+    "button": "npm install vibe-hnindex"
+  },
+  "changelog": {
+    "title": "Changelog",
+    "subtitle": "All notable changes to vibe-hnindex. Stay up to date with the latest features and fixes.",
+    "notFound": "No changelog entries yet.",
+    "viewAllReleases": "View all releases on",
+    "githubReleases": "GitHub Releases",
+    "latest": "Latest"
+  },
+  "footer": {
+    "builtBy": "Built by"
+  },
+  "common": {
+    "languageSwitcher": "Language"
+  }
+}

@@ -1,0 +1,114 @@
+{
+  "nav": {
+    "changelog": "Nhật ký thay đổi",
+    "github": "GitHub",
+    "npm": "npm"
+  },
+  "hero": {
+    "badge": "v0.7.2 · Mã nguồn mở · MIT",
+    "title": "Index Một Lần,",
+    "titleHighlight": "Tìm Kiếm Mọi Phiên",
+    "subtitle": "MCP server cục bộ index codebase của bạn và cho phép mọi trợ lý AI tìm kiếm với đường dẫn, phạm vi dòng, và hiểu ngữ nghĩa. Code của bạn ở trên máy bạn.",
+    "getStarted": "Bắt Đầu",
+    "viewOnGithub": "Xem trên GitHub",
+    "terminal": "npx -y vibe-hnindex"
+  },
+  "stats": {
+    "languages": "Ngôn ngữ",
+    "integrations": "Tích hợp IDE",
+    "tools": "Công cụ MCP"
+  },
+  "features": {
+    "title": "Mọi Thứ Bạn Cần Để Index & Tìm Kiếm",
+    "subtitle": "Từ chunking đến embeddings đến hybrid search — tất cả trong một MCP server.",
+    "items": [
+      {
+        "title": "Tìm Kiếm Hybrid",
+        "desc": "Kết hợp keyword (FTS5 + BM25) với tìm kiếm ngữ nghĩa (Qdrant embeddings) qua Reciprocal Rank Fusion cho kết quả tốt nhất."
+      },
+      {
+        "title": "Lưu Trữ Cục Bộ",
+        "desc": "SQLite cho metadata + FTS, Qdrant cho vectors. Tất cả dữ liệu nằm trên máy bạn — không cần đám mây."
+      },
+      {
+        "title": "Index Tăng Dần",
+        "desc": "SHA-256 file hashing bỏ qua các file không thay đổi. Index một lần, re-index chỉ những gì đã thay đổi."
+      },
+      {
+        "title": "AI-Native",
+        "desc": "Xây dựng cho Model Context Protocol. Hoạt động với Claude, Cursor, Windsurf, Antigravity, và hơn thế nữa."
+      },
+      {
+        "title": "Hơn 40 Ngôn Ngữ",
+        "desc": "TypeScript, Python, Go, Rust, Java, C#, và hơn thế nữa. Dependencies, symbols, exports — tất cả được index."
+      },
+      {
+        "title": "Ngữ Cảnh Thông Minh",
+        "desc": "Tự động phát hiện frameworks, package managers, monorepos. Tạo agent rules và project briefings."
+      }
+    ]
+  },
+  "install": {
+    "title": "Bắt Đầu Trong 2 Phút",
+    "subtitle": "Cài dependencies, dán config, index dự án, và tìm kiếm."
+  },
+  "integrations": {
+    "title": "Hoạt Động Với Công Cụ Yêu Thích Của Bạn"
+  },
+  "architecture": {
+    "title": "Cách Hoạt Động",
+    "yourCodebase": "Codebase Của Bạn",
+    "mcpServer": "vibe-hnindex",
+    "mcpSubtitle": "MCP Server",
+    "ollama": "Ollama",
+    "ollamaModel": "bge-m3",
+    "sqlite": "SQLite",
+    "sqliteSubtitle": "FTS5 · BM25",
+    "keyword": "Từ khóa",
+    "qdrant": "Qdrant",
+    "qdrantSubtitle": "1024-dim Vectors",
+    "semantic": "Ngữ nghĩa",
+    "hybrid": "Tìm Kiếm Hybrid RRF",
+    "hybridSubtitle": "Reciprocal Rank Fusion"
+  },
+  "faq": {
+    "title": "Câu Hỏi Thường Gặp",
+    "items": [
+      {
+        "q": "Tôi có cần API key không?",
+        "a": "Không. vibe-hnindex chạy hoàn toàn trên máy bạn. Ollama cung cấp embeddings cục bộ, và Qdrant lưu vectors cục bộ. Không cần API key đám mây."
+      },
+      {
+        "q": "Tôi có thể dùng mà không cần Qdrant không?",
+        "a": "Có! Không có Qdrant, vibe-hnindex fallback về tìm kiếm keyword-only (SQLite FTS5). Chế độ semantic và hybrid yêu cầu Qdrant."
+      },
+      {
+        "q": "Khác gì so với codebase indexing của Cursor?",
+        "a": "vibe-hnindex không phụ thuộc IDE — hoạt động với mọi trợ lý tương thích MCP (Claude, Cursor, Windsurf, Antigravity, VS Code). Bạn index một lần và tìm kiếm từ bất kỳ công cụ nào."
+      },
+      {
+        "q": "Có hoạt động trên Windows không?",
+        "a": "Có! vibe-hnindex hỗ trợ Windows, macOS, và Linux. Trên Windows, khuyến nghị dùng Node 20 hoặc 22 LTS để tránh vấn đề C++ compiler."
+      }
+    ]
+  },
+  "cta": {
+    "title": "Sẵn Sàng Nâng Tầm AI Coding?",
+    "subtitle": "Cài vibe-hnindex và cho trợ lý AI kiến thức sâu về toàn bộ codebase của bạn.",
+    "button": "npm install vibe-hnindex"
+  },
+  "changelog": {
+    "title": "Nhật Ký Thay Đổi",
+    "subtitle": "Tất cả thay đổi đáng chú ý của vibe-hnindex. Luôn cập nhật các tính năng và sửa lỗi mới nhất.",
+    "notFound": "Chưa có mục nhật ký thay đổi.",
+    "viewAllReleases": "Xem tất cả phiên bản trên",
+    "githubReleases": "GitHub Releases",
+    "latest": "Mới nhất"
+  },
+  "footer": {
+    "builtBy": "Xây dựng bởi"
+  },
+  "common": {
+    "languageSwitcher": "Ngôn ngữ"
+  }
+}

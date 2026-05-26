@@ -1,0 +1,98 @@
+// Auto-generated from ../docs/changelog.md — do not edit manually
+export interface VersionEntry {
+  title: string;
+  items: string[];
+}
+
+export const changelogData: VersionEntry[] = [
+  {
+    title: "v0.7.2",
+    items: [
+      "**Timeouts** — thêm timeout cho Ollama embed/health (`OLLAMA_TIMEOUT_MS`, default 30s), Qdrant client (`QDRANT_TIMEOUT_MS`, default 15s), và overall search (`SEARCH_TIMEOUT_MS`, default 60s). Ngăn treo khi service không phản hồi.",
+      "**Search stability** — `search` được wrap với `withTimeout()`; nếu quá hạn, trả về lỗi rõ ràng thay vì treo vô hạn.",
+      "**README** — thêm section **Timeouts** liệt kê các env vars timeout.",
+      "**CI** — tách `create-release` job độc lập, không phụ thuộc npm publish.",
+    ],
+  },
+  {
+    title: "v0.7.1",
+    items: [
+      "**Index sâu trên Windows** — fix `realpath` crash khi duyệt folder sâu; fallback về `path.resolve()` + lowercase compare để tránh skip toàn bộ subfolder.",
+      "**Bỏ giới hạn extension** — xóa `SUPPORTED_EXTENSIONS` hard-coded; mọi text file (không phải binary) đều được index, không bỏ sót `.prisma`, `.env.local`, `.eslintrc`, v.v.",
+      "**hnindex-cli bump** — đồng bộ version CLI lên 0.7.1.",
+    ],
+  },
+  {
+    title: "v0.7.0 (vibe-hnindex) / hnindex-cli v0.7.0",
+    items: [
+      "**`server_diagnostics`** — one call checks Ollama, Qdrant, config summary, optional embedding probe; optional **`project_name`** compares SQLite chunk count vs Qdrant collection points (`match` / `mismatch` / `unknown`).",
+      "**`agent_rules_stub`** — short markdown for CLAUDE.md / AGENTS.md (optional **`format`**: `agents` | `claude` | `generic`): path, last index time, top language + stats, `package.json` script hints (`npm test`, `npm run build`, `npm run lint` when present), rule-based bullets — not a full `project_briefing`.",
+      "**Git index freshness** — SQLite `projects.indexed_git_head` stores `git rev-parse HEAD` after successful `index_codebase`, `index_file`, and watch reindex; **`onboarding_prompt`** adds **Index freshness** when current HEAD differs from stored head; **`project_briefing` cache key** includes git head so briefings refresh after re-index.",
+      "**Versions** — MCP `server.json`, `.claude-plugin` plugin + marketplace metadata, root npm package, **`hnindex-cli`** npm package, and startup log **v0.7.0**.",
+    ],
+  },
+  {
+    title: "v0.6.1 (vibe-hnindex) / hnindex-cli v0.6.2",
+    items: [
+      "**`EMBEDDING_DIMENSIONS`** — documented in MCP `server.json`; `hnindex init` **merges** with existing MCP `env` so `EMBEDDING_DIMENSIONS` (and other keys) persist when you re-run init without `--embedding-dimensions`.",
+      "**Startup log** — MCP server stderr shows **v0.6.1**.",
+    ],
+  },
+  {
+    title: "v0.6.0",
+    items: [
+      "**`hnindex-cli`** (npm: `hnindex-cli`) — global CLI `hnindex`: `init --mcp <claude|claude-desktop|antigravity|cursor|cursor-project|windsurf|vscode>`, `update`, `version`; merges `vibe-hnindex` into the correct MCP JSON path on Windows, macOS, and Linux. Package: `packages/hnindex-cli`.",
+      "**Symbols table + indexing** — heuristic extraction (TS/JS/TSX/JSX, Python) on index/reindex/watch; SQLite `symbols` with lookup by name.",
+      "**`symbol_lookup` tool** — resolve symbols by name with optional kind / file pattern filters.",
+      "**`search` mode `symbol`** — find chunks via symbol name (explicit mode; `auto` does not route to symbol).",
+      "**Optional rerank** — `RERANK_URL` POST `{ query, documents }` → `{ scores }`; if unset or on failure, reorder pool by Qdrant semantic score when available. Env: `SEARCH_RERANK`, `SEARCH_RERANK_POOL`, `RERANK_TIMEOUT_MS`.",
+      "**`codebase_overview`** — richer detection: Prisma, Tailwind, shadcn (`components.json`), Turborepo/Nx, lockfile → package manager, monorepo hints.",
+      "**MCP / package** — version **0.6.0**.",
+    ],
+  },
+  {
+    title: "v0.4.0",
+    items: [
+      "**`search` — project race** — uses `getProjectWithRetry` so \"project not found\" right after `index_codebase` is rare.",
+      "**`index_codebase` readiness** — summary ends with `Ready: yes|no` and, when Qdrant is up, `qdrant_vectors: <count>` after a best-effort collection verify.",
+      "**`mode: auto`** — heuristic routing to keyword vs hybrid (optional **`SEARCH_AUTO_ROUTE=true`** to treat omitted `mode` like `auto`).",
+      "**Keyword → semantic fallback** — if keyword returns no hits and Ollama+Qdrant are OK, one semantic pass runs (default **`SEARCH_KEYWORD_FALLBACK_SEMANTIC`** on; set to `false` to disable).",
+      "**`explain`** — optional per-result score breakdown (path multiplier, RRF / semantic hints).",
+      "**MCP schema** — `search` exposes `content_mode`, `max_content_chars`, `deprioritize_generated_paths`, `mode` including `auto`, and `explain`.",
+    ],
+  },
+  {
+    title: "v0.5.0",
+    items: [
+      "**`project_briefing`** — briefing rule-based từ README, CLAUDE.md, `package.json` và thống kê index; cache SQLite với khóa `file_count|chunk_count|last_indexed_at`; tham số `regenerate`.",
+      "**`onboarding_prompt`** — một khối markdown: briefing + stats + (tuỳ chọn) git gần đây; cắt theo `max_chars`.",
+      "**`index_codebase`** — tham số **`watch`** (mặc định `false`); sau khi index thành công có thể bật cùng watcher như `watch_project`.",
+      "**Watch** — logic chung `startWatchingProject` dùng cho `watch_project` và `index_codebase` + `watch`.",
+    ],
+  },
+  {
+    title: "v0.3.3",
+    items: [
+      "**`QDRANT_API_KEY`** — optional for local Docker; **required** for [Qdrant Cloud](https://cloud.qdrant.io/) (set with `QDRANT_URL` = HTTPS cluster URL from the dashboard).",
+      "**Startup hint** — if `QDRANT_URL` looks like Cloud (HTTPS + `qdrant` host) but the API key is missing, the server logs a clear warning on first Qdrant use.",
+      "**Docs** — [Getting started](getting-started.md) and [Configuration](configuration.md) spell out Cloud vs self-hosted env vars; default `OLLAMA_URL` is `http://localhost:11434` (override with `OLLAMA_URL` when needed).",
+    ],
+  },
+  {
+    title: "v0.3.2",
+    items: [
+      "**`content_mode`** (default `compact`) — truncates chunk bodies to save tokens; use `full` for entire chunks.",
+      "**Keyword OR fallback** — if strict FTS AND returns nothing and the query has multiple tokens, retry with OR and a warning.",
+      "**`deprioritize_generated_paths`** — down-ranks `dist/`, `.next/`, `build/`, `coverage/`, `*.min.js`, `node_modules`, etc.",
+      "**`project_stats` retry** — reduces rare \"project not found\" right after indexing.",
+    ],
+  },
+  {
+    title: "v0.3.1",
+    items: [
+      "**Keyword query normalization** — tokenizes punctuation-heavy queries for FTS5.",
+      "**`dedupe_by_file`** — one chunk per file by default.",
+      "**`.hnindexignore`** — exclude paths from indexing (minimatch).",
+    ],
+  },
+];
