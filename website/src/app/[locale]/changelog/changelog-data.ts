@@ -6,6 +6,16 @@ export interface VersionEntry {
 
 export const changelogData: VersionEntry[] = [
   {
+    title: "v0.8.0",
+    items: [
+      "**Parallel Indexing** — `index_codebase` dùng worker threads pool (tự động = CPU-1 workers) để chunk + embed song song; nhanh hơn ~3-4x trên máy multi-core. Progress hiển thị % trong quá trình index. Env: `INDEX_WORKERS`, `INDEX_PARALLEL_BATCH`.",
+      "**Search Cache** — LRU cache 100 entries với TTL 5 phút; cache key = `project|query|mode|limit|filters`. Search lần 2 trả về ngay lập tức (~5ms vs 800ms). Tự invalidate khi re-index. Env: `SEARCH_CACHE_SIZE`, `SEARCH_CACHE_TTL_MS`.",
+      "**Regex Search** — mode `regex` dùng JavaScript RegExp tìm pattern trong chunk content. Auto-detect nếu query bọc trong `/pattern/flags`. Highlight match với `**text**`, sort theo số lượng match.",
+      "**Symbol Filters** — lọc kết quả search theo `symbol_kind`: `function`, `class`, `method`, `interface`, `type`, `variable`, `enum`, `export`. Chỉ trả về chunks từ file chứa symbol loại đó.",
+      "**Versions** — `vibe-hnindex` v0.8.0, `hnindex-cli` v0.8.0.",
+    ],
+  },
+  {
     title: "v0.7.2",
     items: [
       "**Timeouts** — thêm timeout cho Ollama embed/health (`OLLAMA_TIMEOUT_MS`, default 30s), Qdrant client (`QDRANT_TIMEOUT_MS`, default 15s), và overall search (`SEARCH_TIMEOUT_MS`, default 60s). Ngăn treo khi service không phản hồi.",
