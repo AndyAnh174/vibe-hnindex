@@ -138,7 +138,7 @@ export async function search(args: {
   }
 
   try {
-    const result = await withTimeout((async () => {
+    const result = await withTimeout((async (): Promise<{ content: Array<{ type: 'text'; text: string }> }> => {
 
   let keywordResults: SearchResult[] = [];
   let semanticResults: Array<{ id: string; score: number }> = [];
