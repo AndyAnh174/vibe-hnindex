@@ -1,5 +1,12 @@
 # Changelog (highlights)
 
+## v0.9.0
+
+- **⚡ Streaming Search** — `stream: true` (hoặc env `SEARCH_STREAM_ENABLED=true`) kích hoạt tìm kiếm song song: keyword FTS5 + semantic Qdrant chạy đồng thời thay vì tuần tự. Hỗ trợ progress notifications 4 phase (Parallel Search → RRF Fusion → Post-processing → Results) và early result preview qua logging messages. Nhanh hơn ~1.5-2x cho hybrid search.
+- **Refactor** — Tách `parallelSearch()` orchestrator, `sendProgress()` notifications, `sendSearchPreview()`, `applyFuzzyBoost()` vào `services/streaming-search.ts`.
+- **Env** — `SEARCH_STREAM_ENABLED` (default false) bật streaming cho mọi search không phải regex/symbol.
+- **Versions** — `vibe-hnindex` v0.9.0, `hnindex-cli` v0.9.0.
+
 ## v0.8.1
 
 - **Fuzzy Search** — cờ `fuzzy: true` dùng Levenshtein distance để phát hiện typo và re-rank kết quả. Auto-detect query có dấu hiệu sai chính tả (lặp ký tự, common misspelling). Env: `SEARCH_FUZZY_ENABLED`.

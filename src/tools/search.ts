@@ -1,3 +1,4 @@
+import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { config } from '../config.js';
 import type { SearchResult } from '../types.js';
 import {
@@ -21,7 +22,12 @@ import {
 import { resolveSearchMode, parseRegexQuery } from '../services/query-router.js';
 import { buildCacheKey, getCachedResult, setCachedResult } from '../services/search-cache.js';
 import { filterBySymbolKind } from '../services/symbol-filter.js';
-import { fuzzyScore } from '../services/fuzzy.js';
+import {
+  sendProgress,
+  sendSearchPreview,
+  parallelSearch,
+  applyFuzzyBoost,
+} from '../services/streaming-search.js';
 
 type SearchMode = 'keyword' | 'semantic' | 'hybrid' | 'auto' | 'symbol' | 'regex';
 type ContentMode = 'full' | 'compact';
@@ -37,6 +43,17 @@ interface HybridExplainMeta {
   keywordRank?: number;
   semanticRank?: number;
   semanticRawScore?: number;
+}
+
+export interface SearchExtra {
+  sendNotification?: (notification: { method: string; params?: Record<string, unknown> }) => Promise<void>;
+  _meta?: { progressToken?: string | number };
+  sessionId?: string;
+}
+
+export interface SearchContext {
+  server?: McpServer;
+  extra?: SearchExtra;
 }
 
 /** Keep the highest-scoring chunk per file path (first wins if scores tie). */
@@ -127,7 +144,9 @@ export async function search(args: {
   rerank?: boolean;
   /** Enable fuzzy search re-ranking — boosts results with high similarity to query terms. v0.8.1 */
   fuzzy?: boolean;
-}): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
+  /** Enable streaming search — parallel keyword+semantic, progress notifications, early result preview. v0.9.0 */
+  stream?: boolean;
+}, ctx?: SearchContext): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
   const rawMode =
     args.mode !== undefined ? args.mode : config.searchAutoRoute ? 'auto' : 'hybrid';
   const queryStr = args.query.trim();
@@ -189,6 +208,14 @@ export async function search(args: {
     }
   }
 
+  // Determine streaming mode
+  const useStream =
+    args.stream === true ||
+    (!args.stream && config.searchStreamEnabled && effectiveMode !== 'regex' && effectiveMode !== 'symbol');
+  const hasStreamContext = !!(ctx?.server && ctx?.extra);
+  const server = ctx?.server;
+  const extra = ctx?.extra;
+
   try {
     const result = await withTimeout((async (): Promise<{ content: Array<{ type: 'text'; text: string }> }> => {
 
@@ -205,6 +232,52 @@ export async function search(args: {
 
   // Keyword / semantic / hybrid (symbol mode uses SQLite symbols table only)
   if (effectiveMode !== 'symbol' && effectiveMode !== 'regex') {
+
+  // ── Streaming path: parallel keyword + semantic ──
+  if (useStream && hasStreamContext && extra && server && (effectiveMode === 'keyword' || effectiveMode === 'semantic' || effectiveMode === 'hybrid')) {
+    await sendProgress(extra, 1, 4, `Phase 1/4: Running parallel keyword + semantic search for "${args.query}"...`);
+
+    const kwFetchLimit = effectiveMode === 'keyword' ? kwLimit : Math.max(candidateLimit, kwLimit);
+    const semLimit = effectiveMode === 'hybrid' ? Math.max(candidateLimit, semanticFetchLimit) : semanticFetchLimit;
+
+    const parallelResult = await parallelSearch(
+      args.project_name,
+      args.query,
+      kwFetchLimit,
+      semLimit,
+      filters,
+    );
+
+    keywordResults = parallelResult.keywordResults;
+    semanticResults = parallelResult.semanticResults;
+    keywordFallbackRan = parallelResult.keywordFallbackRan;
+    warnings.push(...parallelResult.warnings);
+
+    if (!parallelResult.ollamaAvailable || !parallelResult.qdrantAvailable) {
+      if (effectiveMode === 'semantic' && !parallelResult.ollamaAvailable) {
+        return {
+          content: [{
+            type: 'text',
+            text: `Error: Ollama not running at ${config.ollamaUrl}. Run: ollama serve && ollama pull ${config.embeddingModel}`,
+          }],
+        };
+      }
+      if (effectiveMode === 'semantic' && !parallelResult.qdrantAvailable) {
+        return {
+          content: [{
+            type: 'text',
+            text: `Error: Qdrant not running at ${config.qdrantUrl}. Run: docker run -d -p 6333:6333 qdrant/qdrant`,
+          }],
+        };
+      }
+      if (effectiveMode === 'hybrid') {
+        actualMode = 'keyword';
+      }
+    }
+
+    await sendProgress(extra, 2, 4, `Phase 2/4: ${keywordResults.length} keyword + ${semanticResults.length} semantic hits → fusing with RRF...`);
+  } else {
+  // ── Sequential path (original behavior) ──
   // Keyword search (fetch more rows when deduping by file so we can still fill `limit` distinct files)
   if (effectiveMode === 'keyword' || effectiveMode === 'hybrid') {
     try {
@@ -299,6 +372,8 @@ export async function search(args: {
       }
     }
   }
+  } // end sequential path
+
   } // end effectiveMode !== 'symbol' && effectiveMode !== 'regex'
 
   // Combine results
@@ -490,36 +565,7 @@ export async function search(args: {
   // Fuzzy re-ranking (v0.8.1): boost results with high string similarity to query terms
   const useFuzzy = args.fuzzy === true || (!args.fuzzy && config.searchFuzzyEnabled);
   if (useFuzzy && finalResults.length > 0 && effectiveMode !== 'regex') {
-    const queryLower = args.query.toLowerCase();
-    const queryWords = queryLower.split(/\s+/).filter((w) => w.length >= 2);
-
-    for (const r of finalResults) {
-      // Compute best fuzzy similarity against query words on chunk content (word-level)
-      const contentWords = r.content
-        .toLowerCase()
-        .split(/[\s,;:(){}\[\]<>"'`=+\-*/|&^%$#@!~.]+/)
-        .filter((w) => w.length >= 2);
-
-      let bestScore = 0;
-      for (const qw of queryWords) {
-        for (const cw of contentWords) {
-          const s = fuzzyScore(qw, cw);
-          if (s > bestScore) bestScore = s;
-          if (bestScore >= 0.95) break; // early exit on near-exact match
-        }
-        if (bestScore >= 0.95) break;
-      }
-
-      // Also check the full query against the content
-      const fullScore = fuzzyScore(queryLower, r.content.toLowerCase().slice(0, 200));
-      bestScore = Math.max(bestScore, fullScore);
-
-      // Boost: multiply original score by (1 + fuzzyScore * 0.5)
-      r.score = r.score * (1 + bestScore * 0.5);
-    }
-
-    // Re-sort by boosted score
-    finalResults.sort((a, b) => b.score - a.score);
+    finalResults = applyFuzzyBoost(args.query, finalResults);
     actualMode = (actualMode + '+fuzzy') as SearchMode;
   }
 
@@ -535,6 +581,11 @@ export async function search(args: {
     setCachedResult(cacheKey, finalResults);
   }
 
+  // ── Phase 3/4: Post-processing ──
+  if (useStream && hasStreamContext && extra) {
+    await sendProgress(extra, 3, 4, 'Phase 3/4: Post-processing — path quality, fuzzy, rerank...');
+  }
+
   const scoreBeforePath = new Map(finalResults.map((r) => [r.id, r.score]));
   const pathMulById = new Map(finalResults.map((r) => [r.id, deprioritizeMultiplier(r.filePath)]));
 
@@ -544,6 +595,12 @@ export async function search(args: {
     finalResults = await rerankSearchResults(args.query, finalResults, semanticRawById);
   }
   finalResults = finalResults.slice(0, limit);
+
+  // ── Phase 4/4: Streaming preview ──
+  if (useStream && hasStreamContext && server && extra) {
+    await sendSearchPreview(server, extra.sessionId, finalResults, 'final');
+    await sendProgress(extra, 4, 4, `Phase 4/4: Complete — ${finalResults.length} results ready.`);
+  }
 
   // Format output
   if (finalResults.length === 0) {

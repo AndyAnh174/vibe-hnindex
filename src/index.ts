@@ -7,6 +7,7 @@ import { initDatabase, listProjects } from './services/sqlite.js';
 import { indexCodebase } from './tools/index-codebase.js';
 import { indexFile } from './tools/index-file.js';
 import { search } from './tools/search.js';
+import type { SearchExtra } from './tools/search.js';
 import { listProjectsTool } from './tools/list-projects.js';
 import { deleteProjectTool } from './tools/delete-project.js';
 import { getFileInfoTool } from './tools/get-file-info.js';
@@ -28,7 +29,9 @@ initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.8.0',
+  version: '0.9.0',
+}, {
+  capabilities: { logging: {} },
 });
 
 // --- Resource: knowledge://projects ---
@@ -122,7 +125,7 @@ server.tool(
         'Enable fuzzy search re-ranking — boosts results with high Levenshtein similarity to query terms. Useful for misspelled queries or approximate matching. Default follows SEARCH_FUZZY_ENABLED env var (false).',
       ),
   },
-  async (args) => search(args),
+  async (args, extra) => search(args, { server, extra: extra as SearchExtra }),
 );
 
 // --- Tool: list_projects ---
@@ -327,7 +330,7 @@ server.tool(
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started (v0.8.0)');
+  console.error('[vibe-hnindex] Server started (v0.9.0)');
 }
 
 main().catch((error) => {

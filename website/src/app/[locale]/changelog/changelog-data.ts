@@ -6,6 +6,18 @@ export interface VersionEntry {
 
 export const changelogData: VersionEntry[] = [
   {
+    title: "v0.9.0",
+    items: [
+      "**⚡ Streaming Search** — New `stream: true` flag (or env `SEARCH_STREAM_ENABLED=true`) enables parallel search execution: keyword FTS5 + semantic Qdrant run simultaneously instead of sequentially.",
+      "Progress notifications: 4-phase updates (Parallel Search → RRF Fusion → Post-processing → Results) keep you informed of search progress in real-time.",
+      "Early result preview: top 5 results streamed via MCP logging messages before the search completes, so you can start reviewing immediately.",
+      "Speed improvement: ~1.5–2× faster for hybrid search on multi-core machines. Keyword-only and semantic-only modes also benefit from parallel health checks.",
+      "ENV: `SEARCH_STREAM_ENABLED` (default false) — enable streaming by default for all non-regex, non-symbol searches.",
+      "**Refactor** — Extracted `parallelSearch()` orchestrator, `sendProgress()` notifications, `sendSearchPreview()`, and `applyFuzzyBoost()` into `services/streaming-search.ts` for cleaner architecture.",
+      "**📦 Versions** — `vibe-hnindex` v0.9.0, `hnindex-cli` v0.9.0.",
+    ],
+  },
+  {
     title: "v0.8.1",
     items: [
       "**🔤 Fuzzy Search** — New `fuzzy: true` flag uses Levenshtein distance to detect typos and re-rank search results.",

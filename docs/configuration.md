@@ -25,6 +25,7 @@
 | `SEARCH_CACHE_SIZE` | `100` | Max cache entries for search results (LRU eviction). |
 | `SEARCH_CACHE_TTL_MS` | `300000` | Cache TTL in milliseconds (5 min). Cache is skipped for `regex` mode. |
 | `SEARCH_FUZZY_ENABLED` | `false` | When `true`, enable fuzzy search re-ranking for all searches by default. Can be overridden per-query with `fuzzy: true/false` tool argument. |
+| `SEARCH_STREAM_ENABLED` | `false` | When `true`, enable streaming search by default for all non-regex, non-symbol searches. Runs keyword + semantic in parallel with progress notifications and early result preview via MCP logging. Can be overridden per-query with `stream: true/false` tool argument. |
 
 ### Parallel indexing (v0.8.0)
 
@@ -71,6 +72,28 @@ Fuzzy search computes Levenshtein distance between query terms and chunk content
 ```bash
 export SEARCH_FUZZY_ENABLED=true
 ```
+
+### Streaming search (v0.9.0)
+
+**`SEARCH_STREAM_ENABLED`** (default `false`): when `true`, all non-regex, non-symbol searches automatically use streaming mode — keyword and semantic search run in parallel for faster results, with progress notifications and early result preview via MCP logging messages.
+
+```bash
+export SEARCH_STREAM_ENABLED=true
+```
+
+Or enable per-query:
+```json
+{
+  "query": "authentication middleware",
+  "project_name": "my-project",
+  "stream": true
+}
+```
+
+Streaming provides:
+- **Parallel execution**: keyword FTS5 + semantic Qdrant search run simultaneously (~1.5-2× faster for hybrid)
+- **Progress notifications**: 4-phase updates (Parallel Search → RRF Fusion → Post-processing → Results)
+- **Early preview**: top 5 results streamed via MCP logging before final response
 
 ---
 

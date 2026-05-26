@@ -82,6 +82,10 @@ export const config = {
   // Fuzzy search (v0.8.1)
   /** Enable fuzzy search re-ranking by default for all searches. Default false. */
   searchFuzzyEnabled: process.env.SEARCH_FUZZY_ENABLED === 'true',
+
+  // Streaming search (v0.9.0)
+  /** Enable streaming search by default — parallel keyword+semantic, progress notifications. Default false (opt-in via stream:true or this env). */
+  searchStreamEnabled: process.env.SEARCH_STREAM_ENABLED === 'true',
 } as const;
 
 export function getCollectionName(projectName: string): string {
