@@ -52,6 +52,23 @@ function keywordFetchLimit(limit: number, dedupe: boolean): number {
   return Math.min(300, Math.max(40, limit * 25));
 }
 
+/** Wrap a promise with a timeout. Rejects with a TimeoutError if the promise doesn't settle in time. */
+class TimeoutError extends Error {
+  constructor(ms: number) {
+    super(`Operation timed out after ${ms}ms`);
+    this.name = 'TimeoutError';
+  }
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new TimeoutError(ms)), ms)
+    ),
+  ]);
+}
+
 // Reciprocal Rank Fusion
 function rrfFuse(
   keywordResults: SearchResult[],
@@ -119,6 +136,9 @@ export async function search(args: {
       }],
     };
   }
+
+  try {
+    const result = await withTimeout((async () => {
 
   let keywordResults: SearchResult[] = [];
   let semanticResults: Array<{ id: string; score: number }> = [];
@@ -456,4 +476,18 @@ export async function search(args: {
   return {
     content: [{ type: 'text', text: header + warningText + '\n' + resultTexts.join('\n\n') }],
   };
+
+    })(), config.searchTimeoutMs);
+    return result;
+  } catch (error) {
+    if (error instanceof TimeoutError) {
+      return {
+        content: [{
+          type: 'text',
+          text: `Error: Search timed out after ${config.searchTimeoutMs}ms. The operation may be slow due to unresponsive services (Ollama/Qdrant). Try a simpler query or check that Ollama and Qdrant are running and healthy.`,
+        }],
+      };
+    }
+    throw error;
+  }
 }

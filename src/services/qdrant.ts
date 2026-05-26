@@ -22,6 +22,7 @@ export function getQdrantClient(): QdrantClient {
     client = new QdrantClient({
       url: config.qdrantUrl,
       checkCompatibility: false,
+      timeout: config.qdrantTimeoutMs,
       ...(config.qdrantApiKey ? { apiKey: config.qdrantApiKey } : {}),
     });
   }

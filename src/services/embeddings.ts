@@ -13,6 +13,8 @@ export async function embed(texts: string[]): Promise<number[][]> {
   for (let i = 0; i < texts.length; i += config.embeddingBatchSize) {
     const batch = texts.slice(i, i + config.embeddingBatchSize);
 
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), config.ollamaTimeoutMs);
     const response = await fetch(`${config.ollamaUrl}/api/embed`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -20,7 +22,8 @@ export async function embed(texts: string[]): Promise<number[][]> {
         model: config.embeddingModel,
         input: batch,
       }),
-    });
+      signal: controller.signal,
+    }).finally(() => clearTimeout(timer));
 
     if (!response.ok) {
       const text = await response.text();
@@ -58,7 +61,10 @@ export async function embedSingle(text: string): Promise<number[]> {
 
 export async function healthCheck(): Promise<boolean> {
   try {
-    const response = await fetch(`${config.ollamaUrl}/api/tags`);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), config.ollamaTimeoutMs);
+    const response = await fetch(`${config.ollamaUrl}/api/tags`, { signal: controller.signal });
+    clearTimeout(timer);
     return response.ok;
   } catch {
     return false;

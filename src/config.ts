@@ -55,6 +55,14 @@ export const config = {
   /** POST JSON `{ query, documents }` → `{ scores: number[] }`. Same length as documents. */
   rerankUrl: process.env.RERANK_URL?.trim() || '',
   rerankTimeoutMs: parseInt(process.env.RERANK_TIMEOUT_MS || '15000', 10),
+
+  // Timeouts (prevents hanging when services are unresponsive)
+  /** Timeout for Ollama API calls (embed, health check). Default 30s. */
+  ollamaTimeoutMs: parseInt(process.env.OLLAMA_TIMEOUT_MS || '30000', 10),
+  /** Timeout for Qdrant API calls. Default 15s. */
+  qdrantTimeoutMs: parseInt(process.env.QDRANT_TIMEOUT_MS || '15000', 10),
+  /** Overall timeout for search operations. Default 60s. */
+  searchTimeoutMs: parseInt(process.env.SEARCH_TIMEOUT_MS || '60000', 10),
 } as const;
 
 export function getCollectionName(projectName: string): string {
