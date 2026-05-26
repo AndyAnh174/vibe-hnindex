@@ -6,6 +6,16 @@ export interface VersionEntry {
 
 export const changelogData: VersionEntry[] = [
   {
+    title: "v0.9.1",
+    items: [
+      "**⚡ Single-Pass Indexing** — Dependency, export, and symbol parsing is now done during the initial file scan, eliminating the second full directory scan entirely.",
+      "Before: `index_codebase` scanned all files twice — once for chunking/embedding, then again for parsing imports/exports/symbols. Now: one pass does everything.",
+      "Speed improvement: ~30–40% faster indexing on large codebases, especially noticeable on incremental re-indexes.",
+      "**🔬 Fast Hash** — File change detection now uses SHA-1 instead of SHA-256 (~2× faster, still reliable for code deduplication).",
+      "**📦 Versions** — `vibe-hnindex` v0.9.1, `hnindex-cli` v0.9.1.",
+    ],
+  },
+  {
     title: "v0.9.0",
     items: [
       "**⚡ Streaming Search** — New `stream: true` flag (or env `SEARCH_STREAM_ENABLED=true`) enables parallel search execution: keyword FTS5 + semantic Qdrant run simultaneously instead of sequentially.",

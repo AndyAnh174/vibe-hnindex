@@ -1,5 +1,11 @@
 # Changelog (highlights)
 
+## v0.9.1
+
+- **⚡ Single-Pass Indexing** — Gộp dependency/symbol parsing vào lần scan đầu tiên, loại bỏ hoàn toàn lần scan thứ 2. Trước đây index_codebase quét toàn bộ file 2 lần: lần 1 để chunk+embed, lần 2 để parse imports/exports/symbols. Giờ chỉ cần 1 lần duy nhất — nhanh hơn ~30-40% trên codebase lớn.
+- **🔬 Fast Hash** — Thay SHA-256 bằng SHA-1 cho change detection (~2x nhanh hơn, vẫn đủ mạnh để phát hiện file thay đổi).
+- **Versions** — `vibe-hnindex` v0.9.1, `hnindex-cli` v0.9.1.
+
 ## v0.9.0
 
 - **⚡ Streaming Search** — `stream: true` (hoặc env `SEARCH_STREAM_ENABLED=true`) kích hoạt tìm kiếm song song: keyword FTS5 + semantic Qdrant chạy đồng thời thay vì tuần tự. Hỗ trợ progress notifications 4 phase (Parallel Search → RRF Fusion → Post-processing → Results) và early result preview qua logging messages. Nhanh hơn ~1.5-2x cho hybrid search.

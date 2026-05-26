@@ -8,6 +8,7 @@ import { chunkFile } from '../services/chunker.js';
 import { embed } from '../services/embeddings.js';
 import { parallelIndex } from '../services/parallel-indexer.js';
 import { invalidateCache } from '../services/search-cache.js';
+import { fastHash } from '../services/fast-hash.js';
 import {
   upsertProject,
   insertChunks,
@@ -85,18 +86,22 @@ export async function indexCodebase(args: {
   let skippedFiles = 0;
   let unchangedFiles = 0;
   let totalChunks = 0;
+  let parsedDeps = 0;
 
   // Invalidate cache for this project before re-indexing
   invalidateCache(args.project_name);
 
-  // Scan and collect files for parallel indexing
+  // Pre-fetch project files for import resolution (called once, not per-file)
+  const projectFiles = getAllProjectFiles(args.project_name);
+
+  // Scan and index files — single pass: detect changes, parse deps, queue for indexing
   const filesToIndex: FileEntry[] = [];
 
   for await (const file of scanDirectory(rootPath)) {
     totalFiles++;
 
-    // Check if file has changed (via hash)
-    const fileHash = crypto.createHash('sha256').update(file.content).digest('hex');
+    // Fast hash for change detection (SHA-1, ~2x faster than SHA-256)
+    const fileHash = fastHash(file.content);
     const existingHash = getExistingFileHash(args.project_name, file.relativePath);
 
     if (existingHash === fileHash) {
@@ -110,6 +115,60 @@ export async function indexCodebase(args: {
       if (qdrantAvailable && oldIds.length > 0) {
         await deletePoints(args.project_name, oldIds);
       }
+    }
+
+    // ── Parse dependencies/symbols NOW (content is in memory, no need to re-read) ──
+    try {
+      deleteFileDependencies(args.project_name, file.relativePath);
+      deleteFileExports(args.project_name, file.relativePath);
+      deleteSymbolsForFile(args.project_name, file.relativePath);
+
+      const imports = parseImports(file.content, file.language);
+      const depRecords: DependencyRecord[] = [];
+      for (const imp of imports) {
+        const resolved = resolveImportPath(imp.specifier, file.relativePath, projectFiles);
+        depRecords.push({
+          id: crypto.randomUUID(),
+          projectName: args.project_name,
+          sourceFile: file.relativePath,
+          targetFile: resolved ?? imp.specifier,
+          importSpecifiers: imp.specifiers,
+          importType: imp.importType,
+          language: file.language,
+        });
+      }
+      if (depRecords.length > 0) {
+        insertDependencies(depRecords);
+      }
+
+      const exports = parseExports(file.content, file.language);
+      const exportRecords: ExportRecord[] = exports.map(exp => ({
+        id: crypto.randomUUID(),
+        projectName: args.project_name,
+        filePath: file.relativePath,
+        exportName: exp.name,
+        exportType: exp.exportType,
+        lineNumber: exp.lineNumber,
+        language: file.language,
+      }));
+      if (exportRecords.length > 0) {
+        insertExports(exportRecords);
+      }
+
+      const parsedSymbols = extractSymbols(file.content, file.language);
+      const symbolRecords = toSymbolRecords(
+        args.project_name,
+        file.relativePath,
+        file.language,
+        parsedSymbols
+      );
+      if (symbolRecords.length > 0) {
+        insertSymbols(symbolRecords);
+      }
+
+      parsedDeps++;
+    } catch (parseError) {
+      console.error(`[index] Dep/symbol parsing failed for ${file.relativePath}:`, parseError);
     }
 
     filesToIndex.push(file);
@@ -135,77 +194,6 @@ export async function indexCodebase(args: {
     } else {
       console.error(`[index] Used ${result.workerCount} workers`);
     }
-  }
-
-  // --- Dependency parsing pass ---
-  let parsedDeps = 0;
-  try {
-    const projectFiles = getAllProjectFiles(args.project_name);
-
-    for await (const file of scanDirectory(rootPath)) {
-      // Check if file changed (only parse changed files)
-      const fileHash = crypto.createHash('sha256').update(file.content).digest('hex');
-      const existingHash = getExistingFileHash(args.project_name, file.relativePath);
-      if (existingHash !== fileHash) continue; // only parse files that were just indexed (hash now matches)
-
-      try {
-        // Clear old deps/exports/symbols for this file
-        deleteFileDependencies(args.project_name, file.relativePath);
-        deleteFileExports(args.project_name, file.relativePath);
-        deleteSymbolsForFile(args.project_name, file.relativePath);
-
-        // Parse imports
-        const imports = parseImports(file.content, file.language);
-        const depRecords: DependencyRecord[] = [];
-        for (const imp of imports) {
-          const resolved = resolveImportPath(imp.specifier, file.relativePath, projectFiles);
-          depRecords.push({
-            id: crypto.randomUUID(),
-            projectName: args.project_name,
-            sourceFile: file.relativePath,
-            targetFile: resolved ?? imp.specifier,
-            importSpecifiers: imp.specifiers,
-            importType: imp.importType,
-            language: file.language,
-          });
-        }
-        if (depRecords.length > 0) {
-          insertDependencies(depRecords);
-        }
-
-        // Parse exports
-        const exports = parseExports(file.content, file.language);
-        const exportRecords: ExportRecord[] = exports.map(exp => ({
-          id: crypto.randomUUID(),
-          projectName: args.project_name,
-          filePath: file.relativePath,
-          exportName: exp.name,
-          exportType: exp.exportType,
-          lineNumber: exp.lineNumber,
-          language: file.language,
-        }));
-        if (exportRecords.length > 0) {
-          insertExports(exportRecords);
-        }
-
-        const parsedSymbols = extractSymbols(file.content, file.language);
-        const symbolRecords = toSymbolRecords(
-          args.project_name,
-          file.relativePath,
-          file.language,
-          parsedSymbols
-        );
-        if (symbolRecords.length > 0) {
-          insertSymbols(symbolRecords);
-        }
-
-        parsedDeps++;
-      } catch (parseError) {
-        console.error(`[index] Dependency parsing failed for ${file.relativePath}:`, parseError);
-      }
-    }
-  } catch (depError) {
-    console.error('[index] Dependency parsing pass failed:', depError);
   }
 
   // Update project stats
