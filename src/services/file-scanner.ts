@@ -5,48 +5,6 @@ import { config } from '../config.js';
 import type { FileEntry } from '../types.js';
 import { isIgnored, loadHnindexIgnore } from './hnindex-ignore.js';
 
-const SUPPORTED_EXTENSIONS = new Set([
-  '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs',
-  '.py', '.pyi',
-  '.java',
-  '.go',
-  '.rs',
-  '.c', '.cpp', '.cc', '.cxx', '.h', '.hpp', '.hxx',
-  '.cs',
-  '.rb',
-  '.php',
-  '.swift',
-  '.kt', '.kts',
-  '.scala',
-  '.lua',
-  '.sh', '.bash', '.zsh',
-  '.sql',
-  '.r', '.R',
-  '.vue', '.svelte',
-  '.html', '.htm',
-  '.css', '.scss', '.less', '.sass',
-  '.yaml', '.yml',
-  '.toml',
-  '.json',
-  '.xml',
-  '.md', '.mdx',
-  '.proto',
-  '.graphql', '.gql',
-  '.tf',
-  '.zig',
-  '.ex', '.exs',
-  '.erl',
-  '.clj', '.cljs',
-  '.hs',
-  '.ml', '.mli',
-  '.fs', '.fsx',
-  '.dart',
-  '.v',
-  '.sol',
-  '.cmake',
-  '.gradle',
-]);
-
 const SKIP_DIRECTORIES = new Set([
   'node_modules', '.git', 'dist', 'build', 'out', '.next', '.nuxt',
   '__pycache__', '.venv', 'venv', 'env',
@@ -159,12 +117,10 @@ function shouldIndexFile(filePath: string): boolean {
   // Skip known lock files
   if (SKIP_FILES.has(basename)) return false;
 
-  // Check special filenames
-  if (FILENAME_LANGUAGE_MAP[basename]) return true;
-
-  // Check extension
-  const ext = path.extname(filePath).toLowerCase();
-  return SUPPORTED_EXTENSIONS.has(ext);
+  // All text-based files are accepted; we filter out binary files later in the pipeline.
+  // This ensures any file format (including uncommon ones like .prisma, .env.local, .eslintrc, etc.)
+  // gets indexed as long as it's valid UTF-8 text.
+  return true;
 }
 
 export async function* scanDirectory(rootPath: string): AsyncGenerator<FileEntry> {
@@ -193,8 +149,16 @@ export async function* scanDirectory(rootPath: string): AsyncGenerator<FileEntry
         if (SKIP_DIRECTORIES.has(entry.name)) continue;
         if (entry.name.startsWith('.')) continue; // skip hidden dirs
         // Verify resolved path is still under project root
-        const resolvedDir = await fsp.realpath(fullPath).catch(() => null);
-        if (!resolvedDir || !resolvedDir.startsWith(absoluteRoot)) {
+        let resolvedDir: string;
+        try {
+          resolvedDir = await fsp.realpath(fullPath);
+        } catch {
+          // realpath may fail on Windows (long paths, permissions, etc.)
+          // Fall back to path.resolve which doesn't require the path to exist at OS level
+          resolvedDir = path.resolve(fullPath);
+        }
+        const normalizedRoot = path.resolve(absoluteRoot).toLowerCase();
+        if (!resolvedDir.toLowerCase().startsWith(normalizedRoot)) {
           console.error(`[scanner] Skipping directory outside root: ${fullPath}`);
           continue;
         }
