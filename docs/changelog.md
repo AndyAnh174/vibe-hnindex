@@ -1,5 +1,18 @@
 # Changelog (highlights)
 
+## v0.7.2
+
+- **Timeouts** — thêm timeout cho Ollama embed/health (`OLLAMA_TIMEOUT_MS`, default 30s), Qdrant client (`QDRANT_TIMEOUT_MS`, default 15s), và overall search (`SEARCH_TIMEOUT_MS`, default 60s). Ngăn treo khi service không phản hồi.
+- **Search stability** — `search` được wrap với `withTimeout()`; nếu quá hạn, trả về lỗi rõ ràng thay vì treo vô hạn.
+- **README** — thêm section **Timeouts** liệt kê các env vars timeout.
+- **CI** — tách `create-release` job độc lập, không phụ thuộc npm publish.
+
+## v0.7.1
+
+- **Index sâu trên Windows** — fix `realpath` crash khi duyệt folder sâu; fallback về `path.resolve()` + lowercase compare để tránh skip toàn bộ subfolder.
+- **Bỏ giới hạn extension** — xóa `SUPPORTED_EXTENSIONS` hard-coded; mọi text file (không phải binary) đều được index, không bỏ sót `.prisma`, `.env.local`, `.eslintrc`, v.v.
+- **hnindex-cli bump** — đồng bộ version CLI lên 0.7.1.
+
 ## v0.7.0 (vibe-hnindex) / hnindex-cli v0.7.0
 
 - **`server_diagnostics`** — one call checks Ollama, Qdrant, config summary, optional embedding probe; optional **`project_name`** compares SQLite chunk count vs Qdrant collection points (`match` / `mismatch` / `unknown`).
