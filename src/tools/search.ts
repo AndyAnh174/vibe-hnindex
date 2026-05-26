@@ -21,6 +21,7 @@ import {
 import { resolveSearchMode, parseRegexQuery } from '../services/query-router.js';
 import { buildCacheKey, getCachedResult, setCachedResult } from '../services/search-cache.js';
 import { filterBySymbolKind } from '../services/symbol-filter.js';
+import { fuzzyScore } from '../services/fuzzy.js';
 
 type SearchMode = 'keyword' | 'semantic' | 'hybrid' | 'auto' | 'symbol' | 'regex';
 type ContentMode = 'full' | 'compact';
@@ -124,6 +125,8 @@ export async function search(args: {
   explain?: boolean;
   /** When false, skip rerank / semantic reorder. Default: enabled when SEARCH_RERANK is not false. */
   rerank?: boolean;
+  /** Enable fuzzy search re-ranking — boosts results with high similarity to query terms. v0.8.1 */
+  fuzzy?: boolean;
 }): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
   const rawMode =
     args.mode !== undefined ? args.mode : config.searchAutoRoute ? 'auto' : 'hybrid';
@@ -484,6 +487,42 @@ export async function search(args: {
     finalResults = filterBySymbolKind(finalResults, args.project_name, symbolKind);
   }
 
+  // Fuzzy re-ranking (v0.8.1): boost results with high string similarity to query terms
+  const useFuzzy = args.fuzzy === true || (!args.fuzzy && config.searchFuzzyEnabled);
+  if (useFuzzy && finalResults.length > 0 && effectiveMode !== 'regex') {
+    const queryLower = args.query.toLowerCase();
+    const queryWords = queryLower.split(/\s+/).filter((w) => w.length >= 2);
+
+    for (const r of finalResults) {
+      // Compute best fuzzy similarity against query words on chunk content (word-level)
+      const contentWords = r.content
+        .toLowerCase()
+        .split(/[\s,;:(){}\[\]<>"'`=+\-*/|&^%$#@!~.]+/)
+        .filter((w) => w.length >= 2);
+
+      let bestScore = 0;
+      for (const qw of queryWords) {
+        for (const cw of contentWords) {
+          const s = fuzzyScore(qw, cw);
+          if (s > bestScore) bestScore = s;
+          if (bestScore >= 0.95) break; // early exit on near-exact match
+        }
+        if (bestScore >= 0.95) break;
+      }
+
+      // Also check the full query against the content
+      const fullScore = fuzzyScore(queryLower, r.content.toLowerCase().slice(0, 200));
+      bestScore = Math.max(bestScore, fullScore);
+
+      // Boost: multiply original score by (1 + fuzzyScore * 0.5)
+      r.score = r.score * (1 + bestScore * 0.5);
+    }
+
+    // Re-sort by boosted score
+    finalResults.sort((a, b) => b.score - a.score);
+    actualMode = (actualMode + '+fuzzy') as SearchMode;
+  }
+
   // Store results in cache for non-regex modes
   if (effectiveMode !== 'regex' && finalResults.length > 0) {
     const cacheKey = buildCacheKey({
@@ -522,8 +561,10 @@ export async function search(args: {
   }
   const filterInfo = filterParts.length > 0 ? ` [filters: ${filterParts.join(', ')}]` : '';
 
-  const modeLabel =
+  const baseModeLabel =
     rawMode === 'auto' ? `${effectiveMode} (auto from query)` : effectiveMode;
+  const fuzzyLabel = useFuzzy ? ' + fuzzy' : '';
+  const modeLabel = baseModeLabel + fuzzyLabel;
   const header = `Found ${finalResults.length} results for "${args.query}" (mode: ${modeLabel})${filterInfo}:\n`;
   const warningText = warnings.length > 0 ? `\n⚠ ${warnings.join('\n⚠ ')}\n` : '';
 

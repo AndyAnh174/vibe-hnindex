@@ -37,6 +37,8 @@ Search indexed code.
 | `semantic` | Qdrant cosine similarity | Natural language |
 | `hybrid` | RRF fusion | General use (default when `mode` is omitted and `SEARCH_AUTO_ROUTE` is off) |
 | `auto` | Heuristic keyword vs hybrid | Let the server pick based on query shape |
+| `regex` | RegExp pattern matching | Finding patterns in code (v0.8.0+) |
+| `symbol` | SQLite symbol table | Finding definitions by name (v0.8.0+) |
 
 Example:
 
@@ -49,6 +51,86 @@ search(query: "authentication middleware", project_name: "my-app", mode: "hybrid
 **Full pipeline:** see [How it works → Search pipeline](how-it-works.md#search-pipeline-query-to-response).
 
 **Rerank (v0.6+):** After retrieval, the server may **reorder** the top pool. If `RERANK_URL` is set in the MCP env, it POSTs `{query, documents}` to that URL and uses returned `scores`; if not, it reorders by **Qdrant semantic scores** (still no extra config). **Ollama** is only for embeddings (`OLLAMA_URL` / `OLLAMA_MODEL`)—not interchangeable with `RERANK_URL`. Agents: treat default search as sufficient; only use `rerank: false` when the user wants to skip reordering. See [Configuration → Optional rerank](configuration.md#optional-rerank).
+
+### Regex Search (v0.8.0+)
+
+Search code using JavaScript regular expression patterns with `/pattern/flags` syntax.
+
+**Syntax:**
+```
+search(query: "/useState\(.*\)/", project_name: "my-app", mode: "regex")
+search(query: "/TODO|FIXME|HACK/g", project_name: "my-app", mode: "regex")
+```
+
+- Pattern is wrapped in `/pattern/flags` — flags are optional (default `i` for case-insensitive)
+- Supports all standard JS regex flags: `g`, `i`, `m`, `s`, `u`, `y`
+- Auto-detection: when `mode` is `auto` and query looks like `/.../...`, regex mode is selected automatically
+- Matches count as the score; results sorted by match count descending
+- Matches are highlighted with `**text**` in the output
+
+**Use cases:** finding all TODO comments, specific function call patterns, configuration patterns, error handling patterns.
+
+### Symbol Filters (v0.8.0+)
+
+Filter search results to only files that contain specific symbol types using `symbol_kind`.
+
+**Available kinds:**
+| Kind | Description |
+|------|-------------|
+| `function` | Function definitions |
+| `class` | Class definitions |
+| `method` | Class/object methods |
+| `interface` | Interface definitions |
+| `type` | Type alias definitions |
+| `variable` | Variable declarations |
+| `enum` | Enum definitions |
+| `export` | Exported symbols (any kind) |
+
+**Examples:**
+```
+search(query: "authentication", project_name: "my-app", symbol_kind: "class")
+search(query: "handler", project_name: "my-app", symbol_kind: "function")
+search(query: "UserData", project_name: "my-app", mode: "symbol", symbol_kind: "interface")
+```
+
+**Tips:** combine with `keyword` or `hybrid` mode to narrow results to files with specific symbol types. Works with all search modes including `symbol`.
+
+### Search Cache (v0.8.0+)
+
+Search results are cached using an LRU (Least Recently Used) cache with TTL to avoid redundant searches.
+
+- **Cache size:** `SEARCH_CACHE_SIZE` (default 100 entries)
+- **TTL:** `SEARCH_CACHE_TTL_MS` (default 300000ms = 5 minutes)
+- Cache key includes: project name, query, mode, limit, and filters
+- Automatically invalidated when a project is re-indexed
+- Skipped for `regex` mode (results vary with pattern)
+- Results include `[cached]` label when served from cache
+
+See [Configuration → Search cache](configuration.md#search-cache-v080) for env vars.
+
+### Fuzzy Search (v0.8.1+)
+
+Boost search results using Levenshtein distance for approximate string matching — useful for misspelled queries or finding similar identifiers.
+
+**How it works:**
+1. After normal search results are gathered, each result's content is compared to the query using Levenshtein distance
+2. Results with high word-level similarity get a score boost: `score × (1 + fuzzyScore × 0.5)`
+3. Results are re-sorted after boosting
+
+**Enable fuzzy:**
+```
+search(query: "authentication midleware", project_name: "my-app", fuzzy: true)
+search(query: "fucntion handleReq", project_name: "my-app", fuzzy: true)
+```
+
+**When to use:**
+- Queries with possible typos or misspellings
+- Searching for identifiers when you're unsure of exact spelling
+- Approximate matching when exact FTS5 doesn't return enough results
+
+**Global enable:** set `SEARCH_FUZZY_ENABLED=true` to apply fuzzy re-ranking to all searches by default.
+
+See [Configuration → Fuzzy search](configuration.md#fuzzy-search-v081) for the env var.
 
 ---
 

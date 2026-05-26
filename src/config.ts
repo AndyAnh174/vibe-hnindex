@@ -78,6 +78,10 @@ export const config = {
   searchCacheSize: parseInt(process.env.SEARCH_CACHE_SIZE || '100', 10),
   /** Cache TTL in milliseconds. Default 300000 (5 min). */
   searchCacheTtlMs: parseInt(process.env.SEARCH_CACHE_TTL_MS || '300000', 10),
+
+  // Fuzzy search (v0.8.1)
+  /** Enable fuzzy search re-ranking by default for all searches. Default false. */
+  searchFuzzyEnabled: process.env.SEARCH_FUZZY_ENABLED === 'true',
 } as const;
 
 export function getCollectionName(projectName: string): string {

@@ -92,7 +92,7 @@ server.tool(
 // --- Tool: search ---
 server.tool(
   'search',
-  'Search the indexed codebase. Returns matching code chunks with file paths, line numbers, and relevance scores. Modes: keyword (FTS5), semantic (vector), hybrid (RRF fusion), auto (heuristic when SEARCH_AUTO_ROUTE), symbol (SQLite symbol index by identifier), regex (pattern matching with /pattern/flags). Results are cached (LRU, 5min TTL) for non-regex modes. Filter by symbol_kind to only see files with functions, classes, etc. Post-retrieval ordering: if RERANK_URL is set, the server POSTs {query, documents} for optional cross-encoder-style scores; if not set, results are still reordered by Qdrant semantic similarity (no extra service). Ollama (OLLAMA_URL + OLLAMA_MODEL) is only for embeddings at index/query time—not the same as RERANK_URL. Agents: you do not need to "enable" rerank manually unless the user asks to skip it (use rerank:false) or tune env; default behavior is already optimal for most tasks. Prefer a narrow file_pattern and a small limit on the first pass.',
+  'Search the indexed codebase. Returns matching code chunks with file paths, line numbers, and relevance scores. Modes: keyword (FTS5), semantic (vector), hybrid (RRF fusion), auto (heuristic when SEARCH_AUTO_ROUTE), symbol (SQLite symbol index by identifier), regex (pattern matching with /pattern/flags). Results are cached (LRU, 5min TTL) for non-regex modes. Filter by symbol_kind to only see files with functions, classes, etc. Enable fuzzy:true to boost results with approximate string matching (Levenshtein) — useful for misspelled queries. Post-retrieval ordering: if RERANK_URL is set, the server POSTs {query, documents} for optional cross-encoder-style scores; if not set, results are still reordered by Qdrant semantic similarity (no extra service). Ollama (OLLAMA_URL + OLLAMA_MODEL) is only for embeddings at index/query time—not the same as RERANK_URL. Agents: you do not need to "enable" rerank manually unless the user asks to skip it (use rerank:false) or tune env; default behavior is already optimal for most tasks. Prefer a narrow file_pattern and a small limit on the first pass.',
   {
     query: z.string().describe('Search query — natural language, keywords, or a symbol name when mode is symbol'),
     project_name: z.string().describe('Project to search in'),
@@ -114,6 +114,12 @@ server.tool(
       .optional()
       .describe(
         'When false, skip post-retrieval reorder (HTTP rerank if RERANK_URL is set, else semantic reorder by Qdrant scores). Default follows SEARCH_RERANK. Use false for speed or when raw hybrid/semantic order is preferred.',
+      ),
+    fuzzy: z
+      .boolean()
+      .optional()
+      .describe(
+        'Enable fuzzy search re-ranking — boosts results with high Levenshtein similarity to query terms. Useful for misspelled queries or approximate matching. Default follows SEARCH_FUZZY_ENABLED env var (false).',
       ),
   },
   async (args) => search(args),
