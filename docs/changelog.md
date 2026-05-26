@@ -1,5 +1,10 @@
 # Changelog (highlights)
 
+## v0.8.1
+
+- **Fuzzy Search** — cờ `fuzzy: true` dùng Levenshtein distance để phát hiện typo và re-rank kết quả. Auto-detect query có dấu hiệu sai chính tả (lặp ký tự, common misspelling). Env: `SEARCH_FUZZY_ENABLED`.
+- **Docs Update** — `tools-reference.md`: thêm section Regex Search, Symbol Filters, Search Cache, Fuzzy Search. `configuration.md`: thêm 7 env vars mới (INDEX_WORKERS, INDEX_PARALLEL_BATCH, SEARCH_CACHE_SIZE, SEARCH_CACHE_TTL_MS, SEARCH_FUZZY_ENABLED).
+
 ## v0.8.0
 
 - **Parallel Indexing** — `index_codebase` dùng worker threads pool (tự động = CPU-1 workers) để chunk + embed song song; nhanh hơn ~3-4x trên máy multi-core. Progress hiển thị % trong quá trình index. Env: `INDEX_WORKERS`, `INDEX_PARALLEL_BATCH`.

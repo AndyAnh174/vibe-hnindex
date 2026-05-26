@@ -6,6 +6,17 @@ export interface VersionEntry {
 
 export const changelogData: VersionEntry[] = [
   {
+    title: "v0.8.1",
+    items: [
+      "**🔤 Fuzzy Search** — New `fuzzy: true` flag uses Levenshtein distance to detect typos and re-rank search results.",
+      "Typing 'fucntion' still finds functions. Query 'libery' surfaces 'library'. Boost factor: 0.5× similarity score added to original ranking.",
+      "Auto-detection: queries with repeated characters, swapped letters, or common misspellings automatically enable fuzzy mode.",
+      "Env: `SEARCH_FUZZY_ENABLED` (default false) — enable fuzzy search by default for all queries.",
+      "**📝 Docs Update** — `tools-reference.md`: added sections for Regex Search, Symbol Filters, Search Cache, and Fuzzy Search with examples and best practices.",
+      "`configuration.md`: added 7 new environment variables for parallel indexing, search cache, and fuzzy search.",
+    ],
+  },
+  {
     title: "v0.8.0",
     items: [
       "**⚡ Parallel Indexing** — `index_codebase` now uses a worker threads pool (auto = CPU count − 1, min 1 worker) to chunk and embed files in parallel.",
