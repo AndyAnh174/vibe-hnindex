@@ -122,3 +122,30 @@ jobs:
         run: npm publish -w hnindex-cli --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  create-release:
+    needs: check-vibe-hnindex
+    if: needs.check-vibe-hnindex.outputs.should_publish == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ needs.check-vibe-hnindex.outputs.version }}
+          name: v${{ needs.check-vibe-hnindex.outputs.version }}
+          body: |
+            ## vibe-hnindex v${{ needs.check-vibe-hnindex.outputs.version }}
+
+            Published to npm: [`vibe-hnindex@${{ needs.check-vibe-hnindex.outputs.version }}`](https://www.npmjs.com/package/vibe-hnindex)
+
+            Optional CLI installer: [`hnindex-cli`](https://www.npmjs.com/package/hnindex-cli) (`npm install -g hnindex-cli`)
+
+            ```bash
+            npx -y vibe-hnindex
+            ```
+          generate_release_notes: true
