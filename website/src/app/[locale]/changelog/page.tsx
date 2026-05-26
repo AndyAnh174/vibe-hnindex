@@ -66,24 +66,46 @@ export default function ChangelogPage() {
                         {version.title}
                       </h2>
 
-                      <ul className="space-y-3">
+                      <ul className="space-y-4">
                         {version.items.map((item, i) => {
-                          const match = item.match(/^\*\*(.+?)\*\*\s*[—–-]\s*(.+)$/);
-                          if (match) {
+                          // Bold title + description (feature header)
+                          const titleMatch = item.match(/^\*\*(.+?)\*\*\s*[—–-]\s*(.+)$/);
+                          if (titleMatch) {
                             return (
-                              <li key={i} className="flex gap-3 text-sm">
-                                <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
-                                <div>
-                                  <span className="font-semibold text-foreground">{match[1]}</span>
-                                  <span className="text-muted-foreground"> — {match[2]}</span>
+                              <li key={i} className="group">
+                                <div className="flex gap-3">
+                                  <span className="mt-1.5 size-2 shrink-0 rounded-full bg-primary ring-4 ring-primary/10" />
+                                  <div className="space-y-1">
+                                    <span className="text-sm font-semibold text-foreground">{titleMatch[1]}</span>
+                                    <p className="text-sm text-muted-foreground leading-relaxed">{titleMatch[2]}</p>
+                                  </div>
                                 </div>
                               </li>
                             );
                           }
+
+                          // Env vars
+                          const envMatch = item.match(/^Env:\s+(.+)$/);
+                          if (envMatch) {
+                            return (
+                              <li key={i} className="ml-5">
+                                <div className="flex items-start gap-2">
+                                  <Badge variant="secondary" className="mt-0.5 shrink-0 rounded-md px-1.5 py-0 text-[10px] font-mono">
+                                    ENV
+                                  </Badge>
+                                  <code className="text-xs text-muted-foreground">{envMatch[1]}</code>
+                                </div>
+                              </li>
+                            );
+                          }
+
+                          // Plain item (continuation line)
                           return (
-                            <li key={i} className="flex gap-3 text-sm">
-                              <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary/40" />
-                              <span className="text-muted-foreground">{item}</span>
+                            <li key={i} className="ml-5">
+                              <div className="flex gap-3">
+                                <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary/30" />
+                                <span className="text-sm text-muted-foreground leading-relaxed">{item}</span>
+                              </div>
                             </li>
                           );
                         })}
