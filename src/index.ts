@@ -28,7 +28,7 @@ initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.7.0',
+  version: '0.8.0',
 });
 
 // --- Resource: knowledge://projects ---
@@ -92,17 +92,17 @@ server.tool(
 // --- Tool: search ---
 server.tool(
   'search',
-  'Search the indexed codebase. Returns matching code chunks with file paths, line numbers, and relevance scores. Modes: keyword (FTS5), semantic (vector), hybrid (RRF fusion), auto (heuristic when SEARCH_AUTO_ROUTE), symbol (SQLite symbol index by identifier). Post-retrieval ordering: if RERANK_URL is set, the server POSTs {query, documents} for optional cross-encoder-style scores; if not set, results are still reordered by Qdrant semantic similarity (no extra service). Ollama (OLLAMA_URL + OLLAMA_MODEL) is only for embeddings at index/query time—not the same as RERANK_URL. Agents: you do not need to "enable" rerank manually unless the user asks to skip it (use rerank:false) or tune env; default behavior is already optimal for most tasks. Prefer a narrow file_pattern and a small limit on the first pass.',
+  'Search the indexed codebase. Returns matching code chunks with file paths, line numbers, and relevance scores. Modes: keyword (FTS5), semantic (vector), hybrid (RRF fusion), auto (heuristic when SEARCH_AUTO_ROUTE), symbol (SQLite symbol index by identifier), regex (pattern matching with /pattern/flags). Results are cached (LRU, 5min TTL) for non-regex modes. Filter by symbol_kind to only see files with functions, classes, etc. Post-retrieval ordering: if RERANK_URL is set, the server POSTs {query, documents} for optional cross-encoder-style scores; if not set, results are still reordered by Qdrant semantic similarity (no extra service). Ollama (OLLAMA_URL + OLLAMA_MODEL) is only for embeddings at index/query time—not the same as RERANK_URL. Agents: you do not need to "enable" rerank manually unless the user asks to skip it (use rerank:false) or tune env; default behavior is already optimal for most tasks. Prefer a narrow file_pattern and a small limit on the first pass.',
   {
     query: z.string().describe('Search query — natural language, keywords, or a symbol name when mode is symbol'),
     project_name: z.string().describe('Project to search in'),
     mode: z
-      .enum(['keyword', 'semantic', 'hybrid', 'auto', 'symbol'])
+      .enum(['keyword', 'semantic', 'hybrid', 'auto', 'symbol', 'regex'])
       .default('hybrid')
-      .describe('keyword | semantic | hybrid | auto (needs SEARCH_AUTO_ROUTE) | symbol (lookup by symbol name)'),
+      .describe('keyword | semantic | hybrid | auto (needs SEARCH_AUTO_ROUTE) | symbol (lookup by symbol name) | regex (pattern matching with /pattern/flags syntax)'),
     limit: z.number().int().min(1).max(50).default(10).describe('Maximum number of results to return'),
     language: z.string().optional().describe('Filter by language (e.g., "typescript", "python", "go")'),
-    file_pattern: z.string().optional().describe('Filter by file path glob pattern (e.g., "src/api/*", "*.ts", "services/**") — use to reduce noise'),
+    symbol_kind: z.string().optional().describe('Filter results to only files containing symbols of this kind: function, class, method, interface, type, variable, enum, or export'),
     expand_context: z.number().int().min(0).max(5).default(0).describe('Number of adjacent chunks to include before/after each result for more context (0 = no expansion)'),
     dedupe_by_file: z.boolean().default(true).describe('If true, at most one chunk per file (best score). Set false to allow multiple chunks from the same file.'),
     content_mode: z.enum(['full', 'compact']).optional().describe('Snippet length: compact (default) or full chunk text'),
@@ -321,7 +321,7 @@ server.tool(
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started (v0.7.0)');
+  console.error('[vibe-hnindex] Server started (v0.8.0)');
 }
 
 main().catch((error) => {

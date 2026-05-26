@@ -22,7 +22,7 @@ export interface SearchResult {
   content: string;
   language: string;
   score: number;
-  matchType: 'keyword' | 'semantic' | 'hybrid' | 'symbol';
+  matchType: 'keyword' | 'semantic' | 'hybrid' | 'symbol' | 'regex';
 }
 
 export interface ProjectInfo {

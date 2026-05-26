@@ -33,6 +33,7 @@ import {
   deletePoints,
   healthCheck as qdrantHealthCheck,
 } from '../services/qdrant.js';
+import { invalidateCache } from '../services/search-cache.js';
 import { isIgnored, loadHnindexIgnore } from '../services/hnindex-ignore.js';
 import { getGitHead } from '../services/git.js';
 
@@ -204,6 +205,9 @@ export async function indexFile(args: {
   } catch (parseError) {
     console.error(`[index-file] Dependency parsing failed for ${relativePath}:`, parseError);
   }
+
+  // Invalidate cache for this project after file update
+  invalidateCache(args.project_name);
 
   // Update stats
   const fileCount = getProjectFileCount(args.project_name);

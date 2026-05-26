@@ -2,10 +2,12 @@ import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { config } from '../config.js';
-import type { ChunkRecord } from '../types.js';
+import type { ChunkRecord, FileEntry } from '../types.js';
 import { scanDirectory } from '../services/file-scanner.js';
 import { chunkFile } from '../services/chunker.js';
 import { embed } from '../services/embeddings.js';
+import { parallelIndex } from '../services/parallel-indexer.js';
+import { invalidateCache } from '../services/search-cache.js';
 import {
   upsertProject,
   insertChunks,
@@ -77,61 +79,19 @@ export async function indexCodebase(args: {
     }
   }
 
+  const indexStartTime = Date.now();
   let totalFiles = 0;
   let indexedFiles = 0;
   let skippedFiles = 0;
   let unchangedFiles = 0;
   let totalChunks = 0;
 
-  // Batch accumulator for embedding
-  let chunkBatch: ChunkRecord[] = [];
-  let contentBatch: string[] = [];
+  // Invalidate cache for this project before re-indexing
+  invalidateCache(args.project_name);
 
-  const flushBatch = async () => {
-    if (chunkBatch.length === 0) return;
+  // Scan and collect files for parallel indexing
+  const filesToIndex: FileEntry[] = [];
 
-    try {
-      // Generate embeddings
-      const vectors = await embed(contentBatch);
-
-      // Insert into SQLite
-      insertChunks(chunkBatch);
-
-      // Insert into Qdrant
-      if (qdrantAvailable) {
-        const points = chunkBatch.map((chunk, i) => ({
-          id: chunk.id,
-          vector: vectors[i],
-          payload: {
-            project_name: chunk.projectName,
-            file_path: chunk.filePath,
-            chunk_index: chunk.chunkIndex,
-            start_line: chunk.startLine,
-            end_line: chunk.endLine,
-            language: chunk.language,
-          },
-        }));
-        await upsertPoints(args.project_name, points);
-      }
-
-      totalChunks += chunkBatch.length;
-    } catch (error) {
-      console.error('[index] Error processing batch:', error);
-      // Still insert into SQLite without embeddings
-      try {
-        insertChunks(chunkBatch);
-        totalChunks += chunkBatch.length;
-      } catch (sqlError) {
-        console.error('[index] SQLite insert also failed:', sqlError);
-        skippedFiles++;
-      }
-    }
-
-    chunkBatch = [];
-    contentBatch = [];
-  };
-
-  // Scan and index
   for await (const file of scanDirectory(rootPath)) {
     totalFiles++;
 
@@ -152,39 +112,30 @@ export async function indexCodebase(args: {
       }
     }
 
-    // Chunk the file
-    const chunks = chunkFile(file.content, file.relativePath);
-    const now = new Date().toISOString();
-
-    for (const chunk of chunks) {
-      const record: ChunkRecord = {
-        id: crypto.randomUUID(),
-        projectName: args.project_name,
-        filePath: file.relativePath,
-        absolutePath: file.absolutePath,
-        chunkIndex: chunk.chunkIndex,
-        startLine: chunk.startLine,
-        endLine: chunk.endLine,
-        content: chunk.content,
-        language: file.language,
-        fileHash,
-        indexedAt: now,
-      };
-
-      chunkBatch.push(record);
-      contentBatch.push(chunk.content);
-
-      // Flush when batch is full
-      if (chunkBatch.length >= config.embeddingBatchSize) {
-        await flushBatch();
-      }
-    }
-
-    indexedFiles++;
+    filesToIndex.push(file);
   }
 
-  // Flush remaining
-  await flushBatch();
+  // Parallel index the collected files
+  if (filesToIndex.length > 0) {
+    const batchSize = config.indexParallelBatch;
+    console.error(`[index] Parallel indexing ${filesToIndex.length} files with batch size ${batchSize}...`);
+
+    const result = await parallelIndex(filesToIndex, args.project_name, (done, total) => {
+      if (done % Math.max(1, Math.floor(total / 10)) === 0 || done === total) {
+        console.error(`[index] Progress: ${done}/${total} files (${Math.round(done / total * 100)}%)`);
+      }
+    });
+
+    indexedFiles = result.indexedFiles;
+    skippedFiles = result.skippedFiles;
+    totalChunks = result.totalChunks;
+
+    if (result.fallback) {
+      console.error(`[index] Using single-threaded fallback (INDEX_WORKERS=0 or only 1 CPU)`);
+    } else {
+      console.error(`[index] Used ${result.workerCount} workers`);
+    }
+  }
 
   // --- Dependency parsing pass ---
   let parsedDeps = 0;
@@ -276,6 +227,8 @@ export async function indexCodebase(args: {
     }
   }
 
+  const indexDuration = ((Date.now() - indexStartTime) / 1000).toFixed(1);
+
   // Build summary
   const parts = [
     `Indexed project "${args.project_name}"`,
@@ -285,6 +238,7 @@ export async function indexCodebase(args: {
     `  Files unchanged (skipped): ${unchangedFiles}`,
     `  Total chunks: ${finalChunkCount}`,
     `  Dependencies parsed: ${parsedDeps} files`,
+    `  Duration: ${indexDuration}s`,
   ];
 
   if (qdrantVerifyWarn) {

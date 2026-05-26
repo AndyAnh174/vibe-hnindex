@@ -820,6 +820,43 @@ export function getExportsByProject(projectName: string, limit = 50): ExportReco
 
 // --- Utility ---
 
+/** Return all chunks for a project (used by regex search mode). */
+export function getAllProjectChunks(projectName: string): Array<{
+  id: string;
+  filePath: string;
+  absolutePath: string;
+  chunkIndex: number;
+  startLine: number;
+  endLine: number;
+  content: string;
+  language: string;
+}> {
+  const rows = getDb().prepare(`
+    SELECT id, file_path, absolute_path, chunk_index, start_line, end_line, content, language
+    FROM chunks WHERE project_name = ? ORDER BY file_path, chunk_index
+  `).all(projectName) as Array<{
+    id: string;
+    file_path: string;
+    absolute_path: string;
+    chunk_index: number;
+    start_line: number;
+    end_line: number;
+    content: string;
+    language: string;
+  }>;
+
+  return rows.map(r => ({
+    id: r.id,
+    filePath: r.file_path,
+    absolutePath: r.absolute_path,
+    chunkIndex: r.chunk_index,
+    startLine: r.start_line,
+    endLine: r.end_line,
+    content: r.content,
+    language: r.language,
+  }));
+}
+
 export function getAllProjectFiles(projectName: string): string[] {
   const rows = getDb().prepare(
     'SELECT DISTINCT file_path FROM chunks WHERE project_name = ? ORDER BY file_path'

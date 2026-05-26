@@ -7,6 +7,7 @@ import {
   getAdjacentChunks,
   searchSymbolsByName,
   findChunkIdForLine,
+  getAllProjectChunks,
 } from '../services/sqlite.js';
 import { rerankSearchResults } from '../services/rerank.js';
 import { searchSimilar, healthCheck as qdrantHealthCheck } from '../services/qdrant.js';
@@ -17,14 +18,17 @@ import {
   DEFAULT_MAX_CONTENT_CHARS,
   truncateContentUnicode,
 } from '../services/snippet.js';
-import { resolveSearchMode } from '../services/query-router.js';
+import { resolveSearchMode, parseRegexQuery } from '../services/query-router.js';
+import { buildCacheKey, getCachedResult, setCachedResult } from '../services/search-cache.js';
+import { filterBySymbolKind } from '../services/symbol-filter.js';
 
-type SearchMode = 'keyword' | 'semantic' | 'hybrid' | 'auto' | 'symbol';
+type SearchMode = 'keyword' | 'semantic' | 'hybrid' | 'auto' | 'symbol' | 'regex';
 type ContentMode = 'full' | 'compact';
 
 interface SearchFilters {
   language?: string;
   file_pattern?: string;
+  symbol_kind?: string;
 }
 
 interface HybridExplainMeta {
@@ -57,6 +61,22 @@ class TimeoutError extends Error {
   constructor(ms: number) {
     super(`Operation timed out after ${ms}ms`);
     this.name = 'TimeoutError';
+  }
+}
+
+/** Simple glob pattern matching for regex and symbol_kind filters. */
+function simpleGlobMatch(filePath: string, pattern: string): boolean {
+  // Convert glob to regex: * → .*, ? → ., ** → .*
+  const regexStr = pattern
+    .replace(/[.+^${}()|[\]\\]/g, '\\$&')
+    .replace(/\*\*/g, '<<<GLOBSTAR>>>')
+    .replace(/\*/g, '[^/]*')
+    .replace(/<<<GLOBSTAR>>>/g, '.*')
+    .replace(/\?/g, '.');
+  try {
+    return new RegExp('^' + regexStr + '$', 'i').test(filePath);
+  } catch {
+    return filePath.toLowerCase().includes(pattern.toLowerCase());
   }
 }
 
@@ -95,6 +115,7 @@ export async function search(args: {
   limit?: number;
   language?: string;
   file_pattern?: string;
+  symbol_kind?: string;
   expand_context?: number;
   dedupe_by_file?: boolean;
   content_mode?: ContentMode;
@@ -106,8 +127,11 @@ export async function search(args: {
 }): Promise<{ content: Array<{ type: 'text'; text: string }> }> {
   const rawMode =
     args.mode !== undefined ? args.mode : config.searchAutoRoute ? 'auto' : 'hybrid';
+  const queryStr = args.query.trim();
   const effectiveMode: SearchMode =
-    rawMode === 'symbol' ? 'symbol' : resolveSearchMode(args.query, rawMode);
+    rawMode === 'symbol' ? 'symbol'
+      : rawMode === 'regex' ? 'regex'
+      : resolveSearchMode(args.query, rawMode as 'keyword' | 'semantic' | 'hybrid' | 'auto' | 'regex');
   const limit = args.limit || 10;
   const dedupeByFileEnabled = args.dedupe_by_file !== false;
   const kwLimit = keywordFetchLimit(limit, dedupeByFileEnabled);
@@ -122,10 +146,12 @@ export async function search(args: {
     ? Math.min(config.searchRerankPool, Math.max(limit, Math.min(50, limit * 5)))
     : limit;
   const dedupeTarget = useRerank ? poolCap : limit;
+  const symbolKind = args.symbol_kind?.trim();
 
   const filters: SearchFilters = {};
   if (args.language) filters.language = args.language;
   if (args.file_pattern) filters.file_pattern = args.file_pattern;
+  if (symbolKind) filters.symbol_kind = symbolKind;
 
   const project = await getProjectWithRetry(args.project_name);
   if (!project) {
@@ -137,13 +163,36 @@ export async function search(args: {
     };
   }
 
+  // Check cache before searching (skip for regex as results are pattern-dependent)
+  if (effectiveMode !== 'regex') {
+    const cacheKey = buildCacheKey({
+      projectName: args.project_name,
+      query: args.query,
+      mode: effectiveMode,
+      limit,
+      filters: { language: args.language, file_pattern: args.file_pattern, symbol_kind: symbolKind },
+    });
+    const cached = getCachedResult(cacheKey);
+    if (cached && cached.length > 0) {
+      // Return cached results with minimal formatting
+      const header = `Found ${cached.length} results for "${args.query}" (mode: ${effectiveMode}) [cached]:\n`;
+      const resultTexts = cached.slice(0, limit).map((r, i) => {
+        const body = contentMode === 'compact' ? truncateContentUnicode(r.content, maxContentChars) : r.content;
+        return `### ${i + 1}. ${r.filePath}:${r.startLine}-${r.endLine} (${r.language}) [score: ${r.score.toFixed(4)}]\n\`\`\`${r.language}\n${body}\n\`\`\``;
+      });
+      return {
+        content: [{ type: 'text', text: header + '\n' + resultTexts.join('\n\n') }],
+      };
+    }
+  }
+
   try {
     const result = await withTimeout((async (): Promise<{ content: Array<{ type: 'text'; text: string }> }> => {
 
   let keywordResults: SearchResult[] = [];
   let semanticResults: Array<{ id: string; score: number }> = [];
   const warnings: string[] = [];
-  let actualMode = effectiveMode;
+  let actualMode: SearchMode = effectiveMode;
 
   const semanticFetchLimit = dedupeByFileEnabled
     ? Math.min(200, Math.max(limit * 20, limit))
@@ -152,7 +201,7 @@ export async function search(args: {
   let keywordFallbackRan = false;
 
   // Keyword / semantic / hybrid (symbol mode uses SQLite symbols table only)
-  if (effectiveMode !== 'symbol') {
+  if (effectiveMode !== 'symbol' && effectiveMode !== 'regex') {
   // Keyword search (fetch more rows when deduping by file so we can still fill `limit` distinct files)
   if (effectiveMode === 'keyword' || effectiveMode === 'hybrid') {
     try {
@@ -247,7 +296,7 @@ export async function search(args: {
       }
     }
   }
-  } // end effectiveMode !== 'symbol'
+  } // end effectiveMode !== 'symbol' && effectiveMode !== 'regex'
 
   // Combine results
   let finalResults: SearchResult[];
@@ -256,7 +305,63 @@ export async function search(args: {
   const keywordRankById = new Map(keywordResults.map((r, i) => [r.id, i + 1]));
   const semanticRankById = new Map(semanticResults.map((r, i) => [r.id, i + 1]));
 
-  if (effectiveMode === 'symbol') {
+  if (effectiveMode === 'regex') {
+    // Regex mode — match chunks using RegExp on content
+    const regexParsed = parseRegexQuery(args.query);
+    const pattern = regexParsed?.pattern ?? args.query;
+    const flags = regexParsed?.flags ?? 'i';
+
+    let regex: RegExp;
+    try {
+      regex = new RegExp(pattern, flags);
+    } catch (err) {
+      return {
+        content: [{
+          type: 'text',
+          text: `Error: Invalid regex pattern: ${err instanceof Error ? err.message : String(err)}`,
+        }],
+      };
+    }
+
+    const allChunks = getAllProjectChunks(args.project_name);
+
+    const matchedResults: SearchResult[] = [];
+    for (const chunk of allChunks) {
+      if (filters.language && chunk.language.toLowerCase() !== filters.language.toLowerCase()) continue;
+      if (filters.file_pattern && !simpleGlobMatch(chunk.filePath, filters.file_pattern)) continue;
+
+      const matches = chunk.content.match(regex);
+      if (matches) {
+        const highlightContent = chunk.content.replace(regex, (m) => `**${m}**`);
+        matchedResults.push({
+          id: chunk.id,
+          filePath: chunk.filePath,
+          absolutePath: chunk.absolutePath,
+          chunkIndex: chunk.chunkIndex,
+          startLine: chunk.startLine,
+          endLine: chunk.endLine,
+          content: highlightContent,
+          language: chunk.language,
+          score: matches.length,
+          matchType: 'regex' as const,
+        });
+      }
+    }
+
+    matchedResults.sort((a, b) => b.score - a.score || a.filePath.localeCompare(b.filePath));
+
+    if (dedupeByFileEnabled) {
+      finalResults = dedupeByFile(matchedResults, dedupeTarget);
+    } else {
+      finalResults = matchedResults.slice(0, dedupeTarget);
+    }
+    actualMode = 'regex';
+
+    // Apply symbol_kind filter if specified
+    if (symbolKind) {
+      finalResults = filterBySymbolKind(finalResults, args.project_name, symbolKind);
+    }
+  } else if (effectiveMode === 'symbol') {
     const nameQ = args.query.trim();
     if (!nameQ) {
       return {
@@ -372,6 +477,23 @@ export async function search(args: {
     } else {
       finalResults = finalResults.slice(0, dedupeTarget);
     }
+  }
+
+  // Apply symbol_kind filter for non-regex modes (regex already applied above)
+  if (symbolKind && effectiveMode !== 'regex') {
+    finalResults = filterBySymbolKind(finalResults, args.project_name, symbolKind);
+  }
+
+  // Store results in cache for non-regex modes
+  if (effectiveMode !== 'regex' && finalResults.length > 0) {
+    const cacheKey = buildCacheKey({
+      projectName: args.project_name,
+      query: args.query,
+      mode: effectiveMode,
+      limit,
+      filters: { language: args.language, file_pattern: args.file_pattern, symbol_kind: symbolKind },
+    });
+    setCachedResult(cacheKey, finalResults);
   }
 
   const scoreBeforePath = new Map(finalResults.map((r) => [r.id, r.score]));

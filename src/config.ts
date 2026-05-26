@@ -63,6 +63,21 @@ export const config = {
   qdrantTimeoutMs: parseInt(process.env.QDRANT_TIMEOUT_MS || '15000', 10),
   /** Overall timeout for search operations. Default 60s. */
   searchTimeoutMs: parseInt(process.env.SEARCH_TIMEOUT_MS || '60000', 10),
+
+  // Parallel indexing (v0.8.0)
+  /** Number of worker threads for parallel indexing. Default: auto (cpu count - 1, min 1). Set to 0 for single-threaded. */
+  indexWorkers: process.env.INDEX_WORKERS?.trim() === '0' ? 0
+    : process.env.INDEX_WORKERS?.trim() && process.env.INDEX_WORKERS?.trim() !== 'auto'
+      ? parseInt(process.env.INDEX_WORKERS || '1', 10)
+      : 0, // 0 means "auto" in parallel-indexer
+  /** Files per worker batch during parallel indexing. Default 8. */
+  indexParallelBatch: parseInt(process.env.INDEX_PARALLEL_BATCH || '8', 10),
+
+  // Search cache (v0.8.0)
+  /** Max cache entries for search results. Default 100. */
+  searchCacheSize: parseInt(process.env.SEARCH_CACHE_SIZE || '100', 10),
+  /** Cache TTL in milliseconds. Default 300000 (5 min). */
+  searchCacheTtlMs: parseInt(process.env.SEARCH_CACHE_TTL_MS || '300000', 10),
 } as const;
 
 export function getCollectionName(projectName: string): string {
