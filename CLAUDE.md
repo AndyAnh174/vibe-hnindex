@@ -48,12 +48,20 @@
 
 ## Streaming Search (v0.9.0)
 
-Add `stream=true` to searches for parallel keyword+semantic with progress:
+Add `stream=true` to searches for parallel keyword+semantic execution:
 ```json
 { "query": "auth middleware", "project_name": "my-project", "stream": true }
 ```
 
 Or enable globally: `SEARCH_STREAM_ENABLED=true`
+
+**How it works**: Keyword FTS5 and semantic Qdrant run simultaneously (Promise.all) instead of sequentially. This reduces total search time by ~1.5-2x.
+
+**NOT just TTFB** — the actual total response time is faster because two independent searches run in parallel.
+
+**Progress**: 4-phase notifications sent via MCP `notifications/progress`.
+
+**Preview**: Top 5 results streamed via MCP `logging` messages before final response.
 
 ## Fuzzy Search (v0.8.1)
 
