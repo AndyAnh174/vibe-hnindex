@@ -6,6 +6,13 @@ export interface VersionEntry {
 
 export const changelogData: VersionEntry[] = [
   {
+    title: "v0.9.8",
+    items: [
+      "**🔧 Fix** — `hnindex init-skill` no longer reads SKILL.md from disk. Content is inlined to avoid ENOENT errors when installed via npm.",
+      "**📦 Versions** — `vibe-hnindex` v0.9.8, `hnindex-cli` v0.9.8.",
+    ],
+  },
+  {
     title: "v0.9.5",
     items: [
       "**📄 Agent Skill** — New `use-vibe-hnindex` skill for AI agents (Claude, Antigravity, Cursor, Codex). Auto-loaded to understand all 20 tools, search modes, streaming, fuzzy matching, and best practices.",
