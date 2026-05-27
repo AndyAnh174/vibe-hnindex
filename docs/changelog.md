@@ -1,5 +1,12 @@
 # Changelog (highlights)
 
+## v0.9.5
+
+- **📄 Agent Skill** — Skill `use-vibe-hnindex` trong `skills/use-vibe-hnindex/SKILL.md` — AI agent (Claude, Antigravity, Cursor, Codex) tự động load và hiểu hết 20 tools.
+- **🔧 CLI `init-skill`** — `hnindex init-skill --target claude` tạo skill file cho editor tương ứng.
+- **🔬 Benchmark Tool** — Tool `benchmark_search`: chạy bộ test queries (keyword, hybrid, regex, fuzzy) có/không streaming, báo cáo bảng so sánh thời gian + speedup.
+- **Versions** — `vibe-hnindex` v0.9.5, `hnindex-cli` v0.9.5.
+
 ## v0.9.4
 
 - **🔬 Benchmark Tool** — Tool mới `benchmark_search`: chạy bộ test queries (keyword, hybrid, regex, fuzzy) có và không có streaming, báo cáo thời gian (avg/min/max), số kết quả, và speedup ratio. 1 câu là ra bảng so sánh performance.

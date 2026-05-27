@@ -6,6 +6,15 @@ export interface VersionEntry {
 
 export const changelogData: VersionEntry[] = [
   {
+    title: "v0.9.5",
+    items: [
+      "**📄 Agent Skill** — New `use-vibe-hnindex` skill for AI agents (Claude, Antigravity, Cursor, Codex). Auto-loaded to understand all 20 tools, search modes, streaming, fuzzy matching, and best practices.",
+      "**🔧 CLI `init-skill`** — New `hnindex init-skill --target <editor>` command creates the skill file in the correct directory for your editor.",
+      "**🔬 Benchmark Tool** — New `benchmark_search` tool runs a suite of test queries with and without streaming, reports avg/min/max timing and speedup ratios.",
+      "**📦 Versions** — `vibe-hnindex` v0.9.5, `hnindex-cli` v0.9.5.",
+    ],
+  },
+  {
     title: "v0.9.4",
     items: [
       "**🔬 Benchmark Tool** — New `benchmark_search` tool runs a suite of test queries (keyword, hybrid, regex, fuzzy) with and without streaming.",
