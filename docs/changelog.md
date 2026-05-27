@@ -1,5 +1,10 @@
 # Changelog (highlights)
 
+## v0.9.8
+
+- **🔧 Fix** — `hnindex init-skill` nội dung skill inline thay vì đọc file (tránh lỗi ENOENT khi cài qua npm).
+- **Versions** — `vibe-hnindex` v0.9.8, `hnindex-cli` v0.9.8.
+
 ## v0.9.5
 
 - **📄 Agent Skill** — Skill `use-vibe-hnindex` trong `skills/use-vibe-hnindex/SKILL.md` — AI agent (Claude, Antigravity, Cursor, Codex) tự động load và hiểu hết 20 tools.
