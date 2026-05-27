@@ -41,10 +41,23 @@ export default function InstallationPage() {
       <h3 id="ollama">2. Ollama (Embedding Server)</h3>
       <p>
         Ollama provides the embedding model used for semantic search. Install it from{" "}
-        <a href="https://ollama.com/download" target="_blank" rel="noopener noreferrer">ollama.com</a>, then:
+        <a href="https://ollama.com/download" target="_blank" rel="noopener noreferrer">ollama.com</a>, then pull your model:
       </p>
-      <pre><code>ollama pull bge-m3:567m
-ollama serve</code></pre>
+      <pre><code>{`# Default: bge-m3 (multilingual, 1024-dim)
+ollama pull bge-m3:567m
+
+# Lightweight alternative (recommended for CPU-only)
+ollama pull nomic-embed-text
+
+# Best quality (needs GPU)
+ollama pull qwen3-embedding:4b
+
+ollama serve`}</code></pre>
+      <p>
+        <strong>Which model?</strong> bge-m3 is the default. If you have limited RAM or no GPU,
+        nomic-embed-text (274 MB) is the best choice. See{" "}
+        <a href="/configuration#embedding-models">Configuration → Embedding Models</a> for a full comparison.
+      </p>
       <p>
         <strong>Remote Ollama:</strong> If Ollama runs on another machine, you&apos;ll set{" "}
         <code>OLLAMA_URL</code> in your MCP config to point to it.

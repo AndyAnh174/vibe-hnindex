@@ -137,6 +137,59 @@ SEARCH_TIMEOUT_MS=120000  # 2min overall timeout`}</code></pre>
         parsing instead of two passes. Combined with SHA-1 for change detection, this makes
         indexing ~30-40% faster on large codebases.
       </p>
+
+      <Separator className="my-8" />
+
+      <h2 id="embedding-model-performance">Embedding Model Performance</h2>
+      <p>
+        The embedding model significantly impacts indexing speed. Larger models produce better
+        vectors but take longer per chunk:
+      </p>
+
+      <table>
+        <thead>
+          <tr><th>Model</th><th>RAM</th><th>GPU?</th><th>Latency/Chunk</th><th>Index 1k Files*</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>all-minilm</code></td><td>~100 MB</td><td>No</td><td>~5 ms</td><td>~30 sec</td></tr>
+          <tr><td><code>nomic-embed-text</code></td><td>~400 MB</td><td>Optional</td><td>~15 ms</td><td>~1.5 min</td></tr>
+          <tr><td><code>bge-m3:567m</code></td><td>~1.5 GB</td><td>Recommended</td><td>~25 ms</td><td>~2.5 min</td></tr>
+          <tr><td><code>qwen3-embedding:4b</code></td><td>~3 GB (Q4)</td><td>Required</td><td>~40 ms</td><td>~4 min</td></tr>
+        </tbody>
+      </table>
+      <p className="text-xs text-muted-foreground">
+        * Estimated indexing time for 1,000 source files with 60-line chunks (single worker).
+        Actuals vary with file size, hardware, and parallel workers.
+      </p>
+
+      <h3>VRAM Impact</h3>
+      <p>
+        Models that fit entirely in GPU VRAM generate embeddings <strong>5-30× faster</strong> than
+        models that spill to system RAM. Always check quantization level:
+      </p>
+      <table>
+        <thead>
+          <tr><th>Quantization</th><th>Memory Reduction</th><th>Quality Impact</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>F16 (default)</td><td>Baseline</td><td>None</td></tr>
+          <tr><td>Q8_0</td><td>~50%</td><td>Negligible</td></tr>
+          <tr><td>Q5_K_M</td><td>~65%</td><td>Minimal</td></tr>
+          <tr><td>Q4_K_M</td><td>~75%</td><td>Moderate</td></tr>
+        </tbody>
+      </table>
+      <pre><code>{`# Pull a quantized model
+ollama pull nomic-embed-text:Q8_0
+ollama pull qwen3-embedding:4b-Q4_K_M`}</code></pre>
+
+      <h3>Matryoshka Dimension Reduction</h3>
+      <p>
+        <code>nomic-embed-text</code> and <code>snowflake-arctic-embed2</code> support
+        Matryoshka Representation Learning — you can reduce dimensions (e.g., 768 → 512)
+        while keeping ~90% quality, saving memory and Qdrant storage:
+      </p>
+      <pre><code>{`EMBEDDING_DIMENSIONS=512   # Slower to compute but uses less Qdrant storage
+EMBEDDING_DIMENSIONS=256   # Even smaller, still usable quality`}</code></pre>
     </DocsLayout>
   );
 }

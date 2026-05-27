@@ -126,6 +126,82 @@ __pycache__`}</code></pre>
 
       <Separator className="my-8" />
 
+      <h2 id="embedding-models">Embedding Model Selection</h2>
+      <p>
+        vibe-hnindex supports any <a href="https://ollama.com/search?c=embedding" target="_blank" rel="noopener noreferrer">Ollama embedding model</a>.
+        Change <code>OLLAMA_MODEL</code> and <code>EMBEDDING_DIMENSIONS</code> to switch.
+      </p>
+
+      <h3>Model Comparison</h3>
+      <table>
+        <thead>
+          <tr><th>Model</th><th>Size</th><th>Dims</th><th>Context</th><th>MTEB Score</th><th>Best For</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>bge-m3:567m</code> <Badge variant="secondary">default</Badge></td>
+            <td>1.2 GB</td><td>1024</td><td>8192</td><td>~63</td>
+            <td>Multilingual (100+ languages), multi-vector retrieval</td>
+          </tr>
+          <tr>
+            <td><code>nomic-embed-text</code></td>
+            <td>274 MB</td><td>768</td><td>8192</td><td>62.39</td>
+            <td>Lightweight, CPU-friendly, Matryoshka dim reduction</td>
+          </tr>
+          <tr>
+            <td><code>qwen3-embedding:4b</code></td>
+            <td>2.5 GB (Q4)</td><td>32-4096</td><td>8192</td><td>~67</td>
+            <td>Best quality with GPU, instruction support</td>
+          </tr>
+          <tr>
+            <td><code>mxbai-embed-large</code></td>
+            <td>670 MB</td><td>1024</td><td>512 ⚠️</td><td>64.68</td>
+            <td>⚠️ Short context — not recommended for code</td>
+          </tr>
+          <tr>
+            <td><code>snowflake-arctic-embed2</code></td>
+            <td>1.1 GB</td><td>1024</td><td>8192</td><td>~58</td>
+            <td>Multilingual, Matryoshka, smaller than bge-m3</td>
+          </tr>
+          <tr>
+            <td><code>all-minilm</code></td>
+            <td>46 MB</td><td>384</td><td>256</td><td>~56</td>
+            <td>Prototyping, resource-constrained</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3>How to Switch Models</h3>
+      <pre><code>{`# 1. Pull the new model
+ollama pull nomic-embed-text
+
+# 2. Update MCP config env
+OLLAMA_MODEL=nomic-embed-text
+EMBEDDING_DIMENSIONS=768
+
+# 3. Delete old Qdrant collection and re-index
+delete_project(project_name: "my-app")
+index_codebase(path: "/path/to/project", project_name: "my-app")`}</code></pre>
+      <blockquote>
+        After switching models, you <strong>must</strong> delete and re-index projects —
+        Qdrant collection vector size is fixed at creation time.
+      </blockquote>
+
+      <h3>Recommendations</h3>
+      <table>
+        <thead>
+          <tr><th>Scenario</th><th>Model</th><th>Reason</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>CPU only / low RAM</td><td><code>nomic-embed-text</code></td><td>274 MB, runs on CPU</td></tr>
+          <tr><td>Multilingual codebase</td><td><code>bge-m3:567m</code></td><td>100+ languages, best multilingual</td></tr>
+          <tr><td>GPU ≥ 8 GB VRAM</td><td><code>qwen3-embedding:4b</code></td><td>Highest quality with instruction support</td></tr>
+          <tr><td>Minimal resources</td><td><code>all-minilm</code></td><td>46 MB, instant embedding</td></tr>
+        </tbody>
+      </table>
+
+      <Separator className="my-8" />
+
       <h2 id="parallel-indexing">Parallel Indexing (v0.8.0+)</h2>
       <p>
         <code>INDEX_WORKERS</code> controls parallel file indexing using worker threads.

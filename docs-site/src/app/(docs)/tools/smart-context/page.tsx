@@ -131,6 +131,48 @@ export default function SmartContextPage() {
         </tbody>
       </table>
 
+      <h2 id="response-format">Response Format</h2>
+      <p>
+        Smart Context returns a structured response with sections based on the detected task type:
+      </p>
+
+      <table>
+        <thead>
+          <tr><th>Section</th><th>Content</th><th>Modes</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Task Analysis</td><td>Detected task type, keywords, relevant directories</td><td>All</td></tr>
+          <tr><td>Core Context</td><td>File content + imports + definitions for the main files</td><td>All</td></tr>
+          <tr><td>Dependents</td><td>Files that import/use the target code</td><td>Task, Refactor</td></tr>
+          <tr><td>Test Files</td><td>Related <code>.test.ts</code>, <code>.spec.ts</code>, <code>__tests__/</code></td><td>Task, Refactor, Debug</td></tr>
+          <tr><td>Similar Patterns</td><td>Files with same extension and similar code structure</td><td>Task, Add Feature</td></tr>
+          <tr><td>Impact Analysis</td><td>Up to 3 levels deep — files affected by the change</td><td>Refactor</td></tr>
+          <tr><td>Symbol Map</td><td>Exports, types, interfaces in the affected scope</td><td>All</td></tr>
+          <tr><td>Git History</td><td>Recent changes to relevant files (if git repo)</td><td>All</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="agent-usage">How AI Agents Should Use Smart Context</h2>
+      <ol>
+        <li>
+          <strong>Before starting a task:</strong> Call <code>smart_context</code> with a brief
+          description of what you plan to do. It gathers all relevant files upfront.
+        </li>
+        <li>
+          <strong>Read the task analysis</strong> to understand the task type and affected areas.
+        </li>
+        <li>
+          <strong>Check impact analysis</strong> (refactor mode) before touching shared utilities
+          to avoid breaking dependents.
+        </li>
+        <li>
+          <strong>Review test files</strong> to understand expected behavior and run tests after changes.
+        </li>
+        <li>
+          <strong>Use similar patterns</strong> to stay consistent with existing code style.
+        </li>
+      </ol>
+
       <h2 id="related-tools">Related Tools</h2>
       <ul>
         <li>
@@ -141,6 +183,15 @@ export default function SmartContextPage() {
         </li>
         <li>
           <code>agent_rules_stub</code> — Short copy-paste markdown for AI agent context
+        </li>
+        <li>
+          <code>file_summary</code> — Get imports, exports, dependents, and test files for a specific file
+        </li>
+        <li>
+          <code>symbol_lookup</code> — Look up a symbol (function, class, type) and get all references
+        </li>
+        <li>
+          <code>recent_changes</code> — See what files changed recently in a project
         </li>
       </ul>
     </DocsLayout>

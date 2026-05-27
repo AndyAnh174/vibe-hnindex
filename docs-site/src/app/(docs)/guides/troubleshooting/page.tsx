@@ -112,11 +112,41 @@ export default function TroubleshootingPage() {
         Verify the model is pulled and <code>ollama serve</code> is running.
       </p>
 
+      <h3>Switching Embedding Models</h3>
+      <p>
+        Changing <code>OLLAMA_MODEL</code> requires updating <code>EMBEDDING_DIMENSIONS</code> and re-indexing:
+      </p>
+      <ol>
+        <li>Pull the new model: <code>ollama pull nomic-embed-text</code></li>
+        <li>Update MCP env: <code>OLLAMA_MODEL=nomic-embed-text</code>, <code>EMBEDDING_DIMENSIONS=768</code></li>
+        <li>Delete existing project: <code>delete_project(project_name: "my-app")</code></li>
+        <li>Re-index: <code>index_codebase(path: "/path", project_name: "my-app")</code></li>
+        <li>Verify: <code>server_diagnostics()</code></li>
+      </ol>
+      <blockquote>
+        The Qdrant collection is created with a fixed vector size. Changing the embedding
+        model without deleting + re-indexing will cause dimension mismatch errors.
+      </blockquote>
+
       <h3>Dimension Mismatch</h3>
       <p>
-        If you change <code>OLLAMA_MODEL</code>, update <code>EMBEDDING_DIMENSIONS</code> to match.
-        Then delete and re-create the Qdrant collection and re-index.
+        If you see errors like "dimension mismatch" or "wrong vector size", it means
+        <code>EMBEDDING_DIMENSIONS</code> doesn&apos;t match the model&apos;s actual output.
+        Delete the Qdrant collection and re-create it with the correct dimensions.
       </p>
+      <table>
+        <thead>
+          <tr><th>Model</th><th>Correct Dimension</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>bge-m3:567m</code></td><td><code>1024</code></td></tr>
+          <tr><td><code>nomic-embed-text</code></td><td><code>768</code></td></tr>
+          <tr><td><code>mxbai-embed-large</code></td><td><code>1024</code></td></tr>
+          <tr><td><code>all-minilm</code></td><td><code>384</code></td></tr>
+          <tr><td><code>snowflake-arctic-embed2</code></td><td><code>1024</code></td></tr>
+          <tr><td><code>qwen3-embedding</code></td><td><code>32-4096</code> (configurable)</td></tr>
+        </tbody>
+      </table>
 
       <h3>Remote Ollama</h3>
       <p>
