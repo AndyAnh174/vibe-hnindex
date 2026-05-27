@@ -5,15 +5,15 @@
     "email": "hovietanh147@gmail.com"
   },
   "metadata": {
-    "description": "MCP tools for indexing and searching codebases with keyword + semantic + hybrid modes",
-    "version": "0.7.0"
+    "description": "MCP tools for indexing and searching codebases with keyword + semantic + hybrid modes. Supports streaming search, fuzzy matching, regex, symbol filters, and parallel indexing.",
+    "version": "0.9.3"
   },
   "plugins": [
     {
       "name": "vibe-hnindex",
       "source": "./",
-      "description": "Index source code into a local knowledge base, search with keyword + semantic + hybrid modes",
-      "version": "0.7.0",
+      "description": "Index source code into a local knowledge base, search with keyword + semantic + hybrid modes. Streaming search, fuzzy matching, regex, symbol filters, parallel indexing.",
+      "version": "0.9.3",
       "author": {
         "name": "Ho Viet Anh (AndyAnh174)",
         "email": "hovietanh147@gmail.com"
@@ -21,7 +21,7 @@
       "homepage": "https://github.com/AndyAnh174/vibe-hnindex",
       "repository": "https://github.com/AndyAnh174/vibe-hnindex",
       "license": "MIT",
-      "keywords": ["mcp", "codebase", "search", "indexing", "semantic-search", "rag"],
+      "keywords": ["mcp", "codebase", "search", "indexing", "semantic-search", "rag", "streaming", "fuzzy"],
       "category": "developer-tools",
       "tags": ["mcp", "search", "codebase", "knowledge-base", "qdrant", "sqlite"]
     }
