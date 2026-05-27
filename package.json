@@ -1,6 +1,6 @@
 {
   "name": "vibe-hnindex",
-  "version": "0.9.4",
+  "version": "0.9.5",
   "workspaces": [
     "packages/*"
   ],
