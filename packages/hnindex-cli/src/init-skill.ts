@@ -57,6 +57,12 @@ You have access to vibe-hnindex MCP tools for indexing and searching codebases. 
 search(query="how does token validation work", project_name="my-project", mode="hybrid", stream=true)
 \`\`\`
 
+### Smart Context — Task-Aware (v0.10.0)
+\`\`\`
+smart_context(project_name="my-project", file_path="src/auth.ts", task="refactor to add rate limiting")
+smart_context(project_name="my-project", question="how does auth flow work?")
+\`\`\`
+
 ### Find All Implementations
 \`\`\`
 symbol_lookup(project_name="my-project", symbol="AuthService", kind="class")
