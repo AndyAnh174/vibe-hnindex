@@ -3,9 +3,11 @@ import { parseArgs } from 'node:util';
 import { readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { resolve } from 'node:path';
 import { runInit, printTargetList } from './init.js';
 import { parseTarget } from './paths.js';
 import { runGlobalUpdate } from './update.js';
+import { runInitSkill, printSkillTargets } from './init-skill.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -31,6 +33,7 @@ Usage:
   hnindex update
   hnindex version
   hnindex init --list
+  hnindex init-skill --target <editor>
 
 Commands:
   init       Merge vibe-hnindex into the MCP JSON for your editor (creates dirs if needed)
@@ -54,6 +57,8 @@ Examples:
   hnindex init --mcp antigravity
   hnindex init --mcp claude --cwd ~/my-repo
   hnindex init --mcp vscode --qdrant-url https://xxx.cloud.qdrant.io:6333 --qdrant-api-key "***"
+  hnindex init-skill --target claude
+  hnindex init-skill --target antigravity
   hnindex init --mcp cursor-project --cwd .
 
 Docs: https://github.com/AndyAnh174/vibe-hnindex
@@ -77,6 +82,36 @@ function main(): void {
     const r = runGlobalUpdate();
     console.log(r.message);
     process.exit(r.ok ? 0 : 1);
+  }
+
+  if (argv[0] === 'init-skill') {
+    const rest = argv.slice(1);
+    let target = '';
+    let cwd = process.cwd();
+    for (let i = 0; i < rest.length; i++) {
+      if ((rest[i] === '--target' || rest[i] === '-t') && i + 1 < rest.length) {
+        target = rest[i + 1];
+        i++;
+      } else if (rest[i] === '--cwd' && i + 1 < rest.length) {
+        cwd = resolve(process.cwd(), rest[i + 1]);
+        i++;
+      } else if (rest[i] === '--list' || rest[i] === '-l') {
+        console.log(printSkillTargets());
+        process.exit(0);
+      } else {
+        console.error(`Unknown option: ${rest[i]}`);
+        console.error('Run: hnindex help');
+        process.exit(1);
+      }
+    }
+    if (!target) {
+      console.error('Missing --target <editor>. Run: hnindex init-skill --list');
+      process.exit(1);
+    }
+    const result = runInitSkill(target, cwd);
+    console.log(result.existed ? `Updated ${result.filePath}` : `Created ${result.filePath}`);
+    console.log('AI agent will now auto-load vibe-hnindex skill on next session.');
+    process.exit(0);
   }
 
   if (argv[0] !== 'init') {

@@ -5,14 +5,14 @@
     "email": "hovietanh147@gmail.com"
   },
   "metadata": {
-    "description": "MCP tools for indexing and searching codebases with keyword + semantic + hybrid modes. Supports streaming search, fuzzy matching, regex, symbol filters, and parallel indexing.",
+    "description": "MCP tools for indexing and searching codebases with keyword + semantic + hybrid modes. Supports streaming search, fuzzy matching, regex, symbol filters, parallel indexing, and benchmarking.",
     "version": "0.9.4"
   },
   "plugins": [
     {
       "name": "vibe-hnindex",
       "source": "./",
-      "description": "Index source code into a local knowledge base, search with keyword + semantic + hybrid modes. Streaming search, fuzzy matching, regex, symbol filters, parallel indexing.",
+      "description": "Index source code into a local knowledge base, search with keyword + semantic + hybrid modes. Streaming search, fuzzy matching, regex, symbol filters, parallel indexing, benchmark tool.",
       "version": "0.9.4",
       "author": {
         "name": "Ho Viet Anh (AndyAnh174)",
@@ -21,9 +21,16 @@
       "homepage": "https://github.com/AndyAnh174/vibe-hnindex",
       "repository": "https://github.com/AndyAnh174/vibe-hnindex",
       "license": "MIT",
-      "keywords": ["mcp", "codebase", "search", "indexing", "semantic-search", "rag", "streaming", "fuzzy"],
+      "keywords": ["mcp", "codebase", "search", "indexing", "semantic-search", "rag", "streaming", "fuzzy", "benchmark"],
       "category": "developer-tools",
       "tags": ["mcp", "search", "codebase", "knowledge-base", "qdrant", "sqlite"]
+    }
+  ],
+  "skills": [
+    {
+      "name": "use-vibe-hnindex",
+      "path": "skills/use-vibe-hnindex/SKILL.md",
+      "description": "Guide for using vibe-hnindex MCP tools — indexing, searching, streaming, fuzzy matching, benchmarking. Auto-loaded by AI agents."
     }
   ]
 }
