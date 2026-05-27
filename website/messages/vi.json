@@ -5,7 +5,7 @@
     "npm": "npm"
   },
   "hero": {
-    "badge": "v0.7.2 · Mã nguồn mở · MIT",
+    "badge": "v0.10.0 · Mã nguồn mở · MIT",
     "title": "Index Một Lần,",
     "titleHighlight": "Tìm Kiếm Mọi Phiên",
     "subtitle": "MCP server cục bộ index codebase của bạn và cho phép mọi trợ lý AI tìm kiếm với đường dẫn, phạm vi dòng, và hiểu ngữ nghĩa. Code của bạn ở trên máy bạn.",
