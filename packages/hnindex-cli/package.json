@@ -1,6 +1,6 @@
 {
   "name": "hnindex-cli",
-  "version": "0.9.2",
+  "version": "0.9.3",
   "description": "CLI to install vibe-hnindex MCP config for Claude, Cursor, Antigravity, Windsurf, VS Code — Windows, macOS, Linux",
   "type": "module",
   "bin": {

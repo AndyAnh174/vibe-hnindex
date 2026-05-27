@@ -6,12 +6,12 @@
     "url": "https://github.com/AndyAnh174/vibe-hnindex",
     "source": "github"
   },
-  "version": "0.9.2",
+  "version": "0.9.3",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "vibe-hnindex",
-      "version": "0.9.2",
+      "version": "0.9.3",
       "transport": {
         "type": "stdio"
       },
