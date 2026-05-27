@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.AndyAnh174/vibe-hnindex",
-  "description": "Index source code into a local knowledge base, search with keyword + semantic + hybrid modes.",
+  "description": "Index source code into a local knowledge base, search with keyword + semantic + hybrid modes. Supports streaming search, fuzzy matching, regex, symbol filters, and parallel indexing.",
   "repository": {
     "url": "https://github.com/AndyAnh174/vibe-hnindex",
     "source": "github"
   },
-  "version": "0.7.0",
+  "version": "0.9.2",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "vibe-hnindex",
-      "version": "0.7.0",
+      "version": "0.9.2",
       "transport": {
         "type": "stdio"
       },
@@ -31,7 +31,7 @@
           "name": "OLLAMA_MODEL"
         },
         {
-          "description": "Embedding vector size — must match Ollama output for OLLAMA_MODEL (default: 1024). Set via hnindex init --embedding-dimensions or manually.",
+          "description": "Embedding vector size — must match Ollama output for OLLAMA_MODEL (default: 1024)",
           "isRequired": false,
           "format": "string",
           "isSecret": false,
@@ -52,14 +52,28 @@
           "name": "QDRANT_API_KEY"
         },
         {
-          "description": "SQLite database storage path",
+          "description": "SQLite database storage path (default: ~/.vibe-hnindex)",
           "isRequired": false,
           "format": "string",
           "isSecret": false,
           "name": "STORAGE_PATH"
         },
         {
-          "description": "When true, omitting search mode uses auto (heuristic keyword/hybrid)",
+          "description": "Number of worker threads for parallel indexing (default: auto = CPU-1). Set to 1 for single-threaded",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "INDEX_WORKERS"
+        },
+        {
+          "description": "Files per worker batch during parallel indexing (default: 8)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "INDEX_PARALLEL_BATCH"
+        },
+        {
+          "description": "When true, omitting search mode uses auto (heuristic keyword/hybrid) — v0.5.0",
           "isRequired": false,
           "format": "string",
           "isSecret": false,
@@ -71,6 +85,83 @@
           "format": "string",
           "isSecret": false,
           "name": "SEARCH_KEYWORD_FALLBACK_SEMANTIC"
+        },
+        {
+          "description": "Enable streaming search by default — parallel keyword+semantic, progress, preview (v0.9.0)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "SEARCH_STREAM_ENABLED"
+        },
+        {
+          "description": "Enable fuzzy search re-ranking for all searches (v0.8.1)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "SEARCH_FUZZY_ENABLED"
+        },
+        {
+          "description": "Max cache entries for search results LRU (default: 100)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "SEARCH_CACHE_SIZE"
+        },
+        {
+          "description": "Cache TTL in milliseconds (default: 300000 = 5 min)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "SEARCH_CACHE_TTL_MS"
+        },
+        {
+          "description": "Set to false to disable post-retrieval reorder (v0.6.0)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "SEARCH_RERANK"
+        },
+        {
+          "description": "Max distinct results in rerank pool before trimming to limit (default: 50)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "SEARCH_RERANK_POOL"
+        },
+        {
+          "description": "POST URL for external reranker (optional)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "RERANK_URL"
+        },
+        {
+          "description": "Timeout for RERANK_URL request in ms (default: 15000)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "RERANK_TIMEOUT_MS"
+        },
+        {
+          "description": "Overall timeout for search operations in ms (default: 60000)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "SEARCH_TIMEOUT_MS"
+        },
+        {
+          "description": "Timeout for Ollama API calls in ms (default: 30000)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "OLLAMA_TIMEOUT_MS"
+        },
+        {
+          "description": "Timeout for Qdrant API calls in ms (default: 15000)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "QDRANT_TIMEOUT_MS"
         }
       ]
     }
