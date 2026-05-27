@@ -1,0 +1,85 @@
+{
+  "site": {
+    "title": "vibe-hnindex",
+    "description": "Local MCP server — index your repo once, search it in every AI session"
+  },
+  "nav": {
+    "docs": "Documentation",
+    "github": "GitHub",
+    "npm": "npm",
+    "switchLang": "Tiếng Việt"
+  },
+  "sidebar": {
+    "gettingStarted": "Getting Started",
+    "introduction": "Introduction",
+    "installation": "Installation",
+    "quickStart": "Quick Start",
+    "configuration": "Configuration",
+    "tools": "Tools",
+    "search": "Search",
+    "indexCodebase": "Index Codebase",
+    "smartContext": "Smart Context",
+    "benchmark": "Benchmark",
+    "guides": "Guides",
+    "setupMcp": "Setup MCP",
+    "performance": "Performance",
+    "troubleshooting": "Troubleshooting"
+  },
+  "home": {
+    "hero": {
+      "title": "Index Once,",
+      "titleHighlight": "Search Everywhere",
+      "subtitle": "A local MCP server for AI-powered code search. Keyword, semantic, and hybrid search — your code stays on disk.",
+      "getStarted": "Get Started",
+      "viewOnGithub": "View on GitHub"
+    },
+    "features": {
+      "title": "Everything You Need",
+      "subtitle": "Powerful code indexing and search for your AI assistant workflow",
+      "keyword": {
+        "title": "Keyword Search",
+        "description": "SQLite FTS5 + BM25 for exact symbol and identifier matching"
+      },
+      "semantic": {
+        "title": "Semantic Search",
+        "description": "Qdrant vector search with Ollama embeddings for natural language queries"
+      },
+      "hybrid": {
+        "title": "Hybrid Search",
+        "description": "RRF fusion combining keyword and semantic for best results"
+      },
+      "incremental": {
+        "title": "Incremental Indexing",
+        "description": "SHA-based change detection — only re-index changed files"
+      },
+      "parallel": {
+        "title": "Parallel Processing",
+        "description": "Multi-threaded indexing and streaming search for speed"
+      },
+      "local": {
+        "title": "100% Local",
+        "description": "Your code never leaves your machine. SQLite + local Qdrant"
+      }
+    },
+    "quickLinks": {
+      "title": "Quick Links",
+      "installation": "Installation Guide",
+      "quickStart": "5-Minute Quick Start",
+      "configuration": "Configuration Reference",
+      "searchDocs": "Search Tool Docs"
+    }
+  },
+  "common": {
+    "previous": "Previous",
+    "next": "Next",
+    "backToTop": "Back to top",
+    "onThisPage": "On this page",
+    "breadcrumb": {
+      "home": "Home",
+      "docs": "Docs",
+      "gettingStarted": "Getting Started",
+      "tools": "Tools",
+      "guides": "Guides"
+    }
+  }
+}

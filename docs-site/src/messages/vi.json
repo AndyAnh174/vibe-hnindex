@@ -1,0 +1,85 @@
+{
+  "site": {
+    "title": "vibe-hnindex",
+    "description": "MCP server cục bộ — index repo một lần, tìm kiếm trong mọi phiên AI"
+  },
+  "nav": {
+    "docs": "Tài liệu",
+    "github": "GitHub",
+    "npm": "npm",
+    "switchLang": "English"
+  },
+  "sidebar": {
+    "gettingStarted": "Bắt đầu",
+    "introduction": "Giới thiệu",
+    "installation": "Cài đặt",
+    "quickStart": "Bắt đầu nhanh",
+    "configuration": "Cấu hình",
+    "tools": "Công cụ",
+    "search": "Tìm kiếm",
+    "indexCodebase": "Index Codebase",
+    "smartContext": "Smart Context",
+    "benchmark": "Benchmark",
+    "guides": "Hướng dẫn",
+    "setupMcp": "Thiết lập MCP",
+    "performance": "Hiệu suất",
+    "troubleshooting": "Xử lý sự cố"
+  },
+  "home": {
+    "hero": {
+      "title": "Index Một Lần,",
+      "titleHighlight": "Tìm Mọi Nơi",
+      "subtitle": "MCP server cục bộ cho tìm kiếm code bằng AI. Từ khóa, ngữ nghĩa và kết hợp — code của bạn ở trên máy.",
+      "getStarted": "Bắt đầu ngay",
+      "viewOnGithub": "Xem trên GitHub"
+    },
+    "features": {
+      "title": "Mọi Thứ Bạn Cần",
+      "subtitle": "Index và tìm kiếm code mạnh mẽ cho AI assistant của bạn",
+      "keyword": {
+        "title": "Tìm kiếm Từ khóa",
+        "description": "SQLite FTS5 + BM25 cho khớp chính xác ký hiệu và định danh"
+      },
+      "semantic": {
+        "title": "Tìm kiếm Ngữ nghĩa",
+        "description": "Vector search Qdrant với Ollama embeddings cho truy vấn tự nhiên"
+      },
+      "hybrid": {
+        "title": "Tìm kiếm Kết hợp",
+        "description": "RRF fusion kết hợp từ khóa và ngữ nghĩa cho kết quả tốt nhất"
+      },
+      "incremental": {
+        "title": "Index Tăng dần",
+        "description": "Phát hiện thay đổi qua SHA — chỉ re-index file đã sửa"
+      },
+      "parallel": {
+        "title": "Xử lý Song song",
+        "description": "Index đa luồng và tìm kiếm streaming cho tốc độ"
+      },
+      "local": {
+        "title": "100% Cục bộ",
+        "description": "Code không bao giờ rời máy. SQLite + Qdrant cục bộ"
+      }
+    },
+    "quickLinks": {
+      "title": "Liên kết Nhanh",
+      "installation": "Hướng dẫn Cài đặt",
+      "quickStart": "Bắt đầu trong 5 Phút",
+      "configuration": "Tham khảo Cấu hình",
+      "searchDocs": "Tài liệu Search Tool"
+    }
+  },
+  "common": {
+    "previous": "Trước",
+    "next": "Tiếp",
+    "backToTop": "Lên đầu trang",
+    "onThisPage": "Trên trang này",
+    "breadcrumb": {
+      "home": "Trang chủ",
+      "docs": "Tài liệu",
+      "gettingStarted": "Bắt đầu",
+      "tools": "Công cụ",
+      "guides": "Hướng dẫn"
+    }
+  }
+}

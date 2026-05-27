@@ -31,6 +31,7 @@ async function HeaderWrapper({ locale }: { locale: string }) {
   return (
     <FloatingHeader
       locale={locale}
+      docs={t('docs')}
       changelog={t('changelog')}
       github={t('github')}
       npm={t('npm')}

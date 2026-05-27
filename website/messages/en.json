@@ -1,5 +1,6 @@
 {
   "nav": {
+    "docs": "Documentation",
     "changelog": "Changelog",
     "github": "GitHub",
     "npm": "npm"

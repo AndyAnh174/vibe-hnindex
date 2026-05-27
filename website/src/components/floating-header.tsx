@@ -9,12 +9,13 @@ import { useEffect, useState } from "react";
 
 interface FloatingHeaderProps {
   locale: string;
+  docs: string;
   changelog: string;
   github: string;
   npm: string;
 }
 
-export function FloatingHeader({ locale, changelog, github, npm }: FloatingHeaderProps) {
+export function FloatingHeader({ locale, docs, changelog, github, npm }: FloatingHeaderProps) {
   const { scrollY } = useScroll();
   const [hasScrolled, setHasScrolled] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -52,6 +53,14 @@ export function FloatingHeader({ locale, changelog, github, npm }: FloatingHeade
             </Link>
 
             <nav className="hidden md:flex items-center gap-6 text-sm">
+              <a
+                href="https://docs.hnindex.cloud"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                {docs}
+              </a>
               <Link
                 href="/changelog"
                 className="text-muted-foreground hover:text-foreground transition-colors"
@@ -105,6 +114,14 @@ export function FloatingHeader({ locale, changelog, github, npm }: FloatingHeade
               exit={{ opacity: 0, y: 100, transition: { duration: 0.15 } }}
             >
               <div className="flex flex-col gap-3">
+                <a
+                  href="https://docs.hnindex.cloud"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2 text-sm text-muted-foreground hover:text-foreground"
+                >
+                  {docs}
+                </a>
                 <Link
                   href="/changelog"
                   onClick={() => setIsDrawerOpen(false)}

@@ -1,0 +1,142 @@
+"use client";
+
+import { DocsLayout } from "@/components/docs/docs-layout";
+import { getPageNav } from "@/lib/navigation";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Card } from "@/components/ui/card";
+
+export default function PerformancePage() {
+  const pageNav = getPageNav("performance");
+
+  return (
+    <DocsLayout
+      breadcrumbs={[
+        { label: "Docs", href: "/" },
+        { label: "Guides", href: "/guides/setup-mcp" },
+        { label: "Performance" },
+      ]}
+      pageNav={pageNav}
+    >
+      <Badge variant="secondary" className="mb-4">Guides</Badge>
+      <h1>Performance</h1>
+      <p>
+        Optimizing vibe-hnindex for maximum indexing speed and search responsiveness.
+      </p>
+
+      <h2 id="indexing-performance">Indexing Performance</h2>
+
+      <h3 id="parallel-workers">Parallel Workers</h3>
+      <p>
+        Since v0.8.0, <code>index_codebase</code> uses worker threads for parallel processing.
+        The default <code>INDEX_WORKERS=auto</code> uses all CPU cores minus one.
+      </p>
+      <div className="not-prose grid grid-cols-1 sm:grid-cols-2 gap-4 my-6">
+        <Card className="p-4">
+          <h4 className="text-sm font-bold text-primary mb-2">Single-threaded</h4>
+          <pre><code className="text-xs">INDEX_WORKERS=1</code></pre>
+          <p className="text-xs text-muted-foreground mt-2">
+            Baseline. One file at a time. Good for low-resource machines.
+          </p>
+        </Card>
+        <Card className="p-4">
+          <h4 className="text-sm font-bold text-primary mb-2">Multi-threaded (auto)</h4>
+          <pre><code className="text-xs">INDEX_WORKERS=auto</code></pre>
+          <p className="text-xs text-muted-foreground mt-2">
+            ~3-4× faster on multi-core machines. Default setting.
+          </p>
+        </Card>
+      </div>
+
+      <h3 id="batch-size">Batch Size</h3>
+      <p>
+        <code>INDEX_PARALLEL_BATCH</code> controls files per worker batch (default: 8).
+        Higher values increase throughput but use more memory:
+      </p>
+      <pre><code>{`INDEX_PARALLEL_BATCH=16  # Faster, more memory
+INDEX_PARALLEL_BATCH=4   # Slower, less memory`}</code></pre>
+
+      <Separator className="my-8" />
+
+      <h2 id="search-performance">Search Performance</h2>
+
+      <h3 id="streaming">Streaming Search (v0.9.0+)</h3>
+      <p>
+        Streaming search runs keyword + semantic in parallel, providing ~1.5-2× speedup for hybrid mode:
+      </p>
+      <pre><code>{`SEARCH_STREAM_ENABLED=true`}</code></pre>
+      <p>
+        Streaming provides 4-phase progress notifications:
+      </p>
+      <ol>
+        <li>Parallel Search — keyword and semantic run simultaneously</li>
+        <li>RRF Fusion — combined scoring</li>
+        <li>Post-processing — deduplication and path quality</li>
+        <li>Results — final ranked output</li>
+      </ol>
+
+      <h3 id="caching">Search Cache</h3>
+      <p>
+        Results are cached with LRU eviction (default 100 entries, 5 min TTL):
+      </p>
+      <pre><code>{`SEARCH_CACHE_SIZE=200        # More cache entries
+SEARCH_CACHE_TTL_MS=600000   # Longer TTL (10 min)`}</code></pre>
+      <blockquote>
+        Set <code>SEARCH_CACHE_TTL_MS=0</code> to disable caching for benchmarking.
+      </blockquote>
+
+      <h3 id="mode-selection">Mode Selection Strategy</h3>
+      <p>Choose the right search mode for optimal performance:</p>
+      <table>
+        <thead>
+          <tr><th>Scenario</th><th>Best Mode</th><th>Why</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Exact symbol/function name</td><td>keyword</td><td>Fastest — no embedding needed</td></tr>
+          <tr><td>Natural language question</td><td>semantic</td><td>Embedding overhead but better relevance</td></tr>
+          <tr><td>General search</td><td>hybrid</td><td>Best results; moderate overhead</td></tr>
+          <tr><td>Code patterns</td><td>regex</td><td>Bypasses FTS/embeddings entirely</td></tr>
+          <tr><td>Find definitions</td><td>symbol</td><td>Quick SQLite lookup</td></tr>
+        </tbody>
+      </table>
+
+      <Separator className="my-8" />
+
+      <h2 id="timeouts">Timeout Tuning</h2>
+      <p>
+        Adjust timeouts for slow machines or remote services:
+      </p>
+      <pre><code>{`OLLAMA_TIMEOUT_MS=60000   # 60s for slow Ollama
+QDRANT_TIMEOUT_MS=30000   # 30s for remote Qdrant
+SEARCH_TIMEOUT_MS=120000  # 2min overall timeout`}</code></pre>
+
+      <h2 id="hardware-recommendations">Hardware Recommendations</h2>
+      <table>
+        <thead>
+          <tr><th>Component</th><th>Minimum</th><th>Recommended</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>CPU</td><td>2 cores</td><td>4+ cores (for parallel indexing)</td></tr>
+          <tr><td>RAM</td><td>4 GB</td><td>8+ GB (embedding models)</td></tr>
+          <tr><td>Storage</td><td>SSD with 2 GB free</td><td>NVMe with 10+ GB free</td></tr>
+        </tbody>
+      </table>
+
+      <h2 id="benchmarking">Benchmarking</h2>
+      <p>
+        Use the <code>benchmark_search</code> tool to measure performance:
+      </p>
+      <pre><code>{`benchmark_search(project_name: "my-app")`}</code></pre>
+      <p>
+        See <a href="/tools/benchmark">Benchmark docs</a> for interpreting results.
+      </p>
+
+      <h2 id="single-pass">Single-Pass Indexing (v0.9.1+)</h2>
+      <p>
+        Since v0.9.1, indexing uses a single pass for chunking + embedding + dependency/symbol
+        parsing instead of two passes. Combined with SHA-1 for change detection, this makes
+        indexing ~30-40% faster on large codebases.
+      </p>
+    </DocsLayout>
+  );
+}
