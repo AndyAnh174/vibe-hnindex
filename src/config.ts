@@ -86,6 +86,12 @@ export const config = {
   // Streaming search (v0.9.0)
   /** Enable streaming search by default — parallel keyword+semantic, progress notifications. Default false (opt-in via stream:true or this env). */
   searchStreamEnabled: process.env.SEARCH_STREAM_ENABLED === 'true',
+
+  // Code Agent (v0.11.0)
+  /** Enable code_session and code_apply tools. Default false (opt-in). */
+  codeAgentEnabled: process.env.CODE_AGENT_ENABLED === 'true',
+  /** Scope: safe (read-only), moderate (create + modify non-critical files), full (all files). Default moderate. */
+  codeAgentScope: (process.env.CODE_AGENT_SCOPE?.trim() || 'moderate') as 'safe' | 'moderate' | 'full',
 } as const;
 
 export function getCollectionName(projectName: string): string {

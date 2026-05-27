@@ -1,5 +1,22 @@
 # Changelog (highlights)
 
+## v0.11.0 — 🤖 Code Agent (code_session + code_apply)
+
+- **🤖 code_session** — 1 lần gọi thay thế 5-15 lần search + read. Trả về structured context package:
+  - Core files (nội dung đầy đủ)
+  - Similar patterns (code style nhất quán)
+  - Dependency check (package.json analysis)
+  - Test files liên quan
+  - Impact analysis (files bị ảnh hưởng)
+  - Auto-detect task type + framework
+- **✏️ code_apply** — Apply code changes an toàn:
+  - 3 scope: `safe` (read-only), `moderate` (create + modify non-critical), `full`
+  - Tự run test + lint + typecheck sau khi apply
+  - Unified diff parser
+- **🔧 Feature flag** — `CODE_AGENT_ENABLED=true` + `CODE_AGENT_SCOPE` (mặc định off, không ảnh hưởng người dùng hiện tại)
+- **📚 Docs site** — Trang docs đầy đủ 15 trang với embedding model comparison
+- **🎨 Website** — Thêm liên kết Documentation vào navbar hnindex.cloud
+
 ## v0.10.0 — 🧠 Smart Context Generator
 
 - **📄 Smart Context nâng cấp** — `smart_context` tool giờ hỗ trợ 3 chế độ mới:

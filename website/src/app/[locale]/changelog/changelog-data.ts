@@ -6,6 +6,20 @@ export interface VersionEntry {
 
 export const changelogData: VersionEntry[] = [
   {
+    title: "v0.11.0 — 🤖 Code Agent",
+    items: [
+      "**🤖 code_session** — One call replaces 5–15 search+read calls. Returns structured context package with core files (full content), similar patterns, dependency analysis, test files, and impact analysis.",
+      "Auto-detects: task type (add-feature/refactor/debug/explain), framework (Next.js, Express, React, etc.), and test framework (vitest, jest, pytest).",
+      "**✏️ code_apply** — Apply code changes safely with 3 scopes: `safe` (read-only preview), `moderate` (create + modify non-critical files), `full`. Auto-runs tests, lint, and typecheck after applying.",
+      "Supports create, modify (with unified diff), and delete actions. Blocks restricted files in moderate mode (.env, config files, lockfiles).",
+      "**🔧 Feature flag** — `CODE_AGENT_ENABLED=true` + `CODE_AGENT_SCOPE` (safe/moderate/full). Default off — zero impact on existing users.",
+      "**📚 Docs Site** — Full documentation site at docs.hnindex.cloud with 15 pages: Getting Started, Configuration, Tools reference, Performance tuning, Troubleshooting.",
+      "Embedding model comparison table added — bge-m3, nomic-embed-text, qwen3-embedding, mxbai-embed-large, snowflake-arctic-embed2, all-minilm with MTEB scores and recommendations.",
+      "**🎨 Website** — Added Documentation link to hnindex.cloud navbar.",
+      "**📦 Versions** — `vibe-hnindex` v0.11.0, `hnindex-cli` v0.11.0.",
+    ],
+  },
+  {
     title: "v0.10.0 — 🧠 Smart Context",
     items: [
       "**📄 Smart Context nâng cấp** — Tool `smart_context` now supports 3 new modes:",

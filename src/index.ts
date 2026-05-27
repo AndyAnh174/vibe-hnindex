@@ -24,13 +24,16 @@ import { symbolLookupTool } from './tools/symbol-lookup.js';
 import { serverDiagnosticsTool } from './tools/server-diagnostics.js';
 import { agentRulesStubTool } from './tools/agent-rules-stub.js';
 import { benchmarkSearch } from './tools/benchmark-search.js';
+import { codeSession } from './tools/code-session.js';
+import { codeApply } from './tools/code-apply.js';
+import { config } from './config.js';
 
 // Initialize database on startup
 initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.10.0',
+  version: '0.11.0',
 }, {
   capabilities: { logging: {} },
 });
@@ -329,6 +332,38 @@ server.tool(
   async (args) => smartContextTool(args),
 );
 
+// --- Tool: code_session (v0.11.0) ---
+if (config.codeAgentEnabled) {
+  server.tool(
+    'code_session',
+    'Gather a structured context package for a coding task. Returns relevant files (with content), similar patterns, dependencies, test files, and impact analysis — everything the AI needs to reason about a code change in a single response. Use before making code changes to avoid 5-15 separate search/read calls.',
+    {
+      project_name: z.string().describe('Project name'),
+      task: z.string().describe('Task description (e.g., "add rate limiting to the API", "refactor user service", "fix login bug")'),
+      target_files: z.array(z.string()).optional().describe('Specific files to focus on (relative paths within project)'),
+    },
+    async (args) => codeSession(args),
+  );
+
+  // --- Tool: code_apply (v0.11.0) ---
+  server.tool(
+    'code_apply',
+    'Apply code changes (create, modify, delete files) proposed by the AI. Respects CODE_AGENT_SCOPE for safety. Optionally runs test suite and linting after applying. Use after code_session to implement the planned changes.',
+    {
+      project_name: z.string().describe('Project name'),
+      session_id: z.string().optional().describe('Session ID from code_session (optional)'),
+      edits: z.array(z.object({
+        action: z.enum(['create', 'modify', 'delete']).describe('create | modify | delete'),
+        file_path: z.string().describe('Relative file path within the project'),
+        content: z.string().optional().describe('Full file content for create/modify'),
+        diff: z.string().optional().describe('Unified diff for modify (alternative to content)'),
+      })).describe('List of edits to apply'),
+      verify: z.boolean().optional().default(true).describe('Run tests, lint, and typecheck after applying (default true)'),
+    },
+    async (args) => codeApply(args),
+  );
+}
+
 // --- Tool: benchmark_search ---
 server.tool(
   'benchmark_search',
@@ -344,7 +379,7 @@ server.tool(
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started (v0.10.0)');
+  console.error('[vibe-hnindex] Server started (v0.11.0)');
 }
 
 main().catch((error) => {
