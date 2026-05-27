@@ -1,149 +1,122 @@
-# CLAUDE.md — vibe-hnindex
+# vibe-hnindex — Agent Guide
 
-## Project Overview
+> MCP server for indexing & searching codebases with keyword + semantic + hybrid modes.
 
-MCP Server that gives AI assistants (Claude, Cursor, Windsurf, Antigravity) a persistent knowledge base of source code. Index once, search anytime — across chat sessions.
-
-**Core goals:**
-1. Save tokens — AI gets precise results in 1 call instead of 10+ Read/Grep calls
-2. Save time — AI finds exactly what it needs, doesn't wander through files
-3. AI understands codebase — knows architecture, dependencies, what user is working on
-
-## Tech Stack
-
-- **TypeScript** (ESM, Node16 module resolution)
-- **SQLite + FTS5** via `better-sqlite3` — chunk storage, keyword search (BM25)
-- **Qdrant** via `@qdrant/js-client-rest` — vector storage, semantic search (cosine similarity)
-- **Ollama** — embedding API (`POST /api/embed`), model `bge-m3:567m` (1024-dim)
-- **MCP SDK** — `@modelcontextprotocol/sdk` with `server.tool()` + `server.resource()`
-
-## Project Structure
+## Quick Start
 
 ```
-src/
-├── index.ts                 # Entry point: MCP server, tool registration, resource
-├── config.ts                # Env vars + defaults (OLLAMA_URL, QDRANT_URL, etc.)
-├── types.ts                 # Shared interfaces (ChunkRecord, SearchResult, etc.)
-├── services/
-│   ├── sqlite.ts            # SQLite + FTS5: schema, CRUD, keyword search, stats, deps/exports
-│   ├── qdrant.ts            # Qdrant client: collections, vector upsert/search
-│   ├── embeddings.ts        # Ollama API client (batch embed, health check)
-│   ├── chunker.ts           # Smart line-based code chunker (boundary-aware)
-│   ├── file-scanner.ts      # Recursive dir walker, language detection, binary skip
-│   ├── dependency-parser.ts # Import/export regex parser (TS/JS/Python/Go/Rust/Java)
-│   └── git.ts               # Git command runner (recent commits, file history)
-└── tools/
-    ├── index-codebase.ts    # Full directory indexing pipeline + dependency parsing
-    ├── index-file.ts        # Single file indexing + dependency parsing
-    ├── search.ts            # 3 modes: keyword/semantic/hybrid (RRF), filters, context expansion
-    ├── list-projects.ts     # List indexed projects
-    ├── delete-project.ts    # Delete project from SQLite + Qdrant
-    ├── get-file-info.ts     # File chunk details
-    ├── project-stats.ts     # Language breakdown, file/chunk counts
-    ├── watch-project.ts     # fs.watch auto re-index on file save
-    ├── codebase-overview.ts # Project structure, languages, entry points, frameworks
-    ├── file-summary.ts      # Per-file summary: purpose, exports, imports, dependents
-    ├── dependencies.ts      # get_dependencies, get_dependents, impact_analysis
-    ├── recent-changes.ts    # Git-aware recent changes with index cross-reference
-    └── smart-context.ts     # All-in-one file context (imports, dependents, git history)
-tests/
-├── chunker.test.ts
-├── config.test.ts
-├── dependency-parser.test.ts
-├── file-scanner.test.ts
-└── sqlite.test.ts
+1. Index:   index_codebase(path="/path/to/project", project_name="my-project")
+2. Search:  search(query="auth middleware", project_name="my-project", stream=true)
 ```
 
-## Architecture
+## All Tools
 
+| Tool | Purpose | Key Params |
+|------|---------|------------|
+| `index_codebase` | Index entire directory | `path`, `project_name`, `watch` (default true) |
+| `index_file` | Re-index single file | `file_path`, `project_name` |
+| `search` | Full-text + vector search | `query`, `project_name`, `mode`, `stream`, `fuzzy` |
+| `list_projects` | List indexed projects | — |
+| `delete_project` | Delete project data | `project_name` |
+| `server_diagnostics` | Health check | `project_name` (optional) |
+| `agent_rules_stub` | Rules for AGENTS.md | `project_name`, `format` |
+| `project_stats` | Stats breakdown | `project_name` |
+| `codebase_overview` | Architecture overview | `project_name` |
+| `project_briefing` | Cached project summary | `project_name` |
+| `onboarding_prompt` | Onboarding blob | `project_name` |
+| `symbol_lookup` | Find symbol definition | `project_name`, `symbol`, `kind` |
+| `file_summary` | File overview | `project_name`, `file_path` |
+| `get_file_info` | File chunk details | `file_path`, `project_name` |
+| `get_dependencies` | Imports of file | `project_name`, `file_path` |
+| `get_dependents` | Files importing this | `project_name`, `file_path` |
+| `impact_analysis` | Transitive impact | `project_name`, `file_path`, `depth` |
+| `recent_changes` | Recent git commits | `project_name`, `days`, `limit` |
+| `smart_context` | One-call file context | `project_name`, `file_path/query` |
+| `watch_project` | Auto re-index on change | `project_name` |
+| `unwatch_project` | Stop watching | `project_name` |
+
+## Search Modes
+
+| Mode | Use When | Speed |
+|------|----------|-------|
+| `keyword` | Exact identifiers, file paths, short queries | ⚡ Fastest |
+| `semantic` | Natural language, concepts, "how does X work" | 🐢 Slower (needs Ollama) |
+| `hybrid` | Best of both — RRF fusion | ⚡⚡ Balanced (default) |
+| `auto` | Let server decide based on query | ⚡ Auto |
+| `regex` | Pattern matching `/pattern/flags` | ⚡ Fast |
+| `symbol` | Symbol name lookup in SQLite | ⚡⚡ Very fast |
+
+## Streaming Search (v0.9.0)
+
+Add `stream=true` to searches for parallel keyword+semantic with progress:
+```json
+{ "query": "auth middleware", "project_name": "my-project", "stream": true }
 ```
-AI Client → JSON-RPC (stdio) → vibe-hnindex MCP Server
-                                    │
-                    ┌───────────────┼───────────────┐
-                    ▼               ▼               ▼
-              File Scanner     Chunker        Ollama Embed
-                    │               │               │
-                    ▼               ▼               ▼
-              ┌──────────┐   ┌──────────┐
-              │  SQLite   │   │  Qdrant  │
-              │  FTS5     │   │  Vectors │
-              └──────────┘   └──────────┘
+
+Or enable globally: `SEARCH_STREAM_ENABLED=true`
+
+## Fuzzy Search (v0.8.1)
+
+Add `fuzzy=true` to auto-correct typos:
+```json
+{ "query": "fucntion", "project_name": "my-project", "fuzzy": true }
+```
+Typing "fucntion" still finds "function". "libery" finds "library".
+
+## Best Practices
+
+### Searching
+- **Narrow first**: use `file_pattern` to scope, then widen
+- **Small limit**: start with `limit=5-10`, increase if needed
+- **Dedupe**: `dedupe_by_file=true` (default) for diverse results
+- **Expand context**: `expand_context=1-2` to see surrounding code
+- **Stream**: always use `stream=true` for better UX on hybrid/semantic
+
+### Indexing
+- **First time**: index is slow (embeddings via Ollama), be patient
+- **Re-index**: only changed files are re-processed (hash-based incremental)
+- **Watch**: `watch=true` (default) auto re-indexes on file save
+- **Large projects**: increase `INDEX_PARALLEL_BATCH` for more throughput
+
+### Symbol Filters
+Filter results by `symbol_kind`: `function`, `class`, `method`, `interface`, `type`, `variable`, `enum`, `export`
+
+## Key Env Vars
+
+| Var | Default | Purpose |
+|-----|---------|---------|
+| `OLLAMA_URL` | localhost:11434 | Ollama server |
+| `OLLAMA_MODEL` | bge-m3:567m | Embedding model |
+| `QDRANT_URL` | localhost:6333 | Qdrant vector DB |
+| `SEARCH_STREAM_ENABLED` | false | Enable streaming for all searches |
+| `SEARCH_FUZZY_ENABLED` | false | Enable fuzzy for all searches |
+| `SEARCH_AUTO_ROUTE` | false | Auto-select search mode |
+| `INDEX_WORKERS` | auto | Parallel indexing workers |
+| `SEARCH_CACHE_SIZE` | 100 | LRU cache entries |
+| `SEARCH_CACHE_TTL_MS` | 300000 | Cache TTL (5 min) |
+
+## Common Workflows
+
+### Setup & First Search
+```
+→ index_codebase(path="/project", project_name="my-project")
+→ search(query="authentication", project_name="my-project", stream=true)
 ```
 
-- Each project = 1 Qdrant collection (`mcp_ck_{name}`)
-- SQLite stores: chunks text, FTS5 index, project metadata
-- Qdrant stores: 1024-dim vectors with cosine distance
-- Data persistent at `~/.vibe-hnindex/knowledge.db`
-
-## Key Design Decisions
-
-- **Zod schemas passed as raw shape** to `server.tool()`, NOT `z.object()` wrapper
-- **Logs via `console.error()`** — stdout reserved for JSON-RPC
-- **Qdrant client uses `checkCompatibility: false`** — JS client v1.17 rejects server v1.15 otherwise
-- **Graceful degradation** — keyword search works without Qdrant/Ollama; hybrid falls back to keyword
-- **Incremental indexing** — SHA-256 file hash comparison, skip unchanged files
-- **Batch embedding** — 32 chunks per Ollama API call
-
-## Build & Test
-
-```bash
-# Build
-node node_modules/typescript/bin/tsc
-
-# Test (85 tests)
-node node_modules/vitest/vitest.mjs run
-
-# Note: on Windows, npx tsc / npx vitest may not work due to PATH issues
-# Use direct node paths as shown above
+### Debug a File
+```
+→ smart_context(project_name="my-project", file_path="src/auth.ts")
+→ search(query="token validation", project_name="my-project", file_pattern="src/auth/**")
 ```
 
-## Important Conventions
+### Find All Implementations
+```
+→ symbol_lookup(project_name="my-project", symbol="AuthService", kind="class")
+→ get_dependents(project_name="my-project", file_path="src/auth/service.ts")
+```
 
-- Entry point has shebang `#!/usr/bin/env node`
-- All paths use forward slashes in DB (`.replace(/\\/g, '/')`)
-- FTS5 sync via 3 triggers (INSERT/UPDATE/DELETE on chunks)
-- Path traversal protection in index-file.ts (file must be inside project root)
-- Symlink protection in file-scanner.ts (skip symlinks, verify resolved path)
-- Watch mode cleans up on SIGINT/SIGTERM/exit
-
-## Environment Variables
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| OLLAMA_URL | http://222.253.80.30:11434 | Ollama server |
-| OLLAMA_MODEL | bge-m3:567m | Embedding model |
-| STORAGE_PATH | ~/.vibe-hnindex | SQLite DB location |
-| QDRANT_URL | http://localhost:6333 | Qdrant server |
-| QDRANT_API_KEY | *(unset)* | Optional; Qdrant Cloud / API-key auth |
-
-## Publishing
-
-- **npm**: `npm publish --ignore-scripts` (prepack uses `tsc || true`)
-- **MCP Registry**: `mcp-publisher.exe publish` (server.json + mcpName in package.json)
-- **Claude Plugin**: `.claude-plugin/marketplace.json` + `plugin.json`
-- **GitHub Actions**: CI on push (Node 20/22/24), CD auto-publish npm on main merge
-
-## v0.3.0 Features (current)
-
-### Codebase Intelligence (7 new tools → 16 total)
-- **codebase_overview** — project structure, languages, entry points, frameworks, key exports
-- **file_summary** — per-file purpose, exports, imports, dependents, complexity
-- **get_dependencies** — what does a file import?
-- **get_dependents** — what files import this file?
-- **impact_analysis** — transitive BFS of reverse dependencies (depth 1-5)
-- **recent_changes** — git-aware recent commits cross-referenced with index
-- **smart_context** — all-in-one file context bundle (content, deps, git history, exports)
-
-### Dependency Graph
-- Import/export regex parsing for TS/JS, Python, Go, Rust, Java/Kotlin
-- 2 new SQLite tables: `dependencies`, `exports`
-- Parsed automatically during indexing (incremental)
-- Import path resolution (relative paths → actual files)
-
-## Roadmap
-
-### Future
-- Multi-project search
-- Web UI dashboard
-- Zero-dependency mode (in-memory vectors, no Docker)
-- More embedding models (nomic-embed, mxbai-embed)
+### Check Impact Before Refactor
+```
+→ impact_analysis(project_name="my-project", file_path="src/auth/service.ts", depth=3)
+→ search(query="import.*AuthService", project_name="my-project", mode="regex")
+```
