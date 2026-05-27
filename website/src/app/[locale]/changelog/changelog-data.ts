@@ -6,6 +6,15 @@ export interface VersionEntry {
 
 export const changelogData: VersionEntry[] = [
   {
+    title: "v0.9.4",
+    items: [
+      "**🔬 Benchmark Tool** — New `benchmark_search` tool runs a suite of test queries (keyword, hybrid, regex, fuzzy) with and without streaming.",
+      "Reports timing (avg/min/max), result counts, and speedup ratios in a comparison table. One command = full performance report.",
+      "No more prompting AI to benchmark — just call `benchmark_search(project_name, runs=2)`.",
+      "**📦 Versions** — `vibe-hnindex` v0.9.4, `hnindex-cli` v0.9.4.",
+    ],
+  },
+  {
     title: "v0.9.1",
     items: [
       "**⚡ Single-Pass Indexing** — Dependency, export, and symbol parsing is now done during the initial file scan, eliminating the second full directory scan entirely.",

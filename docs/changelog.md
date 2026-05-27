@@ -1,5 +1,10 @@
 # Changelog (highlights)
 
+## v0.9.4
+
+- **🔬 Benchmark Tool** — Tool mới `benchmark_search`: chạy bộ test queries (keyword, hybrid, regex, fuzzy) có và không có streaming, báo cáo thời gian (avg/min/max), số kết quả, và speedup ratio. 1 câu là ra bảng so sánh performance.
+- **Versions** — `vibe-hnindex` v0.9.4, `hnindex-cli` v0.9.4.
+
 ## v0.9.1
 
 - **⚡ Single-Pass Indexing** — Gộp dependency/symbol parsing vào lần scan đầu tiên, loại bỏ hoàn toàn lần scan thứ 2. Trước đây index_codebase quét toàn bộ file 2 lần: lần 1 để chunk+embed, lần 2 để parse imports/exports/symbols. Giờ chỉ cần 1 lần duy nhất — nhanh hơn ~30-40% trên codebase lớn.

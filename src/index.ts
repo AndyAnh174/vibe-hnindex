@@ -23,13 +23,14 @@ import { onboardingPromptTool } from './tools/onboarding-prompt.js';
 import { symbolLookupTool } from './tools/symbol-lookup.js';
 import { serverDiagnosticsTool } from './tools/server-diagnostics.js';
 import { agentRulesStubTool } from './tools/agent-rules-stub.js';
+import { benchmarkSearch } from './tools/benchmark-search.js';
 
 // Initialize database on startup
 initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.9.2',
+  version: '0.9.4',
 }, {
   capabilities: { logging: {} },
 });
@@ -326,11 +327,22 @@ server.tool(
   async (args) => smartContextTool(args),
 );
 
+// --- Tool: benchmark_search ---
+server.tool(
+  'benchmark_search',
+  'Run a suite of search queries and compare streaming vs non-streaming performance. Reports timing (avg/min/max), result counts, and speedup ratios. Useful for measuring vibe-hnindex performance on your project.',
+  {
+    project_name: z.string().describe('Project to benchmark'),
+    runs: z.number().int().min(1).max(5).default(2).describe('Number of runs per query (default 2, higher = more accurate)'),
+  },
+  async (args) => benchmarkSearch(args),
+);
+
 // --- Start server ---
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started (v0.9.2)');
+  console.error('[vibe-hnindex] Server started (v0.9.4)');
 }
 
 main().catch((error) => {
