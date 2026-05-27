@@ -113,8 +113,14 @@ Filter results by `symbol_kind`: `function`, `class`, `method`, `interface`, `ty
 
 ### Debug a File
 ```
-→ smart_context(project_name="my-project", file_path="src/auth.ts")
+→ smart_context(project_name="my-project", file_path="src/auth.ts", task="fix login bug")
 → search(query="token validation", project_name="my-project", file_pattern="src/auth/**")
+```
+
+### Understand Code Flow (NEW v0.10.0)
+```
+→ smart_context(project_name="my-project", question="how does auth flow work?")
+→ smart_context(project_name="my-project", file_path="src/api.ts", task="refactor")
 ```
 
 ### Find All Implementations
@@ -125,6 +131,6 @@ Filter results by `symbol_kind`: `function`, `class`, `method`, `interface`, `ty
 
 ### Check Impact Before Refactor
 ```
+→ smart_context(project_name="my-project", file_path="src/auth.ts", task="refactor")
 → impact_analysis(project_name="my-project", file_path="src/auth/service.ts", depth=3)
-→ search(query="import.*AuthService", project_name="my-project", mode="regex")
 ```

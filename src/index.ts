@@ -30,7 +30,7 @@ initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.9.8',
+  version: '0.10.0',
 }, {
   capabilities: { logging: {} },
 });
@@ -318,11 +318,13 @@ server.tool(
 // --- Tool: smart_context ---
 server.tool(
   'smart_context',
-  'Get comprehensive context for a file or query in a single call: file content preview, imports, dependents, exports, recent git history, and optionally related search results. Ideal before editing a file.',
+  'Get comprehensive context for a file, task, or question. v0.10.0: now supports task-aware analysis (impact, test files, similar patterns) and question-based code search. Ideal before editing, debugging, or understanding code.',
   {
     project_name: z.string().describe('Project name'),
     file_path: z.string().optional().describe('File to get context for'),
     query: z.string().optional().describe('Search query for additional context'),
+    task: z.string().optional().describe('Task description (e.g. "refactor auth", "fix login bug") — triggers impact analysis, test file detection, similar code patterns. v0.10.0'),
+    question: z.string().optional().describe('Natural language question (e.g. "how does auth flow work?") — auto-searches and gathers relevant code context. v0.10.0'),
   },
   async (args) => smartContextTool(args),
 );
@@ -342,7 +344,7 @@ server.tool(
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started (v0.9.8)');
+  console.error('[vibe-hnindex] Server started (v0.10.0)');
 }
 
 main().catch((error) => {

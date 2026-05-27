@@ -1,5 +1,15 @@
 # Changelog (highlights)
 
+## v0.10.0 — 🧠 Smart Context Generator
+
+- **📄 Smart Context nâng cấp** — `smart_context` tool giờ hỗ trợ 3 chế độ mới:
+  - **Task mode**: `task="thêm rate limiting"` → tự phân tích impact, tìm test files, tìm code pattern tương tự
+  - **Question mode**: `question="luồng auth chạy sao?"` → tự search code liên quan, gom đầy đủ context imports/dependents/symbols
+  - **Refactor mode**: `task="refactor"` → full impact analysis depth 3 + tất cả file bị ảnh hưởng + test files + similar patterns
+- **🔍 Auto-detect task type** — Server tự nhận diện loại task (explain/refactor/debug/add-feature) để cung cấp context phù hợp
+- **🔧 CLI Init** — `hnindex init --mcp` giờ sinh đầy đủ 16 env vars (INDEX_WORKERS, SEARCH_STREAM_ENABLED, SEARCH_FUZZY_ENABLED, SEARCH_CACHE_SIZE...)
+- **Versions** — `vibe-hnindex` v0.10.0, `hnindex-cli` v0.10.0.
+
 ## v0.9.8
 
 - **🔧 Fix** — `hnindex init-skill` nội dung skill inline thay vì đọc file (tránh lỗi ENOENT khi cài qua npm).

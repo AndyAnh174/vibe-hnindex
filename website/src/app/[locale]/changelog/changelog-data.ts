@@ -6,6 +6,18 @@ export interface VersionEntry {
 
 export const changelogData: VersionEntry[] = [
   {
+    title: "v0.10.0 — 🧠 Smart Context",
+    items: [
+      "**📄 Smart Context nâng cấp** — Tool `smart_context` now supports 3 new modes:",
+      "**Task mode**: `task=\"add rate limiting\"` → auto-analyzes impact, finds test files, detects similar code patterns",
+      "**Question mode**: `question=\"how does auth flow work?\"` → auto-searches relevant code, gathers full context (imports, dependents, symbols)",
+      "**Refactor mode**: `task=\"refactor\"` → full impact analysis (depth 3) + all affected files + test files + similar patterns",
+      "**Auto-detect**: server infers task type (explain/refactor/debug/add-feature) from task description to provide optimal context",
+      "**🔧 CLI Init upgrade** — `hnindex init --mcp` now generates all 16 env vars by default (INDEX_WORKERS, SEARCH_STREAM_ENABLED, SEARCH_FUZZY_ENABLED, SEARCH_CACHE_SIZE, and more)",
+      "**📦 Versions** — `vibe-hnindex` v0.10.0, `hnindex-cli` v0.10.0.",
+    ],
+  },
+  {
     title: "v0.9.8",
     items: [
       "**🔧 Fix** — `hnindex init-skill` no longer reads SKILL.md from disk. Content is inlined to avoid ENOENT errors when installed via npm.",
