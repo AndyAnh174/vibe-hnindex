@@ -12,7 +12,7 @@
 [![MCP](https://img.shields.io/badge/MCP-compatible-6366f1?style=flat-square)](https://modelcontextprotocol.io/)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
 
-**MCP server (`vibe-hnindex`) latest: v0.7.2** · [`hnindex-cli`](https://www.npmjs.com/package/hnindex-cli) **v0.7.0+** (CLI-only patches). Shields badges read npm in real time; GitHub Releases only update when you publish a new tag/release.
+**MCP server (`vibe-hnindex`) latest: v0.11.0** · [`hnindex-cli`](https://www.npmjs.com/package/hnindex-cli) **v0.11.1** — [Docs](https://docs.hnindex.cloud) · [Changelog](https://hnindex.cloud/changelog) · [GitHub Releases](https://github.com/AndyAnh174/vibe-hnindex/releases)
 
 </div>
 
@@ -24,17 +24,21 @@
 
 ---
 
-## How to read the docs (start here)
+## Documentation
 
-| Step | Doc | Purpose |
-|------|-----|---------|
-| **1** | **[Getting started](docs/getting-started.md)** | Install Node, Ollama, Qdrant; paste MCP JSON; first chat commands |
-| **2** | **[Integrations](docs/integrations.md)** | Where to put the JSON — **including [Google Antigravity](docs/integrations.md#google-antigravity)** (`mcp_config.json`) — or use **[hnindex CLI](docs/getting-started.md#cli-installer-hnindex)** |
-| **3** | **[Tools reference](docs/tools-reference.md)** | What each tool does (`index_codebase`, `search`, …) |
+📚 **Full docs site: [docs.hnindex.cloud](https://docs.hnindex.cloud)** — 16 pages covering Getting Started, Configuration, Tools Reference, Guides, and Code Agent.
 
-Everything else is optional: [Configuration](docs/configuration.md), [How it works](docs/how-it-works.md), [Troubleshooting](docs/troubleshooting.md).
+| Page | What you'll learn |
+|------|-------------------|
+| [Introduction](https://docs.hnindex.cloud) | What vibe-hnindex does, key features, how it works |
+| [Installation](https://docs.hnindex.cloud/getting-started/installation) | Node, Ollama, Qdrant setup + MCP config |
+| [Quick Start](https://docs.hnindex.cloud/getting-started/quick-start) | 5-minute walkthrough with CLI + agent skill |
+| [Configuration](https://docs.hnindex.cloud/configuration) | All 25+ env vars with embedding model comparison |
+| [Search](https://docs.hnindex.cloud/tools/search) | 6 search modes, regex, fuzzy, streaming, cache |
+| [Code Agent](https://docs.hnindex.cloud/tools/code-agent) 🆕 | code_session + code_apply with safety scopes |
+| [Setup MCP](https://docs.hnindex.cloud/guides/setup-mcp) | Per-platform config (Claude, Cursor, Antigravity, VS Code...) |
 
-**Full index:** [docs/README.md](docs/README.md)
+Also available in-repo: [docs/getting-started.md](docs/getting-started.md), [docs/configuration.md](docs/configuration.md), [docs/tools-reference.md](docs/tools-reference.md).
 
 ---
 
@@ -44,12 +48,20 @@ Optional — writes the MCP JSON for you (merge-safe, same `npx -y vibe-hnindex`
 
 ```bash
 npm install -g hnindex-cli
-hnindex init --mcp antigravity    # or: claude, claude-desktop, cursor, cursor-project, windsurf, vscode
+
+# Setup MCP config
+hnindex init --mcp antigravity    # or: claude, cursor, windsurf, vscode, codex
 hnindex init --list               # show all targets and paths
+
+# Install AI agent skill (recommended)
+hnindex init-skill --target claude    # or: antigravity, cursor, windsurf, vscode
+hnindex init-skill --list             # show all skill targets
+
+# Update
 hnindex update                    # npm update -g hnindex-cli
 ```
 
-See **[Getting started → CLI](docs/getting-started.md#cli-installer-hnindex)** and [Integrations → hnindex CLI](docs/integrations.md#hnindex-cli).
+See **[docs.hnindex.cloud](https://docs.hnindex.cloud)** for full documentation.
 
 ---
 
@@ -69,7 +81,10 @@ See **[Getting started → CLI](docs/getting-started.md#cli-installer-hnindex)**
       "env": {
         "OLLAMA_URL": "http://localhost:11434",
         "OLLAMA_MODEL": "bge-m3:567m",
-        "QDRANT_URL": "http://localhost:6333"
+        "QDRANT_URL": "http://localhost:6333",
+        "SEARCH_STREAM_ENABLED": "true",
+        "CODE_AGENT_ENABLED": "true",
+        "CODE_AGENT_SCOPE": "moderate"
       }
     }
   }
@@ -127,10 +142,16 @@ Step-by-step: [Integrations → Google Antigravity](docs/integrations.md#google-
 
 | | |
 |--|--|
-| **Search** | Keyword (FTS5), semantic (vectors), hybrid (RRF fusion); optional post-retrieval reorder (Qdrant scores, or `RERANK_URL`) |
-| **Storage** | SQLite on disk; Qdrant for vectors |
-| **Indexing** | Incremental (hash per file), many languages, `.hnindexignore` |
-| **Resilience** | If Qdrant/Ollama unavailable, keyword search can still work |
+| **Search** | 6 modes: keyword (FTS5+BM25), semantic (Qdrant vectors), hybrid (RRF fusion), regex, symbol, auto |
+| **Code Agent** 🆕 | `code_session` — 1 call replaces 5-15 searches. `code_apply` — safe code changes with auto test/lint/typecheck |
+| **Streaming** | Parallel keyword+semantic search (~1.5-2× faster), 4-phase progress notifications |
+| **Fuzzy Search** | Levenshtein distance auto-corrects typos ("fucntion" → "function") |
+| **Smart Context** | Task-aware context: impact analysis, test file detection, similar code patterns |
+| **Storage** | SQLite on disk + Qdrant for vectors; 100% local, no cloud required |
+| **Indexing** | Incremental (SHA-1 hash), parallel workers (~3-4× faster), watch mode (auto re-index on save), 40+ languages, `.hnindexignore` |
+| **Resilience** | Keyword search works without Qdrant or Ollama; graceful degradation |
+| **Benchmark** | Built-in `benchmark_search` tool — compare streaming vs non-streaming, all search modes |
+| **Multiple Embedding Models** | bge-m3 (default), nomic-embed-text, qwen3-embedding, mxbai-embed-large, and more |
 
 ---
 
