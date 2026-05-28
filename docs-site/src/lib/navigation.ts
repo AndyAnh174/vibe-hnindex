@@ -34,6 +34,7 @@ export const docsNavigation: DocSection[] = [
       { title: "sidebar.search", href: "/tools/search", slug: "search" },
       { title: "sidebar.indexCodebase", href: "/tools/index-codebase", slug: "index-codebase" },
       { title: "sidebar.smartContext", href: "/tools/smart-context", slug: "smart-context" },
+      { title: "sidebar.codeAgent", href: "/tools/code-agent", slug: "code-agent" },
       { title: "sidebar.benchmark", href: "/tools/benchmark", slug: "benchmark" },
     ],
   },
