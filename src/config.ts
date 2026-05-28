@@ -94,8 +94,8 @@ export const config = {
   codeAgentScope: (process.env.CODE_AGENT_SCOPE?.trim() || 'moderate') as 'safe' | 'moderate' | 'full',
 
   // Smart Context
-  /** Max characters per file in smart_context output. Default 8000. */
-  smartContextMaxFileChars: parseInt(process.env.SMART_CONTEXT_MAX_FILE_CHARS || '8000', 10),
+  /** Max characters per file in smart_context output. Default 25000. Set to 0 for unlimited. */
+  smartContextMaxFileChars: parseInt(process.env.SMART_CONTEXT_MAX_FILE_CHARS || '25000', 10),
 } as const;
 
 export function getCollectionName(projectName: string): string {

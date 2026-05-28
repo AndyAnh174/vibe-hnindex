@@ -139,15 +139,19 @@ export async function smartContextTool(args: {
     sections.push(`**Language:** ${language} | **Lines:** 1-${lastLine} | **Chunks:** ${chunks.length} | **Task type:** ${taskType}`);
     sections.push('');
 
-    // Key content (first 3 chunks for task mode, 2 for basic)
-    const previewCount = args.task ? 3 : 2;
+    // Key content (first 5 chunks for task mode, 3 for basic)
+    const previewCount = args.task ? 5 : 3;
     const previewChunks = chunks.slice(0, previewCount);
     const preview = previewChunks.map(c => c.content).join('\n');
     sections.push('### Key Content');
     sections.push('```' + language);
     const maxChars = config.smartContextMaxFileChars;
-    sections.push(preview.slice(0, maxChars));
-    if (preview.length > maxChars) sections.push(`// ... truncated (${preview.length - maxChars} more chars, ${chunks.slice(previewCount).length} more chunks)`);
+    if (maxChars === 0 || preview.length <= maxChars) {
+      sections.push(preview);
+    } else {
+      sections.push(preview.slice(0, maxChars));
+      sections.push(`// ... truncated (${preview.length - maxChars} more chars, ${chunks.slice(previewCount).length} more chunks remaining)`);
+    }
     sections.push('```');
     sections.push('');
 
