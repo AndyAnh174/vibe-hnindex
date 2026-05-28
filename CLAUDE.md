@@ -129,6 +129,15 @@ Filter results by `symbol_kind`: `function`, `class`, `method`, `interface`, `ty
 → get_dependents(project_name="my-project", file_path="src/auth/service.ts")
 ```
 
+### Code Agent — 2-Call Workflow (NEW v0.11.0) ⚡
+```
+→ code_session(project_name="my-project", task="add rate limiting")
+  // Returns: full context package (files, patterns, deps, tests, impact)
+  // AI reasons → decide edits
+→ code_apply(project_name="my-project", edits=[...], verify=true)
+  // Applies changes + runs tests + lint + typecheck
+```
+
 ### Check Impact Before Refactor
 ```
 → smart_context(project_name="my-project", file_path="src/auth.ts", task="refactor")

@@ -67,6 +67,13 @@ get_dependents(project_name="my-project", file_path="src/auth.ts")
 impact_analysis(project_name="my-project", file_path="src/auth.ts", depth=3)
 ```
 
+### Code Agent — High-Level Task (v0.11.0) ⚡
+```
+code_session(project_name="my-project", task="add rate limiting to API")
+// AI reasons over the context package → decides what to edit
+code_apply(project_name="my-project", edits=[...], verify=true)
+```
+
 ### Benchmark Performance
 ```
 benchmark_search(project_name="my-project", runs=3)
