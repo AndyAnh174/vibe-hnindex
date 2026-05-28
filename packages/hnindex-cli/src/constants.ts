@@ -47,6 +47,9 @@ export function defaultEnv(options: {
     // ── Code Agent (v0.11.0) ──
     CODE_AGENT_ENABLED: 'false',
     CODE_AGENT_SCOPE: 'moderate',
+
+    // ── Smart Context ──
+    SMART_CONTEXT_MAX_FILE_CHARS: '25000',
   };
   if (options.qdrantApiKey) {
     env.QDRANT_API_KEY = options.qdrantApiKey;
