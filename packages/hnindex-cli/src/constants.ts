@@ -43,6 +43,10 @@ export function defaultEnv(options: {
     SEARCH_TIMEOUT_MS: '60000',
     OLLAMA_TIMEOUT_MS: '30000',
     QDRANT_TIMEOUT_MS: '15000',
+
+    // ── Code Agent (v0.11.0) ──
+    CODE_AGENT_ENABLED: 'true',
+    CODE_AGENT_SCOPE: 'moderate',
   };
   if (options.qdrantApiKey) {
     env.QDRANT_API_KEY = options.qdrantApiKey;
