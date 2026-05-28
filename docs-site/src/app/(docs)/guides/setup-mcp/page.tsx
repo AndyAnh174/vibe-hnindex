@@ -147,6 +147,19 @@ hnindex init --list
 
 # Update CLI
 hnindex update`}</code></pre>
+          <h4>Install Agent Skill</h4>
+          <p>After MCP setup, install the agent skill so AI knows how to use all tools:</p>
+          <pre><code>{`# Install skill for your editor
+hnindex init-skill --target claude
+hnindex init-skill --target antigravity
+hnindex init-skill --target cursor
+hnindex init-skill --target windsurf
+hnindex init-skill --target codex
+hnindex init-skill --target vscode
+hnindex init-skill --target openclaw
+
+# List all skill targets
+hnindex init-skill --list`}</code></pre>
           <p>
             The CLI merges into existing files and preserves other MCP servers.
             See <a href="/getting-started/quick-start">Quick Start</a> for all flags.
