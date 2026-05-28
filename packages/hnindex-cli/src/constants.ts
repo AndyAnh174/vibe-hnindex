@@ -45,7 +45,7 @@ export function defaultEnv(options: {
     QDRANT_TIMEOUT_MS: '15000',
 
     // ── Code Agent (v0.11.0) ──
-    CODE_AGENT_ENABLED: 'true',
+    CODE_AGENT_ENABLED: 'false',
     CODE_AGENT_SCOPE: 'moderate',
   };
   if (options.qdrantApiKey) {
