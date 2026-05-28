@@ -15,6 +15,7 @@
   - Unified diff parser
 - **🔧 Feature flag** — `CODE_AGENT_ENABLED=true` + `CODE_AGENT_SCOPE` (mặc định off, không ảnh hưởng người dùng hiện tại)
 - **📚 Docs site** — Trang docs đầy đủ 15 trang với embedding model comparison
+- **🔧 CLI init** — `hnindex init` now includes CODE_AGENT_ENABLED and CODE_AGENT_SCOPE in generated config (v0.11.1)
 - **🎨 Website** — Thêm liên kết Documentation vào navbar hnindex.cloud
 
 ## v0.10.0 — 🧠 Smart Context Generator
