@@ -1,5 +1,12 @@
 # Changelog (highlights)
 
+## v0.11.1 — Smart Context Fix + CLI Defaults
+
+- **📄 Smart Context content limit** — Tăng từ 2500 → 25000 ký tự (gấp 10×). Thêm env `SMART_CONTEXT_MAX_FILE_CHARS`, set `0` = unlimited. File 500+ dòng giờ đọc gần như toàn bộ.
+- **🔧 CLI defaults** — `hnindex init` giờ include CODE_AGENT_ENABLED, CODE_AGENT_SCOPE, SMART_CONTEXT_MAX_FILE_CHARS trong config mặc định.
+- **📝 SKILL.md** — Hướng dẫn Code Agent chi tiết cho AI agents: params, output format, when to use.
+- **📦 Versions** — `vibe-hnindex` v0.11.1, `hnindex-cli` v0.11.1.
+
 ## v0.11.0 — 🤖 Code Agent (code_session + code_apply)
 
 - **🤖 code_session** — 1 lần gọi thay thế 5-15 lần search + read. Trả về structured context package:

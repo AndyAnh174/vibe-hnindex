@@ -33,7 +33,7 @@ initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.11.0',
+  version: '0.11.1',
 }, {
   capabilities: { logging: {} },
 });
@@ -332,7 +332,7 @@ server.tool(
   async (args) => smartContextTool(args),
 );
 
-// --- Tool: code_session (v0.11.0) ---
+// --- Tool: code_session (v0.11.1) ---
 if (config.codeAgentEnabled) {
   server.tool(
     'code_session',
@@ -345,7 +345,7 @@ if (config.codeAgentEnabled) {
     async (args) => codeSession(args),
   );
 
-  // --- Tool: code_apply (v0.11.0) ---
+  // --- Tool: code_apply (v0.11.1) ---
   server.tool(
     'code_apply',
     'Apply code changes (create, modify, delete files) proposed by the AI. Respects CODE_AGENT_SCOPE for safety. Optionally runs test suite and linting after applying. Use after code_session to implement the planned changes.',
@@ -379,10 +379,11 @@ server.tool(
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started (v0.11.0)');
+  console.error('[vibe-hnindex] Server started (v0.11.1)');
 }
 
 main().catch((error) => {
   console.error('[vibe-hnindex] Fatal error:', error);
   process.exit(1);
 });
+

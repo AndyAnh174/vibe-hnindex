@@ -1,6 +1,6 @@
 {
   "name": "vibe-hnindex",
-  "version": "0.11.0",
+  "version": "0.11.1",
   "workspaces": [
     "packages/*"
   ],
@@ -73,4 +73,5 @@
     "url": "https://github.com/AndyAnh174/vibe-hnindex/issues"
   }
 }
+
 

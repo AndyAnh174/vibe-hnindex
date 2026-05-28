@@ -6,6 +6,16 @@ export interface VersionEntry {
 
 export const changelogData: VersionEntry[] = [
   {
+    title: "v0.11.1 — Smart Context Fix + CLI",
+    items: [
+      "**📄 Smart Context** — Content limit increased 10×: 2500 → 25000 characters per file. New env `SMART_CONTEXT_MAX_FILE_CHARS` with `0` = unlimited. Files with 500+ lines now show near-complete content.",
+      "Preview chunks increased: 2-3 → 3-5 for task mode, giving AI more context upfront.",
+      "**🔧 CLI defaults** — `hnindex init` now includes `CODE_AGENT_ENABLED`, `CODE_AGENT_SCOPE`, and `SMART_CONTEXT_MAX_FILE_CHARS` in generated config.",
+      "**📝 SKILL.md** — Expanded Code Agent usage guide for AI agents with full params, output format, and when-to-use guidance.",
+      "**📦 Versions** — `vibe-hnindex` v0.11.1, `hnindex-cli` v0.11.1.",
+    ],
+  },
+  {
     title: "v0.11.0 — 🤖 Code Agent",
     items: [
       "**🤖 code_session** — One call replaces 5–15 search+read calls. Returns structured context package with core files (full content), similar patterns, dependency analysis, test files, and impact analysis.",

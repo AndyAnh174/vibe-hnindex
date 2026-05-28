@@ -6,7 +6,7 @@
     "npm": "npm"
   },
   "hero": {
-    "badge": "v0.11.0 · Open Source · MIT",
+    "badge": "v0.11.1 · Open Source · MIT",
     "title": "Index Once,",
     "titleHighlight": "Search Every Session",
     "subtitle": "A local MCP server that indexes your codebase and lets any AI assistant search it with paths, line ranges, and semantic understanding. Your code stays on your machine.",
@@ -113,4 +113,5 @@
     "languageSwitcher": "Language"
   }
 }
+
 
