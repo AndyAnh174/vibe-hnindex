@@ -10,6 +10,7 @@
 import { getProject, getFileChunks, getDependencies, getDependents, getExportsByFile, searchKeyword, getChunksByIds } from '../services/sqlite.js';
 import { isGitRepo, getFileHistory } from '../services/git.js';
 import { search } from './search.js';
+import { config } from '../config.js';
 
 function findTestFiles(dependents: Array<{ sourceFile: string }>, filePath: string): string[] {
   const testPatterns = /\.(test|spec)\.(ts|tsx|js|jsx|py|go|rs|java|rb)$/;
@@ -144,8 +145,9 @@ export async function smartContextTool(args: {
     const preview = previewChunks.map(c => c.content).join('\n');
     sections.push('### Key Content');
     sections.push('```' + language);
-    sections.push(preview.slice(0, 2500));
-    if (preview.length > 2500) sections.push('// ... truncated');
+    const maxChars = config.smartContextMaxFileChars;
+    sections.push(preview.slice(0, maxChars));
+    if (preview.length > maxChars) sections.push(`// ... truncated (${preview.length - maxChars} more chars, ${chunks.slice(previewCount).length} more chunks)`);
     sections.push('```');
     sections.push('');
 
