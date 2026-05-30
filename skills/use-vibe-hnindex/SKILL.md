@@ -1,6 +1,6 @@
 ---
 name: use-vibe-hnindex
-description: Guide for using vibe-hnindex MCP tools — indexing codebases, searching with keyword/semantic/hybrid modes, streaming, fuzzy matching, and benchmarking. Use when the user asks to index a codebase, search code, benchmark search performance, or work with codebase knowledge bases.
+description: Guide for using vibe-hnindex MCP tools — indexing codebases, searching with keyword/semantic/hybrid modes, streaming, fuzzy matching, benchmarking, smart context, and code agent (code_session + code_apply). Use when the user asks to index a codebase, search code, benchmark search performance, or work with codebase knowledge bases.
 ---
 
 # vibe-hnindex — Agent Guide

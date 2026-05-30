@@ -6,6 +6,13 @@ export interface VersionEntry {
 
 export const changelogData: VersionEntry[] = [
   {
+    title: "v0.11.2 — Init-Skill Code Agent Sync",
+    items: [
+      "**📝 Init-Skill Sync** — The inline skill in CLI `hnindex init-skill` now includes full Code Agent documentation (`code_session` + `code_apply`). Previously this was missing, so users who ran init-skill didn't see Code Agent.",
+      "**📦 Versions** — `vibe-hnindex` v0.11.2, `hnindex-cli` v0.11.2.",
+    ],
+  },
+  {
     title: "v0.11.1 — Smart Context Fix + CLI",
     items: [
       "**📄 Smart Context** — Content limit increased 10×: 2500 → 25000 characters per file. New env `SMART_CONTEXT_MAX_FILE_CHARS` with `0` = unlimited. Files with 500+ lines now show near-complete content.",

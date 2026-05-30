@@ -1,5 +1,10 @@
 # Changelog (highlights)
 
+## v0.11.2 — Init-Skill Code Agent Sync
+
+- **📝 Init-Skill Sync** — Bản inline skill trong CLI `hnindex init-skill` giờ có đầy đủ hướng dẫn Code Agent (`code_session` + `code_apply`). Trước đây bản này thiếu → người dùng init skill không thấy Code Agent.
+- **📦 Versions** — `vibe-hnindex` v0.11.2, `hnindex-cli` v0.11.2.
+
 ## v0.11.1 — Smart Context Fix + CLI Defaults
 
 - **📄 Smart Context content limit** — Tăng từ 2500 → 25000 ký tự (gấp 10×). Thêm env `SMART_CONTEXT_MAX_FILE_CHARS`, set `0` = unlimited. File 500+ dòng giờ đọc gần như toàn bộ.

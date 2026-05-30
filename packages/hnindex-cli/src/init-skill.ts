@@ -7,7 +7,7 @@ import { join, resolve } from 'node:path';
 // Inlined SKILL.md content (avoid file path issues when installed via npm)
 const SKILL_CONTENT = `---
 name: use-vibe-hnindex
-description: Guide for using vibe-hnindex MCP tools — indexing codebases, searching with keyword/semantic/hybrid modes, streaming, fuzzy matching, and benchmarking. Use when the user asks to index a codebase, search code, benchmark search performance, or work with codebase knowledge bases.
+description: Guide for using vibe-hnindex MCP tools — indexing codebases, searching with keyword/semantic/hybrid modes, streaming, fuzzy matching, benchmarking, smart context, and code agent (code_session + code_apply). Use when the user asks to index a codebase, search code, benchmark search performance, or work with codebase knowledge bases.
 ---
 
 # vibe-hnindex — Agent Guide
@@ -73,6 +73,40 @@ get_dependents(project_name="my-project", file_path="src/auth.ts")
 \`\`\`
 impact_analysis(project_name="my-project", file_path="src/auth.ts", depth=3)
 \`\`\`
+
+### Code Agent — High-Level Task (v0.11.0) ⚡
+Use this 2-call workflow for any non-trivial code change. It replaces 5-15 separate search+read calls.
+
+**Step 1 — Gather context:**
+\`\`\`
+code_session(
+  project_name="my-project",
+  task="add rate limiting middleware to Express API",
+  target_files=["src/api/auth.ts"]  // optional: focus on specific files
+)
+// Returns structured JSON: task analysis, core files (full content),
+// similar patterns, dependencies, test files, impact analysis, framework info.
+// AI reads this package → reasons over it → decides what to edit.
+\`\`\`
+
+**Step 2 — Apply changes:**
+\`\`\`
+code_apply(
+  project_name="my-project",
+  edits=[
+    { action: "create", file_path: "src/middleware/rate-limit.ts", content: "..." },
+    { action: "modify", file_path: "src/auth.ts", content: "..." }
+  ],
+  verify=true  // auto-run tests + lint + typecheck (default true)
+)
+// Supports 3 actions: create (new file), modify (update), delete.
+// Scope control via CODE_AGENT_SCOPE env: safe | moderate | full.
+// Returns: status, changes, test results, lint, typecheck.
+\`\`\`
+
+**When to use code_agent vs smart_context:**
+- code_agent → actually making changes, refactoring, implementing features
+- smart_context → understanding code, debugging questions, exploring
 
 ### Benchmark Performance
 \`\`\`
