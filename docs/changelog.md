@@ -1,5 +1,12 @@
 # Changelog (highlights)
 
+## v0.11.3 — Agent Tool Priority Enforcement
+
+- **🔴 MCP-First Rules** — `agent_rules_stub` giờ sinh rules aggressive: cấm grep/cat/read/Glob, bắt buộc dùng MCP tools. Có bảng so sánh "Instead of → Use MCP".
+- **📝 CLAUDE.md** — Thêm MANDATORY section ở đầu với bảng thay thế tool rõ ràng.
+- **📝 SKILL.md + init-skill** — Sync strong language về tool priority, đảm bảo AI agent nào cũng thấy.
+- **📦 Versions** — `vibe-hnindex` v0.11.3, `hnindex-cli` v0.11.3.
+
 ## v0.11.2 — Init-Skill Code Agent Sync
 
 - **📝 Init-Skill Sync** — Bản inline skill trong CLI `hnindex init-skill` giờ có đầy đủ hướng dẫn Code Agent (`code_session` + `code_apply`). Trước đây bản này thiếu → người dùng init skill không thấy Code Agent.

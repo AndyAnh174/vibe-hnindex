@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "MCP tools for indexing and searching codebases with keyword + semantic + hybrid modes. Supports streaming search, fuzzy matching, regex, symbol filters, parallel indexing, and benchmarking.",
-    "version": "0.11.2"
+    "version": "0.11.3"
   },
   "plugins": [
     {
       "name": "vibe-hnindex",
       "source": "./",
       "description": "Index source code into a local knowledge base, search with keyword + semantic + hybrid modes. Streaming search, fuzzy matching, regex, symbol filters, parallel indexing, benchmark tool.",
-      "version": "0.11.2",
+      "version": "0.11.3",
       "author": {
         "name": "Ho Viet Anh (AndyAnh174)",
         "email": "hovietanh147@gmail.com"

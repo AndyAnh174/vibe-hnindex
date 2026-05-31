@@ -6,6 +6,15 @@ export interface VersionEntry {
 
 export const changelogData: VersionEntry[] = [
   {
+    title: "v0.11.3 — Agent Tool Priority Enforcement",
+    items: [
+      "**🔴 MCP-First Rules** — `agent_rules_stub` now generates aggressive rules that forbid grep/cat/read/Glob and mandate MCP tools. Includes "Instead of → Use MCP" comparison table.",
+      "**📝 CLAUDE.md** — Added MANDATORY section at the top with clear tool replacement table.",
+      "**📝 SKILL.md + init-skill** — Synced strong tool priority language to ensure all AI agents see it.",
+      "**📦 Versions** — `vibe-hnindex` v0.11.3, `hnindex-cli` v0.11.3.",
+    ],
+  },
+  {
     title: "v0.11.2 — Init-Skill Code Agent Sync",
     items: [
       "**📝 Init-Skill Sync** — The inline skill in CLI `hnindex init-skill` now includes full Code Agent documentation (`code_session` + `code_apply`). Previously this was missing, so users who ran init-skill didn't see Code Agent.",

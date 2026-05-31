@@ -33,7 +33,7 @@ initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.11.2',
+  version: '0.11.3',
 }, {
   capabilities: { logging: {} },
 });
@@ -379,7 +379,7 @@ server.tool(
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started (v0.11.2)');
+  console.error('[vibe-hnindex] Server started (v0.11.3)');
 }
 
 main().catch((error) => {

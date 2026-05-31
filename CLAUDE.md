@@ -1,6 +1,13 @@
 # vibe-hnindex — Agent Guide
 
-> MCP server for indexing & searching codebases with keyword + semantic + hybrid modes.
+> 🔴 **CRITICAL**: This project is indexed by vibe-hnindex MCP. **NEVER use grep, cat, read, Glob, or shell commands for code search/read.** Always use vibe-hnindex MCP tools FIRST. They are faster (pre-indexed), give structured context (deps, tests, patterns), and save your context window.
+>
+> | Instead of | Use MCP tool |
+> |---|---|
+> | `grep` / `rg` | `search(query, stream=true)` |
+> | `cat` / `read` | `smart_context(file_path)` or `code_session(task)` |
+> | `Glob` / `ls` | `search(file_pattern="src/**")` |
+> | Multi-step edit flow | `code_session(task)` → `code_apply(edits)` |
 
 ## Quick Start
 
