@@ -8,7 +8,7 @@ export const changelogData: VersionEntry[] = [
   {
     title: "v0.11.3 — Agent Tool Priority Enforcement",
     items: [
-      "**🔴 MCP-First Rules** — `agent_rules_stub` now generates aggressive rules that forbid grep/cat/read/Glob and mandate MCP tools. Includes "Instead of → Use MCP" comparison table.",
+      "**🔴 MCP-First Rules** — `agent_rules_stub` now generates aggressive rules that forbid grep/cat/read/Glob and mandate MCP tools. Includes \"Instead of → Use MCP\" comparison table.",
       "**📝 CLAUDE.md** — Added MANDATORY section at the top with clear tool replacement table.",
       "**📝 SKILL.md + init-skill** — Synced strong tool priority language to ensure all AI agents see it.",
       "**📦 Versions** — `vibe-hnindex` v0.11.3, `hnindex-cli` v0.11.3.",
