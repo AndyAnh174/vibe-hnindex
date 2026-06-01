@@ -6,6 +6,13 @@ export interface VersionEntry {
 
 export const changelogData: VersionEntry[] = [
   {
+    title: "v0.11.4 — Watch Auto-Resume",
+    items: [
+      "**👁️ Watch Auto-Resume** — File watchers now automatically resume when the MCP server restarts (IDE restart, AI agent restart, connection drop). No more losing watch mode. Env `WATCH_AUTO_RESUME` (default `true`).",
+      "**📦 Versions** — `vibe-hnindex` v0.11.4, `hnindex-cli` v0.11.4.",
+    ],
+  },
+  {
     title: "v0.11.3 — Agent Tool Priority Enforcement",
     items: [
       "**🔴 MCP-First Rules** — `agent_rules_stub` now generates aggressive rules that forbid grep/cat/read/Glob and mandate MCP tools. Includes \"Instead of → Use MCP\" comparison table.",

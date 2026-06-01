@@ -1,5 +1,10 @@
 # Changelog (highlights)
 
+## v0.11.4 — Watch Auto-Resume
+
+- **👁️ Watch Auto-Resume** — File watchers tự động resume khi MCP server khởi động lại (IDE restart, AI agent restart, connection drop). Không còn lo mất watch mode. Env `WATCH_AUTO_RESUME` (default `true`).
+- **📦 Versions** — `vibe-hnindex` v0.11.4, `hnindex-cli` v0.11.4.
+
 ## v0.11.3 — Agent Tool Priority Enforcement
 
 - **🔴 MCP-First Rules** — `agent_rules_stub` giờ sinh rules aggressive: cấm grep/cat/read/Glob, bắt buộc dùng MCP tools. Có bảng so sánh "Instead of → Use MCP".

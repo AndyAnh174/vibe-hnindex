@@ -93,6 +93,10 @@ export const config = {
   /** Scope: safe (read-only), moderate (create + modify non-critical files), full (all files). Default moderate. */
   codeAgentScope: (process.env.CODE_AGENT_SCOPE?.trim() || 'moderate') as 'safe' | 'moderate' | 'full',
 
+  // Watch persistence (v0.11.4)
+  /** Auto-resume file watching for all indexed projects on server start. Default true. */
+  watchAutoResume: process.env.WATCH_AUTO_RESUME !== 'false',
+
   // Smart Context
   /** Max characters per file in smart_context output. Default 25000. Set to 0 for unlimited. */
   smartContextMaxFileChars: parseInt(process.env.SMART_CONTEXT_MAX_FILE_CHARS || '25000', 10),

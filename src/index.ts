@@ -12,7 +12,7 @@ import { listProjectsTool } from './tools/list-projects.js';
 import { deleteProjectTool } from './tools/delete-project.js';
 import { getFileInfoTool } from './tools/get-file-info.js';
 import { projectStatsTool } from './tools/project-stats.js';
-import { watchProjectTool, unwatchProjectTool } from './tools/watch-project.js';
+import { watchProjectTool, unwatchProjectTool, startWatchingProject } from './tools/watch-project.js';
 import { codebaseOverviewTool } from './tools/codebase-overview.js';
 import { fileSummaryTool } from './tools/file-summary.js';
 import { getDependenciesTool, getDependentsTool, impactAnalysisTool } from './tools/dependencies.js';
@@ -33,7 +33,7 @@ initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.11.3',
+  version: '0.11.4',
 }, {
   capabilities: { logging: {} },
 });
@@ -375,11 +375,29 @@ server.tool(
   async (args) => benchmarkSearch(args),
 );
 
+// --- Auto-resume watch on startup ---
+function autoResumeWatch() {
+  if (!config.watchAutoResume) return;
+  const projects = listProjects();
+  for (const p of projects) {
+    startWatchingProject(p.projectName).then((result) => {
+      if (result.ok) {
+        console.error(`[vibe-hnindex] Auto-resumed watch: ${p.projectName}`);
+      } else {
+        console.error(`[vibe-hnindex] Watch skip (${p.projectName}): ${result.message}`);
+      }
+    }).catch((err) => {
+      console.error(`[vibe-hnindex] Watch fail (${p.projectName}):`, err);
+    });
+  }
+}
+
 // --- Start server ---
 async function main() {
+  autoResumeWatch();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started (v0.11.3)');
+  console.error('[vibe-hnindex] Server started (v0.11.4)');
 }
 
 main().catch((error) => {
