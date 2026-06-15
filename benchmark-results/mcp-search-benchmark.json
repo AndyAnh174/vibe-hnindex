@@ -1,0 +1,438 @@
+{
+  "generatedAt": "2026-04-08T19:02:34.071Z",
+  "ollamaUrl": "http://222.253.80.30:11434",
+  "qdrantUrl": "http://localhost:6333",
+  "runs": [
+    {
+      "model": "nomic-embed-text-v2-moe:latest",
+      "slug": "nomic",
+      "dim": "768",
+      "status": 0,
+      "report": {
+        "model": "nomic-embed-text-v2-moe:latest",
+        "embeddingDimensions": "768",
+        "ollamaUrl": "http://222.253.80.30:11434",
+        "qdrantUrl": "http://localhost:6333",
+        "storagePath": "C:\\Users\\ADMIN\\AppData\\Local\\Temp\\vibe-hnindex-mcp-bench\\nomic",
+        "project": "mcpbench_nomic",
+        "fixture": "D:\\RTIC\\MCP\\benchmark-fixture",
+        "index": {
+          "ms": 525.03,
+          "ok": true,
+          "totalChunks": 3,
+          "qdrantVectors": 3,
+          "ready": "yes"
+        },
+        "tools": [
+          {
+            "name": "search_keyword",
+            "ms": 11.39,
+            "ok": true,
+            "textLen": 1029,
+            "preview": "Found 2 results for \"parseEmbeddingDimensions\" (mode: keyword) [filters: content: compact (max ~2000 chars/chunk)]: ### 1. README.md:1-7 (markdown) [score: 0.0000] ```markdown # Benchmark fixture "
+          },
+          {
+            "name": "search_semantic",
+            "ms": 260.55,
+            "ok": true,
+            "textLen": 1285,
+            "preview": "Found 3 results for \"Qdrant Ollama embedding hybrid search pipeline\" (mode: semantic) [filters: content: compact (max ~2000 chars/chunk)]: ### 1. docs/notes-vi.md:1-5 (markdown) [score: 0.6772] ```ma"
+          },
+          {
+            "name": "search_hybrid",
+            "ms": 214.65,
+            "ok": true,
+            "textLen": 1327,
+            "preview": "Found 3 results for \"Qdrant Ollama embedding hybrid search pipeline\" (mode: hybrid) [filters: content: compact (max ~2000 chars/chunk)]: ⚠ Keyword fallback: relaxed OR match used. ### 1. docs/notes-"
+          },
+          {
+            "name": "search_auto",
+            "ms": 241.72,
+            "ok": true,
+            "textLen": 1345,
+            "preview": "Found 3 results for \"Qdrant Ollama embedding hybrid search pipeline\" (mode: hybrid (auto from query)) [filters: content: compact (max ~2000 chars/chunk)]: ⚠ Keyword fallback: relaxed OR match used. "
+          },
+          {
+            "name": "search_symbol",
+            "ms": 1.64,
+            "ok": true,
+            "textLen": 698,
+            "preview": "Found 1 results for \"parseEmbeddingDimensions\" (mode: symbol) [filters: content: compact (max ~2000 chars/chunk)]: ### 1. src/embed-service.ts:1-15 (typescript) [score: 1.0000] ```typescript /** * "
+          },
+          {
+            "name": "project_stats",
+            "ms": 0.68,
+            "ok": true,
+            "textLen": 344,
+            "preview": "## Project: mcpbench_nomic - **Path:** D:\\RTIC\\MCP\\benchmark-fixture - **Total files:** 3 - **Total chunks:** 3 - **Total lines indexed:** 27 - **Avg chunks per file:** 1 - **Last indexed:** 2026-04-0"
+          },
+          {
+            "name": "symbol_lookup",
+            "ms": 0.53,
+            "ok": true,
+            "textLen": 250,
+            "preview": "## Symbol lookup: \"parseEmbeddingDimensions\" **Project:** mcpbench_nomic - **parseEmbeddingDimensions** (function) - File: `src/embed-service.ts`:4 - Exported: yes - `export function parseEmbed"
+          },
+          {
+            "name": "list_projects",
+            "ms": 0.34,
+            "ok": true,
+            "textLen": 215,
+            "preview": "Found 1 indexed project(s): | Project | Path | Files | Chunks | Last Indexed | |---------|------|-------|--------|-------------| | mcpbench_nomic | D:\\RTIC\\MCP\\benchmark-fixture | 3 | 3 | 2026-04-08T"
+          }
+        ]
+      }
+    },
+    {
+      "model": "embeddinggemma:300m",
+      "slug": "gemma",
+      "dim": "768",
+      "status": 0,
+      "report": {
+        "model": "embeddinggemma:300m",
+        "embeddingDimensions": "768",
+        "ollamaUrl": "http://222.253.80.30:11434",
+        "qdrantUrl": "http://localhost:6333",
+        "storagePath": "C:\\Users\\ADMIN\\AppData\\Local\\Temp\\vibe-hnindex-mcp-bench\\gemma",
+        "project": "mcpbench_gemma",
+        "fixture": "D:\\RTIC\\MCP\\benchmark-fixture",
+        "index": {
+          "ms": 739.26,
+          "ok": true,
+          "totalChunks": 3,
+          "qdrantVectors": 3,
+          "ready": "yes"
+        },
+        "tools": [
+          {
+            "name": "search_keyword",
+            "ms": 11.49,
+            "ok": true,
+            "textLen": 1029,
+            "preview": "Found 2 results for \"parseEmbeddingDimensions\" (mode: keyword) [filters: content: compact (max ~2000 chars/chunk)]: ### 1. README.md:1-7 (markdown) [score: 0.0000] ```markdown # Benchmark fixture "
+          },
+          {
+            "name": "search_semantic",
+            "ms": 234.19,
+            "ok": true,
+            "textLen": 1285,
+            "preview": "Found 3 results for \"Qdrant Ollama embedding hybrid search pipeline\" (mode: semantic) [filters: content: compact (max ~2000 chars/chunk)]: ### 1. docs/notes-vi.md:1-5 (markdown) [score: 0.6277] ```ma"
+          },
+          {
+            "name": "search_hybrid",
+            "ms": 287.7,
+            "ok": true,
+            "textLen": 1327,
+            "preview": "Found 3 results for \"Qdrant Ollama embedding hybrid search pipeline\" (mode: hybrid) [filters: content: compact (max ~2000 chars/chunk)]: ⚠ Keyword fallback: relaxed OR match used. ### 1. docs/notes-"
+          },
+          {
+            "name": "search_auto",
+            "ms": 262.62,
+            "ok": true,
+            "textLen": 1345,
+            "preview": "Found 3 results for \"Qdrant Ollama embedding hybrid search pipeline\" (mode: hybrid (auto from query)) [filters: content: compact (max ~2000 chars/chunk)]: ⚠ Keyword fallback: relaxed OR match used. "
+          },
+          {
+            "name": "search_symbol",
+            "ms": 1.71,
+            "ok": true,
+            "textLen": 698,
+            "preview": "Found 1 results for \"parseEmbeddingDimensions\" (mode: symbol) [filters: content: compact (max ~2000 chars/chunk)]: ### 1. src/embed-service.ts:1-15 (typescript) [score: 1.0000] ```typescript /** * "
+          },
+          {
+            "name": "project_stats",
+            "ms": 0.99,
+            "ok": true,
+            "textLen": 344,
+            "preview": "## Project: mcpbench_gemma - **Path:** D:\\RTIC\\MCP\\benchmark-fixture - **Total files:** 3 - **Total chunks:** 3 - **Total lines indexed:** 27 - **Avg chunks per file:** 1 - **Last indexed:** 2026-04-0"
+          },
+          {
+            "name": "symbol_lookup",
+            "ms": 0.53,
+            "ok": true,
+            "textLen": 250,
+            "preview": "## Symbol lookup: \"parseEmbeddingDimensions\" **Project:** mcpbench_gemma - **parseEmbeddingDimensions** (function) - File: `src/embed-service.ts`:4 - Exported: yes - `export function parseEmbed"
+          },
+          {
+            "name": "list_projects",
+            "ms": 0.32,
+            "ok": true,
+            "textLen": 215,
+            "preview": "Found 1 indexed project(s): | Project | Path | Files | Chunks | Last Indexed | |---------|------|-------|--------|-------------| | mcpbench_gemma | D:\\RTIC\\MCP\\benchmark-fixture | 3 | 3 | 2026-04-08T"
+          }
+        ]
+      }
+    },
+    {
+      "model": "bge-m3:567m",
+      "slug": "bge",
+      "dim": "1024",
+      "status": 0,
+      "report": {
+        "model": "bge-m3:567m",
+        "embeddingDimensions": "1024",
+        "ollamaUrl": "http://222.253.80.30:11434",
+        "qdrantUrl": "http://localhost:6333",
+        "storagePath": "C:\\Users\\ADMIN\\AppData\\Local\\Temp\\vibe-hnindex-mcp-bench\\bge",
+        "project": "mcpbench_bge",
+        "fixture": "D:\\RTIC\\MCP\\benchmark-fixture",
+        "index": {
+          "ms": 618.08,
+          "ok": true,
+          "totalChunks": 3,
+          "qdrantVectors": 3,
+          "ready": "yes"
+        },
+        "tools": [
+          {
+            "name": "search_keyword",
+            "ms": 12.19,
+            "ok": true,
+            "textLen": 1029,
+            "preview": "Found 2 results for \"parseEmbeddingDimensions\" (mode: keyword) [filters: content: compact (max ~2000 chars/chunk)]: ### 1. README.md:1-7 (markdown) [score: 0.0000] ```markdown # Benchmark fixture "
+          },
+          {
+            "name": "search_semantic",
+            "ms": 242.04,
+            "ok": true,
+            "textLen": 1285,
+            "preview": "Found 3 results for \"Qdrant Ollama embedding hybrid search pipeline\" (mode: semantic) [filters: content: compact (max ~2000 chars/chunk)]: ### 1. docs/notes-vi.md:1-5 (markdown) [score: 0.6999] ```ma"
+          },
+          {
+            "name": "search_hybrid",
+            "ms": 228.47,
+            "ok": true,
+            "textLen": 1327,
+            "preview": "Found 3 results for \"Qdrant Ollama embedding hybrid search pipeline\" (mode: hybrid) [filters: content: compact (max ~2000 chars/chunk)]: ⚠ Keyword fallback: relaxed OR match used. ### 1. docs/notes-"
+          },
+          {
+            "name": "search_auto",
+            "ms": 239.41,
+            "ok": true,
+            "textLen": 1345,
+            "preview": "Found 3 results for \"Qdrant Ollama embedding hybrid search pipeline\" (mode: hybrid (auto from query)) [filters: content: compact (max ~2000 chars/chunk)]: ⚠ Keyword fallback: relaxed OR match used. "
+          },
+          {
+            "name": "search_symbol",
+            "ms": 1.69,
+            "ok": true,
+            "textLen": 698,
+            "preview": "Found 1 results for \"parseEmbeddingDimensions\" (mode: symbol) [filters: content: compact (max ~2000 chars/chunk)]: ### 1. src/embed-service.ts:1-15 (typescript) [score: 1.0000] ```typescript /** * "
+          },
+          {
+            "name": "project_stats",
+            "ms": 0.74,
+            "ok": true,
+            "textLen": 342,
+            "preview": "## Project: mcpbench_bge - **Path:** D:\\RTIC\\MCP\\benchmark-fixture - **Total files:** 3 - **Total chunks:** 3 - **Total lines indexed:** 27 - **Avg chunks per file:** 1 - **Last indexed:** 2026-04-08T"
+          },
+          {
+            "name": "symbol_lookup",
+            "ms": 0.59,
+            "ok": true,
+            "textLen": 248,
+            "preview": "## Symbol lookup: \"parseEmbeddingDimensions\" **Project:** mcpbench_bge - **parseEmbeddingDimensions** (function) - File: `src/embed-service.ts`:4 - Exported: yes - `export function parseEmbeddi"
+          },
+          {
+            "name": "list_projects",
+            "ms": 0.37,
+            "ok": true,
+            "textLen": 213,
+            "preview": "Found 1 indexed project(s): | Project | Path | Files | Chunks | Last Indexed | |---------|------|-------|--------|-------------| | mcpbench_bge | D:\\RTIC\\MCP\\benchmark-fixture | 3 | 3 | 2026-04-08T19"
+          }
+        ]
+      }
+    }
+  ],
+  "flatTable": [
+    {
+      "model": "nomic-embed-text-v2-moe:latest",
+      "tool": "index_codebase",
+      "ms": 525.03,
+      "ok": true,
+      "note": "chunks=3 qdrant=3"
+    },
+    {
+      "model": "nomic-embed-text-v2-moe:latest",
+      "tool": "search_keyword",
+      "ms": 11.39,
+      "ok": true,
+      "note": "Found 2 results for \"parseEmbeddingDimensions\" (mode: keywor"
+    },
+    {
+      "model": "nomic-embed-text-v2-moe:latest",
+      "tool": "search_semantic",
+      "ms": 260.55,
+      "ok": true,
+      "note": "Found 3 results for \"Qdrant Ollama embedding hybrid search p"
+    },
+    {
+      "model": "nomic-embed-text-v2-moe:latest",
+      "tool": "search_hybrid",
+      "ms": 214.65,
+      "ok": true,
+      "note": "Found 3 results for \"Qdrant Ollama embedding hybrid search p"
+    },
+    {
+      "model": "nomic-embed-text-v2-moe:latest",
+      "tool": "search_auto",
+      "ms": 241.72,
+      "ok": true,
+      "note": "Found 3 results for \"Qdrant Ollama embedding hybrid search p"
+    },
+    {
+      "model": "nomic-embed-text-v2-moe:latest",
+      "tool": "search_symbol",
+      "ms": 1.64,
+      "ok": true,
+      "note": "Found 1 results for \"parseEmbeddingDimensions\" (mode: symbol"
+    },
+    {
+      "model": "nomic-embed-text-v2-moe:latest",
+      "tool": "project_stats",
+      "ms": 0.68,
+      "ok": true,
+      "note": "## Project: mcpbench_nomic - **Path:** D:\\RTIC\\MCP\\benchmark"
+    },
+    {
+      "model": "nomic-embed-text-v2-moe:latest",
+      "tool": "symbol_lookup",
+      "ms": 0.53,
+      "ok": true,
+      "note": "## Symbol lookup: \"parseEmbeddingDimensions\" **Project:** mc"
+    },
+    {
+      "model": "nomic-embed-text-v2-moe:latest",
+      "tool": "list_projects",
+      "ms": 0.34,
+      "ok": true,
+      "note": "Found 1 indexed project(s): | Project | Path | Files | Chunk"
+    },
+    {
+      "model": "embeddinggemma:300m",
+      "tool": "index_codebase",
+      "ms": 739.26,
+      "ok": true,
+      "note": "chunks=3 qdrant=3"
+    },
+    {
+      "model": "embeddinggemma:300m",
+      "tool": "search_keyword",
+      "ms": 11.49,
+      "ok": true,
+      "note": "Found 2 results for \"parseEmbeddingDimensions\" (mode: keywor"
+    },
+    {
+      "model": "embeddinggemma:300m",
+      "tool": "search_semantic",
+      "ms": 234.19,
+      "ok": true,
+      "note": "Found 3 results for \"Qdrant Ollama embedding hybrid search p"
+    },
+    {
+      "model": "embeddinggemma:300m",
+      "tool": "search_hybrid",
+      "ms": 287.7,
+      "ok": true,
+      "note": "Found 3 results for \"Qdrant Ollama embedding hybrid search p"
+    },
+    {
+      "model": "embeddinggemma:300m",
+      "tool": "search_auto",
+      "ms": 262.62,
+      "ok": true,
+      "note": "Found 3 results for \"Qdrant Ollama embedding hybrid search p"
+    },
+    {
+      "model": "embeddinggemma:300m",
+      "tool": "search_symbol",
+      "ms": 1.71,
+      "ok": true,
+      "note": "Found 1 results for \"parseEmbeddingDimensions\" (mode: symbol"
+    },
+    {
+      "model": "embeddinggemma:300m",
+      "tool": "project_stats",
+      "ms": 0.99,
+      "ok": true,
+      "note": "## Project: mcpbench_gemma - **Path:** D:\\RTIC\\MCP\\benchmark"
+    },
+    {
+      "model": "embeddinggemma:300m",
+      "tool": "symbol_lookup",
+      "ms": 0.53,
+      "ok": true,
+      "note": "## Symbol lookup: \"parseEmbeddingDimensions\" **Project:** mc"
+    },
+    {
+      "model": "embeddinggemma:300m",
+      "tool": "list_projects",
+      "ms": 0.32,
+      "ok": true,
+      "note": "Found 1 indexed project(s): | Project | Path | Files | Chunk"
+    },
+    {
+      "model": "bge-m3:567m",
+      "tool": "index_codebase",
+      "ms": 618.08,
+      "ok": true,
+      "note": "chunks=3 qdrant=3"
+    },
+    {
+      "model": "bge-m3:567m",
+      "tool": "search_keyword",
+      "ms": 12.19,
+      "ok": true,
+      "note": "Found 2 results for \"parseEmbeddingDimensions\" (mode: keywor"
+    },
+    {
+      "model": "bge-m3:567m",
+      "tool": "search_semantic",
+      "ms": 242.04,
+      "ok": true,
+      "note": "Found 3 results for \"Qdrant Ollama embedding hybrid search p"
+    },
+    {
+      "model": "bge-m3:567m",
+      "tool": "search_hybrid",
+      "ms": 228.47,
+      "ok": true,
+      "note": "Found 3 results for \"Qdrant Ollama embedding hybrid search p"
+    },
+    {
+      "model": "bge-m3:567m",
+      "tool": "search_auto",
+      "ms": 239.41,
+      "ok": true,
+      "note": "Found 3 results for \"Qdrant Ollama embedding hybrid search p"
+    },
+    {
+      "model": "bge-m3:567m",
+      "tool": "search_symbol",
+      "ms": 1.69,
+      "ok": true,
+      "note": "Found 1 results for \"parseEmbeddingDimensions\" (mode: symbol"
+    },
+    {
+      "model": "bge-m3:567m",
+      "tool": "project_stats",
+      "ms": 0.74,
+      "ok": true,
+      "note": "## Project: mcpbench_bge - **Path:** D:\\RTIC\\MCP\\benchmark-f"
+    },
+    {
+      "model": "bge-m3:567m",
+      "tool": "symbol_lookup",
+      "ms": 0.59,
+      "ok": true,
+      "note": "## Symbol lookup: \"parseEmbeddingDimensions\" **Project:** mc"
+    },
+    {
+      "model": "bge-m3:567m",
+      "tool": "list_projects",
+      "ms": 0.37,
+      "ok": true,
+      "note": "Found 1 indexed project(s): | Project | Path | Files | Chunk"
+    }
+  ]
+}

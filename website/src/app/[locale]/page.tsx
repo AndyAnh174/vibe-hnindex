@@ -283,48 +283,49 @@ export default function Home() {
               />
               <div className="relative z-10 w-full">
                 <MermaidDiagram chart={`
-graph TB
+flowchart LR
     subgraph Input["📂 Input"]
-        A["💻 Your Codebase<br/>.ts .py .go .rs ..."]
+        A["💻 Your Codebase"]
     end
 
-    subgraph Server["⚙️ vibe-hnindex MCP Server"]
-        B["🔍 Search Router<br/>keyword | semantic | hybrid"]
+    subgraph Server["⚙️ vibe-hnindex Server"]
+        B["🔍 Search Router"]
         C["🔀 RRF Fusion"]
     end
 
     subgraph Storage["💾 Storage"]
-        D["(SQLite<br/>FTS5 + Keyword)"]
-        E["(Qdrant<br/>Vector Embeddings)"]
+        D[("SQLite FTS5")]
+        E[("Qdrant Vectors")]
     end
 
-    subgraph Memory["🧠 Chat Memory (v0.12)"]
-        F["(SQLite<br/>Chat Context)"]
-        G["(Qdrant<br/>Chat Vectors)"]
+    subgraph Memory["🧠 Chat Memory"]
+        F[("SQLite Context")]
+        G[("Qdrant Chat")]
     end
 
     subgraph Infra["🏗️ Infrastructure"]
-        H["Ollama<br/>Embeddings"]
-        I["Qdrant<br/>localhost:6333"]
+        H["Ollama"]
+        I["Qdrant :6333"]
     end
 
     subgraph Output["🤖 AI Clients"]
-        J["Claude · Cursor · Windsurf<br/>Antigravity · VS Code"]
+        J["Claude · Cursor"]
     end
 
-    A -->|"index_codebase"| Storage
-    A -->|scan| H
-    B -->|"keyword"| D
-    B -->|"semantic"| E
-    B -->|"hybrid"| C
+    A -->|index| D
+    A -->|embed| H
+    B -->|keyword| D
+    B -->|semantic| E
+    B -->|hybrid| C
     C --> D
     C --> E
-    B -.->|"auto-track"| F
-    F --> H
+    B -.->|auto-track| F
+    F -->|embed| H
     H --> G
     D --> J
     E --> J
     H -.-> I
+    G -.-> I
 
     style F fill:#6366f1,color:#fff
     style G fill:#6366f1,color:#fff
