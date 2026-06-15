@@ -1,5 +1,13 @@
 # Changelog (highlights)
 
+## v0.12.1 — 🚫 Tool Priority Enforcement
+
+- **🚫 Hardened agent_rules_stub** — Ultra-compact BANNED/INSTEAD table at top of generated rules. Shorter, punchier, harder to ignore.
+- **📢 priority_prompt tool** — One-shot tool to dump enforcement rules mid-conversation. Call when AI uses grep instead of MCP.
+- **💬 MCP prompts capability** — `tool-priority` prompt for AI clients to auto-fetch enforcement rules.
+- **📝 SKILL.md + CLAUDE.md** — Stronger BANNED language at top, compact 4-line table.
+- **📦 Versions** — `vibe-hnindex` v0.12.1, `hnindex-cli` v0.12.1.
+
 ## v0.12.0 — 🧠 Chat Memory System
 
 - **🧠 Auto-Track** — Tự động log mọi tool call (search, smart_context, code_session) vào SQLite, không cần gọi tool thủ công. AI restart session vẫn có ngay context cũ.

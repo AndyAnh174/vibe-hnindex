@@ -46,57 +46,32 @@ export async function agentRulesStubTool(args: {
         ? 'AGENTS.md stub'
         : 'Agent rules stub';
 
+  // v0.12.1: ultra-compact + penalty language at TOP
   const lines: string[] = [
     `# ${title}`,
     '',
-    `**Project:** ${project.projectName}`,
-    `**Root:** ${project.rootPath}`,
-    `**Last indexed:** ${project.lastIndexedAt}`,
+    `> 🚫 grep/Read/Glob for this project = BANNED. Pre-indexed. Use MCP tools or you will miss results.`,
     '',
-    '## 🔴 MANDATORY: Use vibe-hnindex MCP tools FIRST',
+    `| BANNED | Use MCP instead |`,
+    `|---|---|`,
+    `| grep / rg / git grep | \`search(query, stream=true)\` |`,
+    `| cat / Read / View file | \`smart_context(file_path)\` or \`code_session(task)\` |`,
+    `| Glob / ls / find | \`search(file_pattern="src/**")\` |`,
+    `| Bash(grep ...) | \`search(query, project_name="${args.project_name}")\` |`,
     '',
-    '**This project has an indexed knowledge base via vibe-hnindex MCP.**',
-    '',
-    '### ❌ DO NOT use these tools for code search/read:',
-    '- `grep` / `rg` / `git grep` — use `search` (MCP) instead',
-    '- `cat` / `read` / `Read` / `View` — use `smart_context` or `code_session` (MCP) instead',
-    '- `Glob` / `ls` / `find` — use `search` with `file_pattern` (MCP) instead',
-    '- `Bash(grep ...)` or any shell grep — use `search` (MCP) instead',
-    '',
-    '### ✅ ALWAYS use these MCP tools instead:',
-    '- `search(query, project_name, stream=true)` → find code (replaces grep)',
-    '- `smart_context(project_name, file_path/query)` → read file with full context (replaces cat/read)',
-    '- `code_session(project_name, task)` + `code_apply` → implement changes (replaces multi-step edit)',
-    '- `symbol_lookup` → find definitions (replaces grep for symbols)',
-    '- `impact_analysis` → check what breaks before refactoring',
-    '',
-    '### Why:',
-    '- MCP search is **faster** than grep (pre-indexed FTS5 + vectors)',
-    '- MCP smart_context gives **structured context** (deps, tests, patterns) — grep only gives raw lines',
-    '- MCP code_session replaces **5-15 separate tool calls** with 1 call',
-    '- You save context window space and API cost',
-    '',
-    '## Stack (from index)',
-    `- Primary language (by files): **${topLang}**`,
-    `- **Files:** ${stats.totalFiles} · **Chunks:** ${stats.totalChunks}`,
+    `**Project:** ${project.projectName} · **Root:** ${project.rootPath}`,
+    `**Language:** ${topLang} · **Files:** ${stats.totalFiles} · **Chunks:** ${stats.totalChunks}`,
     '',
   ];
 
   if (scripts.length > 0) {
-    lines.push('## Suggested commands (from package.json)');
-    for (const c of scripts) {
-      lines.push(`- \`${c}\``);
-    }
+    lines.push('**Commands:** ' + scripts.map(c => `\`${c}\``).join(' · '));
     lines.push('');
   }
 
-  lines.push('## When editing this codebase');
-  lines.push('');
-  lines.push('- Run tests/build after substantive changes when applicable.');
-  lines.push('- Use `search` with a narrow `file_pattern` to scope results.');
-  lines.push('- Re-run `index_codebase` after large merges or dependency changes.');
-  lines.push('- Prefer `project_briefing` for full context before large refactors.');
-  lines.push('');
+  lines.push(`Search: \`search(query, project_name="${args.project_name}", stream=true)\``);
+  lines.push(`Context: \`smart_context(project_name="${args.project_name}", task="...")\``);
+  lines.push(`Edit: \`code_session(project_name="${args.project_name}", task="...")\` → \`code_apply\``);
 
   return { content: [{ type: 'text', text: lines.join('\n') }] };
 }

@@ -3,7 +3,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
-import { initDatabase, listProjects } from './services/sqlite.js';
+import { initDatabase, listProjects, getProject } from './services/sqlite.js';
 import { indexCodebase } from './tools/index-codebase.js';
 import { indexFile } from './tools/index-file.js';
 import { search } from './tools/search.js';
@@ -35,9 +35,9 @@ initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.12.0',
+  version: '0.12.1',
 }, {
-  capabilities: { logging: {} },
+  capabilities: { logging: {}, prompts: {} },
 });
 
 // --- Resource: knowledge://projects ---
@@ -420,6 +420,72 @@ if (config.chatMemoryEnabled) {
   );
 }
 
+// --- Prompt: tool-priority (v0.12.1) ---
+// AI clients fetch this prompt to enforce MCP tool usage for indexed projects
+server.prompt(
+  'tool-priority',
+  '🚫 Enforce vibe-hnindex MCP tool usage — blocks grep/cat/Glob for indexed projects',
+  {
+    project_name: z.string().describe('Project name to scope rules'),
+  },
+  (args) => ({
+    messages: [{
+      role: 'user',
+      content: {
+        type: 'text',
+        text: [
+          `CRITICAL for "${args.project_name}": This project is PRE-INDEXED. Using grep/cat misses data.`,
+          '',
+          'BANNED → MCP:',
+          `- grep/rg → search(query="<term>", project_name="${args.project_name}", stream=true)`,
+          `- cat/Read → smart_context(project_name="${args.project_name}", file_path="<file>")`,
+          `- Glob/ls → search(project_name="${args.project_name}", file_pattern="src/**")`,
+          '- Multi-step edit → code_session(task) → code_apply(edits)',
+          '',
+          'If you use grep instead, you will get incomplete results and waste context tokens.',
+        ].join('\n'),
+      },
+    }],
+  })
+);
+
+// --- Tool: priority_prompt (v0.12.1) ---
+// One-shot tool to dump enforcement rules into conversation
+server.tool(
+  'priority_prompt',
+  'Dump MCP tool priority enforcement rules into the conversation. Call this when the AI agent is using grep/cat/Glob instead of MCP tools. Returns compact rules the AI must follow.',
+  {
+    project_name: z.string().describe('Project name'),
+  },
+  async (args) => {
+    const project = getProject(args.project_name);
+    if (!project) {
+      return { content: [{ type: 'text', text: `Project "${args.project_name}" not found. Index it first.` }] };
+    }
+    return {
+      content: [{
+        type: 'text',
+        text: [
+          `🚫 TOOL PRIORITY for "${args.project_name}":`,
+          '',
+          'This codebase is PRE-INDEXED by vibe-hnindex. Using grep/cat/Glob WASTES tokens and MISSES results.',
+          '',
+          '| ❌ DO NOT USE | ✅ USE INSTEAD |',
+          '|---|---|',
+          '| grep / rg / git grep | search(query, stream=true) |',
+          '| cat / Read / View file | smart_context(file_path) or code_session(task) |',
+          '| Glob / ls / find | search(file_pattern="src/**") |',
+          '| Bash(grep ...) | search(mode="keyword") |',
+          '| Multi-step manual edit | code_session(task) → code_apply(edits) |',
+          '',
+          'MCP tools are FASTER (pre-indexed), RICHER (deps, tests, patterns), and save context tokens.',
+          'Using grep = wasting 500+ tokens and missing semantic search results.',
+        ].join('\n'),
+      }],
+    };
+  },
+);
+
 // --- Auto-resume watch on startup ---
 function autoResumeWatch() {
   if (!config.watchAutoResume) return;
@@ -442,7 +508,7 @@ async function main() {
   autoResumeWatch();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started (v0.12.0)');
+  console.error('[vibe-hnindex] Server started (v0.12.1)');
 }
 
 main().catch((error) => {

@@ -5,14 +5,14 @@ description: Guide for using vibe-hnindex MCP tools — indexing codebases, sear
 
 # vibe-hnindex — Agent Guide
 
-> 🔴 **CRITICAL**: When a project is indexed by vibe-hnindex MCP, **NEVER use grep, cat, read, Glob, or shell commands for code search/read.** Always use vibe-hnindex MCP tools FIRST. They are faster (pre-indexed), give structured context, and save your context window.
+> 🚫 grep/cat/Glob for indexed projects = BANNED. Pre-indexed = you WILL miss results. Use MCP tools only.
 >
-> | Instead of | Use MCP tool |
+> | ❌ BANNED | ✅ MCP INSTEAD |
 > |---|---|
-> | `grep` / `rg` | `search(query, project_name, stream=true)` |
-> | `cat` / `read` / `View` | `smart_context(project_name, file_path)` or `code_session(project_name, task)` |
+> | `grep` / `rg` / `git grep` | `search(query, project_name, stream=true)` |
+> | `cat` / `Read` / `View` | `smart_context(project_name, file_path)` or `code_session(project_name, task)` |
 > | `Glob` / `ls` / `find` | `search(project_name, file_pattern="src/**")` |
-> | Multi-step edit flow | `code_session(project_name, task)` → `code_apply(project_name, edits)` |
+> | Multi-step edit | `code_session(project_name, task)` → `code_apply(project_name, edits)` |
 
 You have access to vibe-hnindex MCP tools for indexing and searching codebases. This skill tells you how to use them effectively.
 

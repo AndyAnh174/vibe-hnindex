@@ -1,7 +1,7 @@
 {
   "name": "vibe-hnindex",
   "description": "Index source code into a local knowledge base, search with keyword + semantic + hybrid modes. Chat memory with hybrid SQLite+Qdrant storage for persistent AI context.",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "author": {
     "name": "Ho Viet Anh (AndyAnh174)",
     "email": "hovietanh147@gmail.com"
