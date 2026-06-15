@@ -173,3 +173,124 @@ export async function deleteCollection(projectName: string): Promise<void> {
     console.error('[qdrant] Delete collection error:', error);
   }
 }
+
+// ── Chat Memory Qdrant (v0.12.0) ──
+
+export function getChatCollectionName(projectName: string): string {
+  const sanitized = projectName.replace(/[^a-zA-Z0-9_]/g, '_');
+  return `${config.qdrantCollectionPrefix}chat_${sanitized}`;
+}
+
+export async function ensureChatCollection(projectName: string): Promise<void> {
+  const collectionName = getChatCollectionName(projectName);
+  const qdrant = getQdrantClient();
+
+  try {
+    await qdrant.getCollection(collectionName);
+  } catch (error: unknown) {
+    const status = (error as { status?: number })?.status;
+    if (status && status !== 404) throw error;
+    await qdrant.createCollection(collectionName, {
+      vectors: {
+        size: config.embeddingDimensions,
+        distance: 'Cosine',
+      },
+      optimizers_config: {
+        default_segment_number: 2,
+      },
+      on_disk_payload: true,
+    });
+    console.error(`[qdrant] Created chat collection: ${collectionName}`);
+  }
+}
+
+export async function upsertChatPoints(
+  projectName: string,
+  points: Array<{
+    id: string;
+    vector: number[];
+    payload: Record<string, unknown>;
+  }>
+): Promise<void> {
+  if (points.length === 0) return;
+  const collectionName = getChatCollectionName(projectName);
+  try {
+    await ensureChatCollection(projectName);
+    await getQdrantClient().upsert(collectionName, {
+      wait: true,
+      points: points.map(p => ({
+        id: p.id,
+        vector: p.vector,
+        payload: p.payload,
+      })),
+    });
+  } catch (error) {
+    console.error('[qdrant] Upsert chat points error:', error);
+  }
+}
+
+export async function searchChatSemantic(
+  projectName: string,
+  queryVector: number[],
+  limit: number,
+  filters?: { threadId?: string; source?: string }
+): Promise<Array<{ id: string; score: number }>> {
+  const collectionName = getChatCollectionName(projectName);
+
+  try {
+    const must: Array<Record<string, unknown>> = [];
+
+    if (filters?.threadId) {
+      must.push({
+        key: 'thread_id',
+        match: { value: filters.threadId },
+      });
+    }
+    if (filters?.source) {
+      must.push({
+        key: 'source',
+        match: { value: filters.source },
+      });
+    }
+
+    const filter = must.length > 0 ? { must } : undefined;
+
+    const results = await getQdrantClient().search(collectionName, {
+      vector: queryVector,
+      limit,
+      with_payload: false,
+      ...(filter ? { filter } : {}),
+    });
+
+    return results.map(r => ({
+      id: r.id as string,
+      score: r.score,
+    }));
+  } catch (error) {
+    console.error('[qdrant] Chat search error:', error);
+    return [];
+  }
+}
+
+export async function deleteChatPoints(projectName: string, ids: string[]): Promise<void> {
+  if (ids.length === 0) return;
+  const collectionName = getChatCollectionName(projectName);
+  try {
+    await getQdrantClient().delete(collectionName, {
+      wait: true,
+      points: ids,
+    });
+  } catch (error) {
+    console.error('[qdrant] Delete chat points error:', error);
+  }
+}
+
+export async function deleteChatCollection(projectName: string): Promise<void> {
+  const collectionName = getChatCollectionName(projectName);
+  try {
+    await getQdrantClient().deleteCollection(collectionName);
+    console.error(`[qdrant] Deleted chat collection: ${collectionName}`);
+  } catch (error) {
+    console.error('[qdrant] Delete chat collection error:', error);
+  }
+}

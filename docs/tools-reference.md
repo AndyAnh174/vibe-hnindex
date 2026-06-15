@@ -194,6 +194,28 @@ Rule-based project briefing (README, CLAUDE.md, `package.json`, index stats). Ca
 
 Single markdown blob for onboarding: optional **Index freshness** (v0.7.0+) when the repo’s current `git HEAD` differs from the commit stored at last index, then cached briefing, **`project_stats`**, and optional recent git activity. Truncated to **`max_chars`** (default 10000). Set **`include_recent: false`** to omit git.
 
+## `chat_context` (v0.12.0+)
+
+Manage chat memory — save, load (chronological or semantic via Qdrant), ingest full conversations, and clear old context. Requires `CHAT_MEMORY_ENABLED=true`.
+
+```
+// Save a message
+chat_context(action: "save", project_name: "my-app", role: "assistant", content: "...")
+
+// Load recent context (chronological)
+chat_context(action: "load", project_name: "my-app", limit: 20)
+
+// Load context via semantic search (Qdrant — saves tokens)
+chat_context(action: "load", project_name: "my-app", semantic_query: "auth middleware")
+
+// Ingest full conversation at session end
+chat_context(action: "ingest", project_name: "my-app",
+  messages: [{ role: "user", content: "..." }, ...])
+
+// Clear old entries
+chat_context(action: "clear", project_name: "my-app", max_age_hours: 168)
+```
+
 ---
 
 [← Back to docs index](README.md)

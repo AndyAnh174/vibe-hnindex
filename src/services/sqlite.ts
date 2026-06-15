@@ -114,6 +114,35 @@ export function initDatabase(): void {
     );
   `);
 
+  // Chat Memory (v0.12.0)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS chat_threads (
+      id TEXT PRIMARY KEY,
+      project_name TEXT NOT NULL,
+      title TEXT,
+      message_count INTEGER NOT NULL DEFAULT 0,
+      total_chars INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_chat_threads_project ON chat_threads(project_name);
+
+    CREATE TABLE IF NOT EXISTS chat_context (
+      id TEXT PRIMARY KEY,
+      thread_id TEXT NOT NULL,
+      project_name TEXT NOT NULL,
+      source TEXT NOT NULL,
+      role TEXT NOT NULL,
+      content TEXT NOT NULL,
+      metadata TEXT,
+      created_at TEXT NOT NULL,
+      FOREIGN KEY (thread_id) REFERENCES chat_threads(id) ON DELETE CASCADE
+    );
+    CREATE INDEX IF NOT EXISTS idx_chat_context_thread ON chat_context(thread_id);
+    CREATE INDEX IF NOT EXISTS idx_chat_context_project ON chat_context(project_name);
+    CREATE INDEX IF NOT EXISTS idx_chat_context_created ON chat_context(created_at);
+  `);
+
   // FTS5 virtual table (content-sync with chunks)
   db.exec(`
     CREATE VIRTUAL TABLE IF NOT EXISTS chunks_fts USING fts5(
@@ -862,4 +891,229 @@ export function getAllProjectFiles(projectName: string): string[] {
     'SELECT DISTINCT file_path FROM chunks WHERE project_name = ? ORDER BY file_path'
   ).all(projectName) as Array<{ file_path: string }>;
   return rows.map(r => r.file_path);
+}
+
+// ── Chat Memory (v0.12.0) ──
+
+import type { ChatThread, ChatContextEntry, ChatContextMetadata } from '../types.js';
+
+export function upsertChatThread(
+  threadId: string,
+  projectName: string,
+  title?: string | null
+): void {
+  const now = new Date().toISOString();
+  getDb().prepare(`
+    INSERT INTO chat_threads (id, project_name, title, message_count, total_chars, created_at, updated_at)
+    VALUES (?, ?, ?, 1, 0, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      title = COALESCE(excluded.title, title),
+      updated_at = excluded.updated_at
+  `).run(threadId, projectName, title ?? null, now, now);
+}
+
+export function getChatThread(threadId: string): ChatThread | null {
+  const row = getDb().prepare(`
+    SELECT id, project_name, title, message_count, total_chars, created_at, updated_at
+    FROM chat_threads WHERE id = ?
+  `).get(threadId) as {
+    id: string; project_name: string; title: string | null;
+    message_count: number; total_chars: number;
+    created_at: string; updated_at: string;
+  } | undefined;
+
+  if (!row) return null;
+  return {
+    id: row.id,
+    projectName: row.project_name,
+    title: row.title,
+    messageCount: row.message_count,
+    totalChars: row.total_chars,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+export function listChatThreads(
+  projectName: string,
+  limit = 20
+): ChatThread[] {
+  const rows = getDb().prepare(`
+    SELECT id, project_name, title, message_count, total_chars, created_at, updated_at
+    FROM chat_threads WHERE project_name = ?
+    ORDER BY updated_at DESC LIMIT ?
+  `).all(projectName, limit) as Array<{
+    id: string; project_name: string; title: string | null;
+    message_count: number; total_chars: number;
+    created_at: string; updated_at: string;
+  }>;
+
+  return rows.map(r => ({
+    id: r.id,
+    projectName: r.project_name,
+    title: r.title,
+    messageCount: r.message_count,
+    totalChars: r.total_chars,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  }));
+}
+
+export function insertChatContext(entry: {
+  id: string;
+  threadId: string;
+  projectName: string;
+  source: ChatContextEntry['source'];
+  role: string;
+  content: string;
+  metadata?: ChatContextMetadata | null;
+}): void {
+  const now = new Date().toISOString();
+  const metaJson = entry.metadata ? JSON.stringify(entry.metadata) : null;
+
+  getDb().prepare(`
+    INSERT INTO chat_context (id, thread_id, project_name, source, role, content, metadata, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+  `).run(entry.id, entry.threadId, entry.projectName, entry.source, entry.role, entry.content, metaJson, now);
+
+  // Update thread stats
+  getDb().prepare(`
+    UPDATE chat_threads SET
+      message_count = message_count + 1,
+      total_chars = total_chars + ?,
+      updated_at = ?
+    WHERE id = ?
+  `).run(entry.content.length, now, entry.threadId);
+}
+
+export function getChatContextByIds(
+  projectName: string,
+  ids: string[],
+  opts?: { maxAgeHours?: number }
+): ChatContextEntry[] {
+  if (ids.length === 0) return [];
+
+  const conditions: string[] = ['project_name = ?'];
+  const params: unknown[] = [projectName];
+
+  const placeholders = ids.map(() => '?').join(',');
+  conditions.push(`id IN (${placeholders})`);
+  params.push(...ids);
+
+  if (opts?.maxAgeHours) {
+    const cutoff = new Date(Date.now() - opts.maxAgeHours * 3600_000).toISOString();
+    conditions.push('created_at >= ?');
+    params.push(cutoff);
+  }
+
+  const sql = `
+    SELECT id, thread_id, project_name, source, role, content, metadata, created_at
+    FROM chat_context
+    WHERE ${conditions.join(' AND ')}
+    ORDER BY created_at ASC
+  `;
+
+  const rows = getDb().prepare(sql).all(...params) as Array<{
+    id: string; thread_id: string; project_name: string;
+    source: string; role: string; content: string;
+    metadata: string | null; created_at: string;
+  }>;
+
+  return rows.map(r => ({
+    id: r.id,
+    threadId: r.thread_id,
+    projectName: r.project_name,
+    source: r.source as ChatContextEntry['source'],
+    role: r.role,
+    content: r.content,
+    metadata: r.metadata ? JSON.parse(r.metadata) as ChatContextMetadata : null,
+    createdAt: r.created_at,
+  }));
+}
+
+export function getChatContext(
+  projectName: string,
+  opts?: {
+    threadId?: string;
+    limit?: number;
+    maxAgeHours?: number;
+    source?: ChatContextEntry['source'];
+  }
+): ChatContextEntry[] {
+  const limit = opts?.limit ?? 50;
+  const conditions: string[] = ['project_name = ?'];
+  const params: unknown[] = [projectName];
+
+  if (opts?.threadId) {
+    conditions.push('thread_id = ?');
+    params.push(opts.threadId);
+  }
+  if (opts?.maxAgeHours) {
+    const cutoff = new Date(Date.now() - opts.maxAgeHours * 3600_000).toISOString();
+    conditions.push('created_at >= ?');
+    params.push(cutoff);
+  }
+  if (opts?.source) {
+    conditions.push('source = ?');
+    params.push(opts.source);
+  }
+
+  const sql = `
+    SELECT id, thread_id, project_name, source, role, content, metadata, created_at
+    FROM chat_context
+    WHERE ${conditions.join(' AND ')}
+    ORDER BY created_at DESC LIMIT ?
+  `;
+  params.push(limit);
+
+  const rows = getDb().prepare(sql).all(...params) as Array<{
+    id: string; thread_id: string; project_name: string;
+    source: string; role: string; content: string;
+    metadata: string | null; created_at: string;
+  }>;
+
+  return rows.map(r => ({
+    id: r.id,
+    threadId: r.thread_id,
+    projectName: r.project_name,
+    source: r.source as ChatContextEntry['source'],
+    role: r.role,
+    content: r.content,
+    metadata: r.metadata ? JSON.parse(r.metadata) as ChatContextMetadata : null,
+    createdAt: r.created_at,
+  }));
+}
+
+export function clearChatContext(
+  projectName: string,
+  opts?: { threadId?: string; maxAgeHours?: number }
+): number {
+  const conditions: string[] = ['project_name = ?'];
+  const params: unknown[] = [projectName];
+
+  if (opts?.threadId) {
+    conditions.push('thread_id = ?');
+    params.push(opts.threadId);
+  }
+  if (opts?.maxAgeHours) {
+    const cutoff = new Date(Date.now() - opts.maxAgeHours * 3600_000).toISOString();
+    conditions.push('created_at < ?');
+    params.push(cutoff);
+  }
+
+  const result = getDb().prepare(`
+    DELETE FROM chat_context WHERE ${conditions.join(' AND ')}
+  `).run(...params);
+
+  // Clean up empty threads
+  if (opts?.threadId) {
+    getDb().prepare('DELETE FROM chat_threads WHERE id = ? AND message_count = 0').run(opts.threadId);
+  }
+
+  return result.changes;
+}
+
+export function deleteChatThread(threadId: string): void {
+  getDb().prepare('DELETE FROM chat_context WHERE thread_id = ?').run(threadId);
+  getDb().prepare('DELETE FROM chat_threads WHERE id = ?').run(threadId);
 }

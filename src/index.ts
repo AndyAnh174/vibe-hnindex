@@ -26,6 +26,8 @@ import { agentRulesStubTool } from './tools/agent-rules-stub.js';
 import { benchmarkSearch } from './tools/benchmark-search.js';
 import { codeSession } from './tools/code-session.js';
 import { codeApply } from './tools/code-apply.js';
+import { chatContextTool, chatContextSchema } from './tools/chat-context.js';
+import { getContextResource } from './services/chat-memory.js';
 import { config } from './config.js';
 
 // Initialize database on startup
@@ -33,7 +35,7 @@ initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.11.4',
+  version: '0.12.0',
 }, {
   capabilities: { logging: {} },
 });
@@ -364,6 +366,16 @@ if (config.codeAgentEnabled) {
   );
 }
 
+// --- Tool: chat_context (v0.12.0) ---
+if (config.chatMemoryEnabled) {
+  server.tool(
+    'chat_context',
+    'Manage chat memory: save conversation messages, load previous context, ingest entire conversation threads, or clear old context. Auto-track is always on when CHAT_MEMORY_ENABLED=true — search, smart_context, and code_session calls are logged automatically without calling this tool.',
+    chatContextSchema,
+    async (args) => chatContextTool(args),
+  );
+}
+
 // --- Tool: benchmark_search ---
 server.tool(
   'benchmark_search',
@@ -374,6 +386,39 @@ server.tool(
   },
   async (args) => benchmarkSearch(args),
 );
+
+// --- Resource: knowledge://context/{project} (v0.12.0) ---
+if (config.chatMemoryEnabled) {
+  server.resource(
+    'chat-context',
+    'knowledge://context/{project}',
+    {
+      description: 'Recent chat context and tool-auto tracked history for a project. Loaded by AI clients on session start to restore working context.',
+      mimeType: 'text/plain',
+    },
+    async (uri) => {
+      // Extract project name from URI path: knowledge://context/my-project
+      const projectName = uri.pathname.replace(/^\//, '').split('/').pop() || '';
+      if (!projectName) {
+        return {
+          contents: [{
+            uri: 'knowledge://context',
+            mimeType: 'text/plain',
+            text: 'Usage: knowledge://context/{project_name}',
+          }],
+        };
+      }
+      const text = getContextResource(projectName);
+      return {
+        contents: [{
+          uri: uri.href,
+          mimeType: 'text/plain',
+          text,
+        }],
+      };
+    },
+  );
+}
 
 // --- Auto-resume watch on startup ---
 function autoResumeWatch() {
@@ -397,7 +442,7 @@ async function main() {
   autoResumeWatch();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started (v0.11.4)');
+  console.error('[vibe-hnindex] Server started (v0.12.0)');
 }
 
 main().catch((error) => {

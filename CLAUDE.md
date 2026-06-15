@@ -22,10 +22,10 @@
 |------|---------|------------|
 | `index_codebase` | Index entire directory | `path`, `project_name`, `watch` (default true) |
 | `index_file` | Re-index single file | `file_path`, `project_name` |
-| `search` | Full-text + vector search | `query`, `project_name`, `mode`, `stream`, `fuzzy` |
+| `search` | Full-text + vector + symbol + regex | `query`, `project_name`, `mode`, `stream`, `fuzzy` |
 | `list_projects` | List indexed projects | — |
 | `delete_project` | Delete project data | `project_name` |
-| `server_diagnostics` | Health check | `project_name` (optional) |
+| `server_diagnostics` | Health check: Ollama, Qdrant, config | `project_name` (optional) |
 | `agent_rules_stub` | Rules for AGENTS.md | `project_name`, `format` |
 | `project_stats` | Stats breakdown | `project_name` |
 | `codebase_overview` | Architecture overview | `project_name` |
@@ -38,9 +38,13 @@
 | `get_dependents` | Files importing this | `project_name`, `file_path` |
 | `impact_analysis` | Transitive impact | `project_name`, `file_path`, `depth` |
 | `recent_changes` | Recent git commits | `project_name`, `days`, `limit` |
-| `smart_context` | One-call file context | `project_name`, `file_path/query` |
+| `smart_context` | One-call file/task/question context | `project_name`, `file_path`, `task`, `question` |
+| `code_session` | Structured context package for coding | `project_name`, `task`, `target_files` |
+| `code_apply` | Apply edits + verify | `project_name`, `edits`, `verify` |
 | `watch_project` | Auto re-index on change | `project_name` |
 | `unwatch_project` | Stop watching | `project_name` |
+| `benchmark_search` | Performance benchmark | `project_name`, `runs` |
+| `chat_context` | Chat memory (save/load/clear/ingest) | `action`, `project_name`, `semantic_query` |
 
 ## Search Modes
 
@@ -53,30 +57,91 @@
 | `regex` | Pattern matching `/pattern/flags` | ⚡ Fast |
 | `symbol` | Symbol name lookup in SQLite | ⚡⚡ Very fast |
 
+### Key Search Params
+`limit` (10) · `dedupe_by_file` (true) · `expand_context` (0-5) · `file_pattern` (glob) · `symbol_kind` · `language` · `content_mode` · `explain` · `rerank`
+
 ## Streaming Search (v0.9.0)
 
-Add `stream=true` to searches for parallel keyword+semantic execution:
-```json
-{ "query": "auth middleware", "project_name": "my-project", "stream": true }
-```
-
-Or enable globally: `SEARCH_STREAM_ENABLED=true`
-
-**How it works**: Keyword FTS5 and semantic Qdrant run simultaneously (Promise.all) instead of sequentially. This reduces total search time by ~1.5-2x.
-
-**NOT just TTFB** — the actual total response time is faster because two independent searches run in parallel.
-
-**Progress**: 4-phase notifications sent via MCP `notifications/progress`.
-
-**Preview**: Top 5 results streamed via MCP `logging` messages before final response.
+Add `stream=true` for parallel keyword+semantic via Promise.all — ~1.5-2x faster total time. Enable globally: `SEARCH_STREAM_ENABLED=true`.
 
 ## Fuzzy Search (v0.8.1)
 
-Add `fuzzy=true` to auto-correct typos:
-```json
-{ "query": "fucntion", "project_name": "my-project", "fuzzy": true }
+Add `fuzzy=true` to auto-correct typos via Levenshtein. `"fucntion"` → `"function"`.
+
+---
+
+## 🧠 Chat Memory (v0.12.0)
+
+Hybrid storage: **SQLite** (full text) + **Qdrant** (vector embeddings). Auto-track + semantic search.
+
+### Architecture
 ```
-Typing "fucntion" still finds "function". "libery" finds "library".
+SAVE:  entry → SQLite (sync) + Ollama embed() → Qdrant (background, fire-and-forget)
+LOAD:  semantic_query → embed → Qdrant search(top-K) → SQLite fetch by ID
+       (no semantic_query) → SQLite chronological
+```
+
+### Auto-Track (NO manual tool call needed)
+When `CHAT_MEMORY_ENABLED=true`, these tool calls auto-log to chat memory:
+- `search` → query + mode + top result files + scores
+- `smart_context` → task/question + gathered file paths
+- `code_session` → task + core files + test files + session ID
+
+### chat_context Actions
+
+**ingest** — Dump full conversation at session end:
+```
+chat_context(action="ingest", project_name="my-project",
+  title="Fix login bug",
+  messages=[
+    { role: "user", content: "fix login bug in auth.ts" },
+    { role: "assistant", content: "Found the bug in token validation..." }
+  ])
+```
+
+**save** — Save a single important message:
+```
+chat_context(action="save", project_name="my-project",
+  role="assistant", content="Decision: we should use JWT with refresh tokens")
+```
+
+**load** — Load context:
+```
+# Chronological — "what were we working on?"
+chat_context(action="load", project_name="my-project", limit=20)
+
+# Semantic — "anything about auth rate limiting?"
+chat_context(action="load", project_name="my-project",
+  semantic_query="auth rate limiting middleware")
+# Embed query → Qdrant search → SQLite by ID. Only returns relevant entries.
+# Falls back to chronological if Ollama/Qdrant are unavailable.
+```
+
+**clear** — Delete old entries:
+```
+chat_context(action="clear", project_name="my-project", max_age_hours=168)
+```
+
+### Resource: knowledge://context/{project}
+AI clients auto-read on startup → previous context available immediately. No tool call, no re-searching.
+
+### Session Lifecycle (Recommended)
+```
+START:  Resource auto-loads context. Optionally: chat_context(action="load") for detail.
+DURING: Auto-tracked (no action). Optionally: chat_context(action="save") for key notes.
+END:    chat_context(action="ingest", messages=[entire conversation])
+```
+
+### Chat Memory Env Vars
+| Var | Default | |
+|-----|---------|---|
+| `CHAT_MEMORY_ENABLED` | `false` | **Master switch** — must be true for any feature |
+| `CHAT_MEMORY_VECTOR_ENABLED` | `true` | Qdrant semantic search. Set false for SQLite-only |
+| `CHAT_MEMORY_LOAD_LIMIT` | `20` | Max entries per load |
+| `CHAT_MEMORY_MAX_AGE_HOURS` | `168` | Only load entries within 7 days |
+| `CHAT_MEMORY_THREAD_TTL_MS` | `3600000` | Reuse latest thread if within 1 hour |
+
+---
 
 ## Best Practices
 
@@ -93,8 +158,11 @@ Typing "fucntion" still finds "function". "libery" finds "library".
 - **Watch**: `watch=true` (default) auto re-indexes on file save
 - **Large projects**: increase `INDEX_PARALLEL_BATCH` for more throughput
 
-### Symbol Filters
-Filter results by `symbol_kind`: `function`, `class`, `method`, `interface`, `type`, `variable`, `enum`, `export`
+### Chat Memory
+- **Ingest at session end** — dump once, not after every message
+- **Semantic for specific topics** — use when looking for past discussions on a topic
+- **Chronological for resuming** — use when resuming a session
+- **Clear periodically** — entries > 7-30 days to keep DB lean
 
 ## Key Env Vars
 
@@ -103,12 +171,22 @@ Filter results by `symbol_kind`: `function`, `class`, `method`, `interface`, `ty
 | `OLLAMA_URL` | localhost:11434 | Ollama server |
 | `OLLAMA_MODEL` | bge-m3:567m | Embedding model |
 | `QDRANT_URL` | localhost:6333 | Qdrant vector DB |
-| `SEARCH_STREAM_ENABLED` | false | Enable streaming for all searches |
-| `SEARCH_FUZZY_ENABLED` | false | Enable fuzzy for all searches |
+| `QDRANT_API_KEY` | (none) | Qdrant Cloud API key |
+| `STORAGE_PATH` | ~/.vibe-hnindex | SQLite path |
+| `SEARCH_STREAM_ENABLED` | false | Global stream mode |
+| `SEARCH_FUZZY_ENABLED` | false | Global fuzzy mode |
 | `SEARCH_AUTO_ROUTE` | false | Auto-select search mode |
-| `INDEX_WORKERS` | auto | Parallel indexing workers |
 | `SEARCH_CACHE_SIZE` | 100 | LRU cache entries |
 | `SEARCH_CACHE_TTL_MS` | 300000 | Cache TTL (5 min) |
+| `INDEX_WORKERS` | auto | Parallel indexing workers |
+| `CODE_AGENT_ENABLED` | false | Enable code_session + code_apply |
+| `CODE_AGENT_SCOPE` | moderate | safe / moderate / full |
+| `WATCH_AUTO_RESUME` | true | Auto-resume file watching |
+| `CHAT_MEMORY_ENABLED` | false | Enable chat memory |
+| `CHAT_MEMORY_VECTOR_ENABLED` | true | Qdrant vectors for chat |
+| `CHAT_MEMORY_LOAD_LIMIT` | 20 | Max entries per load |
+| `CHAT_MEMORY_MAX_AGE_HOURS` | 168 | Context age limit (7 days) |
+| `CHAT_MEMORY_THREAD_TTL_MS` | 3600000 | Thread reuse window (1 hour) |
 
 ## Common Workflows
 
@@ -124,29 +202,31 @@ Filter results by `symbol_kind`: `function`, `class`, `method`, `interface`, `ty
 → search(query="token validation", project_name="my-project", file_pattern="src/auth/**")
 ```
 
-### Understand Code Flow (NEW v0.10.0)
+### Understand Code Flow (v0.10.0)
 ```
 → smart_context(project_name="my-project", question="how does auth flow work?")
 → smart_context(project_name="my-project", file_path="src/api.ts", task="refactor")
 ```
 
-### Find All Implementations
-```
-→ symbol_lookup(project_name="my-project", symbol="AuthService", kind="class")
-→ get_dependents(project_name="my-project", file_path="src/auth/service.ts")
-```
-
-### Code Agent — 2-Call Workflow (NEW v0.11.0) ⚡
+### Code Agent — 2-Call (v0.11.0) ⚡
 ```
 → code_session(project_name="my-project", task="add rate limiting")
-  // Returns: full context package (files, patterns, deps, tests, impact)
-  // AI reasons → decide edits
+  // Returns: files + patterns + deps + tests + impact
 → code_apply(project_name="my-project", edits=[...], verify=true)
   // Applies changes + runs tests + lint + typecheck
 ```
 
-### Check Impact Before Refactor
+### Impact Before Refactor
 ```
-→ smart_context(project_name="my-project", file_path="src/auth.ts", task="refactor")
 → impact_analysis(project_name="my-project", file_path="src/auth/service.ts", depth=3)
+→ smart_context(project_name="my-project", file_path="src/auth.ts", task="refactor")
+```
+
+### Session with Memory (v0.12.0) 🧠
+```
+START:  (knowledge://context/my-project auto-loads)
+→ search(query="middleware", stream=true)     // auto-tracked
+→ smart_context(task="add rate limit")         // auto-tracked
+END:
+→ chat_context(action="ingest", project_name="my-project", messages=[...])
 ```

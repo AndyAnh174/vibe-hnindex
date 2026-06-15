@@ -13,6 +13,7 @@ import { search } from './search.js';
 import { smartContextTool } from './smart-context.js';
 import { projectBriefingTool } from './project-briefing.js';
 import { getDependentsTool } from './dependencies.js';
+import { autoTrack } from '../services/chat-memory.js';
 import { config } from '../config.js';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -402,6 +403,22 @@ export async function codeSession(args: CodeSessionArgs): Promise<{
 
   const jsonOutput = JSON.stringify(result, null, 2);
   result.session_data.total_context_bytes = jsonOutput.length;
+
+  // Auto-track code_session to chat memory (v0.12.0)
+  const csFiles = coreFiles.map(f => f.path);
+  autoTrack({
+    projectName: args.project_name,
+    threadId: sessionId,
+    tool: 'code_session',
+    query: args.task,
+    resultSummary: `[code_session] task="${args.task}" → ${csFiles.length} core files, ${similarPatterns.length} similar, ${testFiles.length} tests`,
+    files: csFiles,
+    metadata: {
+      sessionId,
+      taskType,
+      testFiles: testFiles.join(', '),
+    } as Record<string, unknown>,
+  });
 
   return {
     content: [{
