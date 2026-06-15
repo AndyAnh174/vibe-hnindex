@@ -117,6 +117,35 @@ code_apply(
 - code_agent → actually making changes, refactoring, implementing features
 - smart_context → understanding code, debugging questions, exploring
 
+### Chat Memory — Persistent Context (v0.12.0) 🧠
+
+Hybrid storage: SQLite (full text) + Qdrant (vectors). Auto-track + semantic search.
+Auto-track is ON when CHAT_MEMORY_ENABLED=true — NO manual tool call needed.
+
+\`\`\`
+// Auto-tracked (no tool call)
+search(query="auth", project_name="my-project")           // logged
+smart_context(project_name="my-project", task="fix bug")    // logged
+code_session(project_name="my-project", task="add feature") // logged
+
+// Session end — ingest conversation
+chat_context(action="ingest", project_name="my-project",
+  messages=[{ role: "user", content: "fix login" }, ...])
+
+// Load context (chronological)
+chat_context(action="load", project_name="my-project", limit=20)
+
+// Semantic search (Qdrant — saves tokens)
+chat_context(action="load", project_name="my-project",
+  semantic_query="auth rate limiting")
+
+// Resource auto-read on startup
+knowledge://context/{project}
+\`\`\`
+
+**Env vars:** CHAT_MEMORY_ENABLED=true, CHAT_MEMORY_VECTOR_ENABLED=true,
+CHAT_MEMORY_LOAD_LIMIT=20, CHAT_MEMORY_MAX_AGE_HOURS=168, CHAT_MEMORY_THREAD_TTL_MS=3600000
+
 ### Benchmark Performance
 \`\`\`
 benchmark_search(project_name="my-project", runs=3)

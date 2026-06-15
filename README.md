@@ -12,7 +12,7 @@
 [![MCP](https://img.shields.io/badge/MCP-compatible-6366f1?style=flat-square)](https://modelcontextprotocol.io/)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
 
-**MCP server (`vibe-hnindex`) latest: v0.11.0** · [`hnindex-cli`](https://www.npmjs.com/package/hnindex-cli) **v0.11.1** — [Docs](https://docs.hnindex.cloud) · [Changelog](https://hnindex.cloud/changelog) · [GitHub Releases](https://github.com/AndyAnh174/vibe-hnindex/releases)
+**MCP server (`vibe-hnindex`) latest: v0.12.0** · [`hnindex-cli`](https://www.npmjs.com/package/hnindex-cli) **v0.12.0** — [Docs](https://docs.hnindex.cloud) · [Changelog](https://hnindex.cloud/changelog) · [GitHub Releases](https://github.com/AndyAnh174/vibe-hnindex/releases)
 
 </div>
 
@@ -84,7 +84,8 @@ See **[docs.hnindex.cloud](https://docs.hnindex.cloud)** for full documentation.
         "QDRANT_URL": "http://localhost:6333",
         "SEARCH_STREAM_ENABLED": "true",
         "CODE_AGENT_ENABLED": "true",
-        "CODE_AGENT_SCOPE": "moderate"
+        "CODE_AGENT_SCOPE": "moderate",
+        "CHAT_MEMORY_ENABLED": "true"
       }
     }
   }
@@ -143,7 +144,8 @@ Step-by-step: [Integrations → Google Antigravity](docs/integrations.md#google-
 | | |
 |--|--|
 | **Search** | 6 modes: keyword (FTS5+BM25), semantic (Qdrant vectors), hybrid (RRF fusion), regex, symbol, auto |
-| **Code Agent** 🆕 | `code_session` — 1 call replaces 5-15 searches. `code_apply` — safe code changes with auto test/lint/typecheck |
+| **Code Agent** | `code_session` — 1 call replaces 5-15 searches. `code_apply` — safe code changes with auto test/lint/typecheck |
+| **Chat Memory** 🆕 | Auto-track tool calls, semantic search via Qdrant, persistent AI context across sessions |
 | **Streaming** | Parallel keyword+semantic search (~1.5-2× faster), 4-phase progress notifications |
 | **Fuzzy Search** | Levenshtein distance auto-corrects typos ("fucntion" → "function") |
 | **Smart Context** | Task-aware context: impact analysis, test file detection, similar code patterns |

@@ -48,6 +48,13 @@ export function defaultEnv(options: {
     CODE_AGENT_ENABLED: 'false',
     CODE_AGENT_SCOPE: 'moderate',
 
+    // ── Chat Memory (v0.12.0) ──
+    CHAT_MEMORY_ENABLED: 'true',
+    CHAT_MEMORY_VECTOR_ENABLED: 'true',
+    CHAT_MEMORY_LOAD_LIMIT: '20',
+    CHAT_MEMORY_MAX_AGE_HOURS: '168',
+    CHAT_MEMORY_THREAD_TTL_MS: '3600000',
+
     // ── Smart Context ──
     SMART_CONTEXT_MAX_FILE_CHARS: '25000',
   };
