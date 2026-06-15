@@ -100,3 +100,41 @@ export interface GitCommit {
   message: string;
   files: string[];
 }
+
+// ── Chat Memory (v0.12.0) ──
+
+export interface ChatThread {
+  id: string;
+  projectName: string;
+  title: string | null;
+  messageCount: number;
+  totalChars: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatContextEntry {
+  id: string;
+  threadId: string;
+  projectName: string;
+  source: 'user-message' | 'ai-response' | 'tool-auto' | 'system';
+  role: string;
+  content: string;
+  metadata: ChatContextMetadata | null;
+  createdAt: string;
+}
+
+export interface ChatContextMetadata {
+  /** Tool name that generated this entry (for tool-auto entries) */
+  tool?: string;
+  /** Original query/input that triggered this */
+  query?: string;
+  /** Referenced file paths */
+  files?: string[];
+  /** Top search results summary */
+  searchResults?: Array<{ filePath: string; score: number; snippet: string }>;
+  /** Task description */
+  task?: string;
+  /** Additional key-value tags */
+  tags?: Record<string, string>;
+}

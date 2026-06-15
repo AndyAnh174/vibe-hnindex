@@ -93,6 +93,18 @@ export const config = {
   /** Scope: safe (read-only), moderate (create + modify non-critical files), full (all files). Default moderate. */
   codeAgentScope: (process.env.CODE_AGENT_SCOPE?.trim() || 'moderate') as 'safe' | 'moderate' | 'full',
 
+  // Chat Memory (v0.12.0)
+  /** Enable chat memory (auto-track, save/load/ingest). Default false (opt-in). */
+  chatMemoryEnabled: process.env.CHAT_MEMORY_ENABLED === 'true',
+  /** Max entries to load in a single chat_context load. Default 20. */
+  chatMemoryLoadLimit: parseInt(process.env.CHAT_MEMORY_LOAD_LIMIT || '20', 10),
+  /** Max age in hours for context retrieval. Default 168 (7 days). */
+  chatMemoryMaxAgeHours: parseInt(process.env.CHAT_MEMORY_MAX_AGE_HOURS || '168', 10),
+  /** Thread TTL in ms — new messages go to latest thread if within this window. Default 3600000 (1 hour). */
+  chatMemoryThreadTtlMs: parseInt(process.env.CHAT_MEMORY_THREAD_TTL_MS || '3600000', 10),
+  /** Enable Qdrant vector storage for chat context (semantic search). Default true when CHAT_MEMORY_ENABLED=true. */
+  chatMemoryVectorEnabled: process.env.CHAT_MEMORY_VECTOR_ENABLED !== 'false',
+
   // Watch persistence (v0.11.4)
   /** Auto-resume file watching for all indexed projects on server start. Default true. */
   watchAutoResume: process.env.WATCH_AUTO_RESUME !== 'false',

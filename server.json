@@ -6,12 +6,12 @@
     "url": "https://github.com/AndyAnh174/vibe-hnindex",
     "source": "github"
   },
-  "version": "0.11.4",
+  "version": "0.12.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "vibe-hnindex",
-      "version": "0.11.4",
+      "version": "0.12.0",
       "transport": {
         "type": "stdio"
       },
@@ -162,6 +162,41 @@
           "format": "string",
           "isSecret": false,
           "name": "QDRANT_TIMEOUT_MS"
+        },
+        {
+          "description": "Enable chat memory — auto-track tool calls, save/load/ingest context (v0.12.0)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "CHAT_MEMORY_ENABLED"
+        },
+        {
+          "description": "Max entries in chat_context load (default: 20)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "CHAT_MEMORY_LOAD_LIMIT"
+        },
+        {
+          "description": "Max age in hours for context retrieval (default: 168 = 7 days)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "CHAT_MEMORY_MAX_AGE_HOURS"
+        },
+        {
+          "description": "Thread TTL in ms — reuse latest thread if within this window (default: 3600000 = 1h)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "CHAT_MEMORY_THREAD_TTL_MS"
+        },
+        {
+          "description": "Enable Qdrant vector storage for chat context — enables semantic search on load (default: true)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false,
+          "name": "CHAT_MEMORY_VECTOR_ENABLED"
         }
       ]
     }

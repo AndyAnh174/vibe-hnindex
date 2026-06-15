@@ -1,5 +1,14 @@
 # Changelog (highlights)
 
+## v0.12.0 — 🧠 Chat Memory System
+
+- **🧠 Auto-Track** — Tự động log mọi tool call (search, smart_context, code_session) vào SQLite, không cần gọi tool thủ công. AI restart session vẫn có ngay context cũ.
+- **💬 chat_context tool** — Save/load/clear/ingest conversation messages. Load hỗ trợ semantic search qua Qdrant (`semantic_query` param) — chỉ trả context thực sự liên quan, tiết kiệm token.
+- **🔀 Hybrid storage** — SQLite (full text) + Qdrant (vector embeddings). Save = SQLite sync + Qdrant background. Load semantic = embed query → search Qdrant → fetch từ SQLite.
+- **📡 knowledge://context/{project} resource** — AI clients tự đọc context khi bắt đầu session, khỏi search lại từ đầu.
+- **⚙️ Config** — `CHAT_MEMORY_ENABLED=true` (opt-in), `CHAT_MEMORY_VECTOR_ENABLED=true` (Qdrant), `CHAT_MEMORY_LOAD_LIMIT`, `CHAT_MEMORY_MAX_AGE_HOURS`, `CHAT_MEMORY_THREAD_TTL_MS`.
+- **📦 Versions** — `vibe-hnindex` v0.12.0, `hnindex-cli` v0.12.0.
+
 ## v0.11.4 — Watch Auto-Resume
 
 - **👁️ Watch Auto-Resume** — File watchers tự động resume khi MCP server khởi động lại (IDE restart, AI agent restart, connection drop). Không còn lo mất watch mode. Env `WATCH_AUTO_RESUME` (default `true`).

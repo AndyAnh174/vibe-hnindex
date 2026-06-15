@@ -6,6 +6,17 @@ export interface VersionEntry {
 
 export const changelogData: VersionEntry[] = [
   {
+    title: "v0.12.0 — 🧠 Chat Memory System",
+    items: [
+      "**🧠 Auto-Track** — Automatically log every tool call (search, smart_context, code_session) into SQLite, no manual tool call needed. AI restarts sessions with full context from previous work.",
+      "**💬 chat_context tool** — Save/load/clear/ingest conversation messages. Load supports semantic search via Qdrant (`semantic_query` param) — returns only relevant entries, saving tokens.",
+      "**🔀 Hybrid storage** — SQLite (full text) + Qdrant (vector embeddings). Save = SQLite sync + Qdrant background. Semantic load = embed query → search Qdrant → fetch from SQLite.",
+      "**📡 knowledge://context/{project} resource** — AI clients auto-read context on session start, no need to re-search from scratch.",
+      "**⚙️ Config** — `CHAT_MEMORY_ENABLED=true` (opt-in), `CHAT_MEMORY_VECTOR_ENABLED=true` (Qdrant), `CHAT_MEMORY_LOAD_LIMIT`, `CHAT_MEMORY_MAX_AGE_HOURS`, `CHAT_MEMORY_THREAD_TTL_MS`.",
+      "**📦 Versions** — `vibe-hnindex` v0.12.0, `hnindex-cli` v0.12.0.",
+    ],
+  },
+  {
     title: "v0.11.4 — Watch Auto-Resume",
     items: [
       "**👁️ Watch Auto-Resume** — File watchers now automatically resume when the MCP server restarts (IDE restart, AI agent restart, connection drop). No more losing watch mode. Env `WATCH_AUTO_RESUME` (default `true`).",

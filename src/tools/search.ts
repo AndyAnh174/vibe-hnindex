@@ -10,6 +10,7 @@ import {
   findChunkIdForLine,
   getAllProjectChunks,
 } from '../services/sqlite.js';
+import { autoTrack, summarizeSearchResults } from '../services/chat-memory.js';
 import { rerankSearchResults } from '../services/rerank.js';
 import { searchSimilar, healthCheck as qdrantHealthCheck } from '../services/qdrant.js';
 import { embedSingle, healthCheck as ollamaHealthCheck } from '../services/embeddings.js';
@@ -691,6 +692,16 @@ export async function search(args: {
       '```',
       explainLine,
     ].filter(Boolean).join('\n');
+  });
+
+  // Auto-track search to chat memory (v0.12.0)
+  autoTrack({
+    projectName: args.project_name,
+    threadId: extra?.sessionId,
+    tool: 'search',
+    query: args.query,
+    resultSummary: summarizeSearchResults(args.query, effectiveMode, finalResults),
+    files: finalResults.map(r => r.filePath),
   });
 
   return {

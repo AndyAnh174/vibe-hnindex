@@ -10,6 +10,7 @@
 import { getProject, getFileChunks, getDependencies, getDependents, getExportsByFile, searchKeyword, getChunksByIds } from '../services/sqlite.js';
 import { isGitRepo, getFileHistory } from '../services/git.js';
 import { search } from './search.js';
+import { autoTrack, summarizeSmartContext } from '../services/chat-memory.js';
 import { config } from '../config.js';
 
 function findTestFiles(dependents: Array<{ sourceFile: string }>, filePath: string): string[] {
@@ -362,6 +363,18 @@ export async function smartContextTool(args: {
       content: [{ type: 'text', text: 'No context found.' }],
     };
   }
+
+  // Auto-track smart_context to chat memory (v0.12.0)
+  const scFiles: string[] = args.file_path ? [args.file_path] : [];
+  const scLabel = args.task || args.question || args.query || 'context-gather';
+  autoTrack({
+    projectName: args.project_name,
+    threadId: undefined,
+    tool: 'smart_context',
+    query: scLabel,
+    resultSummary: summarizeSmartContext(scLabel, scFiles),
+    files: scFiles,
+  });
 
   return { content: [{ type: 'text', text: sections.join('\n') }] };
 }
