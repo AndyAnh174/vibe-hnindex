@@ -159,9 +159,55 @@ Step-by-step: [Integrations → Google Antigravity](docs/integrations.md#google-
 
 ## Architecture
 
-<p align="center">
-  <img src="assets/architecture.svg" alt="vibe-hnindex architecture" width="820"/>
-</p>
+```mermaid
+graph TB
+    subgraph Input["📂 Input"]
+        A["💻 Your Codebase<br/>.ts .py .go .rs ..."]
+    end
+
+    subgraph Server["⚙️ vibe-hnindex MCP Server"]
+        B["🔍 Search Router<br/>keyword | semantic | hybrid"]
+        C["🔀 RRF Fusion"]
+    end
+
+    subgraph Storage["💾 Storage"]
+        D[("SQLite<br/>FTS5 + Keyword")]
+        E[("Qdrant<br/>Vector Embeddings")]
+    end
+
+    subgraph Memory["🧠 Chat Memory (v0.12)"]
+        F[("SQLite<br/>Chat Context")]
+        G[("Qdrant<br/>Chat Vectors")]
+    end
+
+    subgraph Infra["🏗️ Infrastructure"]
+        H["Ollama<br/>Embeddings"]
+        I["Qdrant<br/>localhost:6333"]
+    end
+
+    subgraph Output["🤖 AI Clients"]
+        J["Claude · Cursor · Windsurf<br/>Antigravity · VS Code"]
+    end
+
+    A -->|"index_codebase"| Storage
+    A -->|scan| H
+    B -->|"keyword"| D
+    B -->|"semantic"| E
+    B -->|"hybrid"| C
+    C --> D
+    C --> E
+    B -.->|"auto-track"| F
+    F --> H
+    H --> G
+    D --> J
+    E --> J
+    H -.-> I
+
+    style F fill:#6366f1,color:#fff
+    style G fill:#6366f1,color:#fff
+    style B fill:#f59e0b,color:#000
+    style J fill:#22c55e,color:#fff
+```
 
 <p align="center">
   <a href="docs/how-it-works.md">How indexing &amp; search work →</a>

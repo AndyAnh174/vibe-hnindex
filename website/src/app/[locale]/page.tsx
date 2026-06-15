@@ -16,6 +16,7 @@ import { Marquee } from "@/components/ui/marquee";
 import { RetroGrid } from "@/components/ui/retro-grid";
 import { AuroraText } from "@/components/aurora-text";
 import FlickeringGrid from "@/components/ui/flickering-grid";
+import { MermaidDiagram } from "@/components/mermaid-diagram";
 import { motion } from "framer-motion";
 
 function CodeIcon({ className }: { className?: string }) {
@@ -280,95 +281,56 @@ export default function Home() {
                 borderWidth={1}
                 duration={12}
               />
-              <div className="relative z-10 flex flex-col items-center">
-                {/* Flow Diagram */}
-                <div className="relative flex flex-col items-center gap-6 lg:gap-4">
-                  {/* Row 1: Input */}
-                  <div className="flex flex-wrap items-center justify-center gap-6">
-                    <div className="flex flex-col items-center rounded-xl border-2 bg-white px-8 py-5 shadow-sm">
-                      <Database className="mb-2 size-8 text-indigo-500" />
-                      <span className="text-sm font-semibold text-slate-900">{t('architecture.yourCodebase')}</span>
-                      <span className="text-xs text-slate-500">.ts, .py, .go, .rs…</span>
-                    </div>
+              <div className="relative z-10 w-full">
+                <MermaidDiagram chart={`
+graph TB
+    subgraph Input["📂 Input"]
+        A["💻 Your Codebase<br/>.ts .py .go .rs ..."]
+    end
 
-                    <svg className="size-8 text-indigo-400 max-sm:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
+    subgraph Server["⚙️ vibe-hnindex MCP Server"]
+        B["🔍 Search Router<br/>keyword | semantic | hybrid"]
+        C["🔀 RRF Fusion"]
+    end
 
-                    <div className="flex flex-col items-center rounded-xl border-2 border-indigo-400 bg-indigo-50 px-8 py-5 shadow-sm">
-                      <Sparkles className="mb-2 size-8 text-indigo-500" />
-                      <span className="text-sm font-semibold text-slate-900">{t('architecture.mcpServer')}</span>
-                      <span className="text-xs text-slate-500">{t('architecture.mcpSubtitle')}</span>
-                    </div>
+    subgraph Storage["💾 Storage"]
+        D["(SQLite<br/>FTS5 + Keyword)"]
+        E["(Qdrant<br/>Vector Embeddings)"]
+    end
 
-                    <svg className="size-8 text-indigo-400 max-sm:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M5 12h14M12 5l7 7-7 7" />
-                    </svg>
+    subgraph Memory["🧠 Chat Memory (v0.12)"]
+        F["(SQLite<br/>Chat Context)"]
+        G["(Qdrant<br/>Chat Vectors)"]
+    end
 
-                    <div className="flex flex-col items-center rounded-xl border-2 bg-white px-8 py-5 shadow-sm">
-                      <svg className="mb-2 size-8 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M12 6v6l4 2" />
-                      </svg>
-                      <span className="text-sm font-semibold text-slate-900">{t('architecture.ollama')}</span>
-                      <span className="text-xs text-slate-500">{t('architecture.ollamaModel')}</span>
-                    </div>
-                  </div>
+    subgraph Infra["🏗️ Infrastructure"]
+        H["Ollama<br/>Embeddings"]
+        I["Qdrant<br/>localhost:6333"]
+    end
 
-                  {/* Arrow down */}
-                  <svg className="size-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 5v14M5 12l7 7 7-7" />
-                  </svg>
+    subgraph Output["🤖 AI Clients"]
+        J["Claude · Cursor · Windsurf<br/>Antigravity · VS Code"]
+    end
 
-                  {/* Row 2: Storage */}
-                  <div className="flex flex-wrap items-center justify-center gap-12">
-                    <div className="flex flex-col items-center rounded-xl border-2 bg-white px-10 py-5 shadow-sm">
-                      <div className="mb-2 flex size-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500">
-                        <Database className="size-5" />
-                      </div>
-                      <span className="text-sm font-semibold text-slate-900">{t('architecture.sqlite')}</span>
-                      <span className="text-xs text-slate-500">{t('architecture.sqliteSubtitle')}</span>
-                      <Badge variant="secondary" className="mt-2 text-[10px]">{t('architecture.keyword')}</Badge>
-                    </div>
+    A -->|"index_codebase"| Storage
+    A -->|scan| H
+    B -->|"keyword"| D
+    B -->|"semantic"| E
+    B -->|"hybrid"| C
+    C --> D
+    C --> E
+    B -.->|"auto-track"| F
+    F --> H
+    H --> G
+    D --> J
+    E --> J
+    H -.-> I
 
-                    <div className="flex flex-col items-center rounded-xl border-2 bg-white px-10 py-5 shadow-sm">
-                      <div className="mb-2 flex size-8 items-center justify-center rounded-lg bg-purple-500/10 text-purple-500">
-                        <Layers className="size-5" />
-                      </div>
-                      <span className="text-sm font-semibold text-slate-900">{t('architecture.qdrant')}</span>
-                      <span className="text-xs text-slate-500">{t('architecture.qdrantSubtitle')}</span>
-                      <Badge variant="secondary" className="mt-2 text-[10px]">{t('architecture.semantic')}</Badge>
-                    </div>
-                  </div>
-
-                  {/* Merge arrows */}
-                  <div className="flex items-center gap-12 max-sm:hidden">
-                    <svg className="size-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 5v19M5 12l7-7 7 7" />
-                    </svg>
-                    <svg className="size-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M12 5v19M5 12l7-7 7 7" />
-                    </svg>
-                  </div>
-
-                  {/* Arrow down */}
-                  <svg className="size-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M12 5v14M5 12l7 7 7-7" />
-                  </svg>
-
-                  {/* Row 3: Output */}
-                  <div className="flex flex-col items-center rounded-xl border-2 border-indigo-400 bg-gradient-to-br from-indigo-50 to-indigo-100/50 px-14 py-6 shadow-sm">
-                    <Search className="mb-2 size-8 text-indigo-500" />
-                    <span className="text-lg font-bold text-slate-900">{t('architecture.hybrid')}</span>
-                    <span className="text-sm text-slate-500">{t('architecture.hybridSubtitle')}</span>
-                    <div className="mt-3 flex gap-2">
-                      <Badge variant="outline" className="text-[10px]">Claude</Badge>
-                      <Badge variant="outline" className="text-[10px]">Cursor</Badge>
-                      <Badge variant="outline" className="text-[10px]">Windsurf</Badge>
-                      <Badge variant="outline" className="text-[10px]">Antigravity</Badge>
-                    </div>
-                  </div>
-                </div>
+    style F fill:#6366f1,color:#fff
+    style G fill:#6366f1,color:#fff
+    style B fill:#f59e0b,color:#000
+    style J fill:#22c55e,color:#fff
+`} className="w-full overflow-x-auto" />
               </div>
             </div>
           </div>
