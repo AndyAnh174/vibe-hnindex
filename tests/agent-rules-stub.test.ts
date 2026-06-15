@@ -32,7 +32,8 @@ describe('agentRulesStubTool', () => {
     expect(text).toContain('# Agent rules stub');
     expect(text).toContain('**Project:** demo');
     expect(text).toContain('typescript');
-    expect(text).toContain('When editing');
+    expect(text).toContain('BANNED');
+    expect(text).toContain('search(query');
   });
 
   it('returns error when project missing', async () => {
