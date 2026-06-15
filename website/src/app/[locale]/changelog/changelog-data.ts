@@ -6,6 +6,15 @@ export interface VersionEntry {
 
 export const changelogData: VersionEntry[] = [
   {
+    title: "v0.12.1 — 🚫 Tool Priority Enforcement",
+    items: [
+      "**🚫 Hardened agent_rules_stub** — Ultra-compact BANNED/INSTEAD table at top. Claude Code can't miss it.",
+      "**📢 priority_prompt tool** — One-shot enforcement dump mid-conversation when AI strays to grep.",
+      "**💬 MCP prompts** — `tool-priority` prompt for AI clients to auto-fetch rules on startup.",
+      "**📦 Versions** — `vibe-hnindex` v0.12.1, `hnindex-cli` v0.12.1.",
+    ],
+  },
+  {
     title: "v0.12.0 — 🧠 Chat Memory System",
     items: [
       "**🧠 Auto-Track** — Automatically log every tool call (search, smart_context, code_session) into SQLite, no manual tool call needed. AI restarts sessions with full context from previous work.",

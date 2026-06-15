@@ -1,13 +1,13 @@
 # vibe-hnindex — Agent Guide
 
-> 🔴 **CRITICAL**: This project is indexed by vibe-hnindex MCP. **NEVER use grep, cat, read, Glob, or shell commands for code search/read.** Always use vibe-hnindex MCP tools FIRST. They are faster (pre-indexed), give structured context (deps, tests, patterns), and save your context window.
+> 🚫 grep/cat/Glob for this project = BANNED. Pre-indexed. Use MCP tools or you WILL miss results.
 >
-> | Instead of | Use MCP tool |
+> | ❌ BANNED | ✅ MCP INSTEAD |
 > |---|---|
-> | `grep` / `rg` | `search(query, stream=true)` |
-> | `cat` / `read` | `smart_context(file_path)` or `code_session(task)` |
-> | `Glob` / `ls` | `search(file_pattern="src/**")` |
-> | Multi-step edit flow | `code_session(task)` → `code_apply(edits)` |
+> | `grep` / `rg` / `git grep` | `search(query, stream=true)` |
+> | `cat` / `Read` / `View` | `smart_context(file_path)` or `code_session(task)` |
+> | `Glob` / `ls` / `find` | `search(file_pattern="src/**")` |
+> | Multi-step edit | `code_session(task)` → `code_apply(edits)` |
 
 ## Quick Start
 
