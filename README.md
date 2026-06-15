@@ -160,49 +160,48 @@ Step-by-step: [Integrations → Google Antigravity](docs/integrations.md#google-
 ## Architecture
 
 ```mermaid
-flowchart LR
+graph TB
     subgraph Input["📂 Input"]
-        A["💻 Your Codebase"]
+        A["💻 Your Codebase<br/>.ts .py .go .rs ..."]
     end
 
-    subgraph Server["⚙️ vibe-hnindex Server"]
-        B["🔍 Search Router"]
+    subgraph Server["⚙️ vibe-hnindex MCP Server"]
+        B["🔍 Search Router<br/>keyword | semantic | hybrid"]
         C["🔀 RRF Fusion"]
     end
 
     subgraph Storage["💾 Storage"]
-        D[("SQLite FTS5")]
-        E[("Qdrant Vectors")]
+        D[("SQLite<br/>FTS5 + Keyword")]
+        E[("Qdrant<br/>Vector Embeddings")]
     end
 
-    subgraph Memory["🧠 Chat Memory"]
-        F[("SQLite Context")]
-        G[("Qdrant Chat")]
+    subgraph Memory["🧠 Chat Memory (v0.12)"]
+        F[("SQLite<br/>Chat Context")]
+        G[("Qdrant<br/>Chat Vectors")]
     end
 
     subgraph Infra["🏗️ Infrastructure"]
-        H["Ollama"]
-        I["Qdrant :6333"]
+        H["Ollama<br/>Embeddings"]
+        I["Qdrant<br/>localhost:6333"]
     end
 
     subgraph Output["🤖 AI Clients"]
-        J["Claude · Cursor"]
+        J["Claude · Cursor · Windsurf<br/>Antigravity · VS Code"]
     end
 
-    A -->|index| D
-    A -->|embed| H
-    B -->|keyword| D
-    B -->|semantic| E
-    B -->|hybrid| C
+    A -->|"index_codebase"| Storage
+    A -->|scan| H
+    B -->|"keyword"| D
+    B -->|"semantic"| E
+    B -->|"hybrid"| C
     C --> D
     C --> E
-    B -.->|auto-track| F
-    F -->|embed| H
+    B -.->|"auto-track"| F
+    F --> H
     H --> G
     D --> J
     E --> J
     H -.-> I
-    G -.-> I
 
     style F fill:#6366f1,color:#fff
     style G fill:#6366f1,color:#fff

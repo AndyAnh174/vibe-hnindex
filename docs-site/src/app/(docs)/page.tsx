@@ -73,52 +73,42 @@ export default function HomePage() {
 
       <div className="not-prose my-6">
         <MermaidDiagram chart={`
-flowchart LR
-    subgraph AI["🤖 AI Client"]
+graph TB
+    subgraph AI_Client["AI Client (Claude / OpenClaw / Cursor)"]
         A[AI Agent]
     end
 
-    subgraph Index["📂 Indexing"]
-        B[index_codebase] --> C[File Scanner]
-        C --> D["Chunker"]
-        D --> E[Ollama Embed]
+    subgraph Server["vibe-hnindex MCP Server"]
+        B[index_codebase] --\x3e C[File Scanner]
+        C --\x3e D["Chunker (~60 lines)"]
+        D --\x3e E[Ollama Embed]
+        E --\x3e F["(Qdrant Vectors)"]
+        D --\x3e G["(SQLite FTS5 + Text)"]
+
+        A --\x3e|"search query"| H{Search Router}
+        H --\x3e|"keyword"| G
+        H --\x3e|"semantic"| F
+        H --\x3e|"hybrid"| I[RRF Fusion]
+        I --\x3e G
+        I --\x3e F
+
+        G --\x3e J["Results"]
+        F --\x3e J
+        J --\x3e|"ranked code"| A
     end
 
-    subgraph Storage["💾 Storage"]
-        G[("SQLite FTS5")]
-        F[("Qdrant Vectors")]
-    end
-
-    subgraph Memory["🧠 Chat Memory"]
-        K[("SQLite Chat")]
-        L[Embed]
-        M[("Qdrant Chat")]
+    subgraph ChatMem["Chat Memory (v0.12.0)"]
+        A --\x3e|"auto-track"| K["(SQLite Chat)"]
+        K --\x3e L[Embed]
+        L --\x3e M["(Qdrant Chat)"]
     end
 
     subgraph Infra["🏗️ Infrastructure"]
-        O["Ollama"]
-        P["Qdrant"]
+        E -.-\x3e O["Ollama :11434"]
+        F -.-\x3e P["Qdrant :6333"]
+        L -.-\x3e O
+        M -.-\x3e P
     end
-
-    A -->|"search"| H{Search Router}
-    H -->|"keyword"| G
-    H -->|"semantic"| F
-    H -->|"hybrid"| I[RRF Fusion]
-    I --> G
-    I --> F
-    G --> A
-    F --> A
-
-    D --> G
-    E --> F
-    E -.-> O
-    F -.-> P
-
-    A -.->|"auto-track"| K
-    K --> L
-    L --> O
-    L --> M
-    M -.-> P
 
     style K fill:#6366f1,color:#fff
     style M fill:#6366f1,color:#fff
