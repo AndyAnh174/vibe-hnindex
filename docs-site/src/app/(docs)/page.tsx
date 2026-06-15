@@ -4,6 +4,7 @@ import { DocsLayout } from "@/components/docs/docs-layout";
 import { getPageNav } from "@/lib/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { MermaidDiagram } from "@/components/mermaid-diagram";
 import Link from "next/link";
 
 export default function HomePage() {
@@ -69,18 +70,65 @@ export default function HomePage() {
       </div>
 
       <h2 id="how-it-works">How It Works</h2>
+
+      <div className="not-prose my-6">
+        <MermaidDiagram chart={`
+graph TB
+    subgraph AI_Client["AI Client (Claude / OpenClaw / Cursor)"]
+        A[AI Agent]
+    end
+
+    subgraph Server["vibe-hnindex MCP Server"]
+        B[index_codebase] --\x3e C[File Scanner]
+        C --\x3e D["Chunker (~60 lines)"]
+        D --\x3e E[Ollama Embed]
+        E --\x3e F["(Qdrant Vectors)"]
+        D --\x3e G["(SQLite FTS5 + Text)"]
+
+        A --\x3e|"search query"| H{Search Router}
+        H --\x3e|"keyword"| G
+        H --\x3e|"semantic"| F
+        H --\x3e|"hybrid"| I[RRF Fusion]
+        I --\x3e G
+        I --\x3e F
+
+        G --\x3e J["Results"]
+        F --\x3e J
+        J --\x3e|"ranked code"| A
+    end
+
+    subgraph ChatMem["Chat Memory (v0.12.0)"]
+        A --\x3e|"auto-track"| K["(SQLite Chat)"]
+        K --\x3e L[Embed]
+        L --\x3e M["(Qdrant Chat)"]
+    end
+
+    E -.-\x3e O["Ollama :11434"]
+    F -.-\x3e P["Qdrant :6333"]
+    L -.-\x3e O
+    M -.-\x3e P
+
+    style K fill:#6366f1,color:#fff
+    style M fill:#6366f1,color:#fff
+    style H fill:#f59e0b,color:#000
+`} />
+      </div>
+
       <ol>
         <li>
-          <strong>Index:</strong> You point vibe-hnindex at a directory. It scans files, chunks them (~60 lines),
-          embeds chunks via Ollama, and stores everything in SQLite + Qdrant.
+          <strong>Index:</strong> Point vibe-hnindex at a directory. It scans files, chunks them (~60 lines),
+          embeds via Ollama, and stores in SQLite + Qdrant.
         </li>
         <li>
-          <strong>Search:</strong> AI assistants call the <code>search</code> tool, which queries the index
-          using keyword, semantic, or hybrid modes.
+          <strong>Search:</strong> AI assistants call <code>search</code>, which queries using
+          keyword (FTS5), semantic (Qdrant), or hybrid (RRF fusion) modes.
         </li>
         <li>
-          <strong>Results:</strong> Ranked code snippets with file paths and line ranges are returned
-          to the AI for context.
+          <strong>Persist:</strong> Every search, smart_context, and code_session is auto-tracked to
+          Chat Memory (SQLite + Qdrant vectors). AI restarts with full context.
+        </li>
+        <li>
+          <strong>Results:</strong> Ranked code snippets with file paths and line ranges returned to the AI.
         </li>
       </ol>
 
