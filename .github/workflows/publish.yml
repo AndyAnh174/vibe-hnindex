@@ -18,9 +18,11 @@ concurrency:
 
 jobs:
   validate:
+    if: github.ref == 'refs/heads/main'
     uses: ./.github/workflows/ci.yml
 
   check-versions:
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     outputs:
       server_publish: ${{ steps.check.outputs.server_publish }}
