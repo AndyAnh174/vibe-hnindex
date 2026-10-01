@@ -106,6 +106,32 @@ export function initDatabase(): void {
 
   // Cached project briefing (rule-based; invalidated when cache_key changes)
   db.exec(`
+    CREATE TABLE IF NOT EXISTS code_graph_sources (
+      project_name TEXT NOT NULL, file_path TEXT NOT NULL, content TEXT NOT NULL,
+      PRIMARY KEY(project_name, file_path)
+    );
+    CREATE TABLE IF NOT EXISTS code_graph_state (
+      project_name TEXT PRIMARY KEY, fingerprint TEXT NOT NULL, version TEXT NOT NULL,
+      warnings TEXT NOT NULL, updated_at TEXT NOT NULL
+    );
+    CREATE TABLE IF NOT EXISTS code_graph_nodes (
+      id TEXT PRIMARY KEY, projectName TEXT NOT NULL, filePath TEXT NOT NULL,
+      name TEXT NOT NULL, kind TEXT NOT NULL, startLine INTEGER NOT NULL,
+      endLine INTEGER NOT NULL, column INTEGER NOT NULL, parentId TEXT,
+      signature TEXT NOT NULL, exported INTEGER NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_graph_nodes_name ON code_graph_nodes(projectName, name);
+    CREATE INDEX IF NOT EXISTS idx_graph_nodes_file ON code_graph_nodes(projectName, filePath);
+    CREATE TABLE IF NOT EXISTS code_graph_edges (
+      id TEXT PRIMARY KEY, projectName TEXT NOT NULL, sourceId TEXT NOT NULL,
+      targetId TEXT, kind TEXT NOT NULL, filePath TEXT NOT NULL, line INTEGER NOT NULL,
+      column INTEGER NOT NULL, targetName TEXT NOT NULL, resolution TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_graph_edges_source ON code_graph_edges(projectName, sourceId, kind);
+    CREATE INDEX IF NOT EXISTS idx_graph_edges_target ON code_graph_edges(projectName, targetId, kind);
+  `);
+
+  db.exec(`
     CREATE TABLE IF NOT EXISTS project_briefings (
       project_name TEXT PRIMARY KEY,
       body TEXT NOT NULL,
@@ -323,6 +349,10 @@ export function deleteFileChunks(projectName: string, filePath: string): string[
 
 export function deleteProject(projectName: string): void {
   const d = getDb();
+  d.prepare('DELETE FROM code_graph_sources WHERE project_name = ?').run(projectName);
+  d.prepare('DELETE FROM code_graph_state WHERE project_name = ?').run(projectName);
+  d.prepare('DELETE FROM code_graph_edges WHERE projectName = ?').run(projectName);
+  d.prepare('DELETE FROM code_graph_nodes WHERE projectName = ?').run(projectName);
   d.prepare('DELETE FROM dependencies WHERE project_name = ?').run(projectName);
   d.prepare('DELETE FROM exports WHERE project_name = ?').run(projectName);
   d.prepare('DELETE FROM symbols WHERE project_name = ?').run(projectName);

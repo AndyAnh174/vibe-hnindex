@@ -22,6 +22,7 @@ Use this page to pick **one** path, or jump to a topic.
 | [Integrations](integrations.md) | Config file paths per editor / assistant |
 | [Configuration](configuration.md) | Environment variables, `.hnindexignore` |
 | [Embedding providers](embedding-providers.md) | Ollama, OpenAI, Voyage, Gemini, compatible APIs and provider migration |
+| [Code Graph](code-graph.md) | Offline TS/JS graph, references, callers, context budgets and labeled evaluation |
 | [Tools reference](tools-reference.md) | MCP tools (`index_codebase`, `search`, …) |
 | [How it works](how-it-works.md) | Indexing pipeline, hybrid RRF, search pipeline, where data lives |
 | [Changelog](changelog.md) | What changed per release |

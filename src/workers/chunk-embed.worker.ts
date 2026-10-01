@@ -7,6 +7,7 @@ import { parentPort, workerData } from 'node:worker_threads';
 import { chunkFile } from '../services/chunker.js';
 import { embed } from '../services/embeddings.js';
 import { fastHash } from '../services/fast-hash.js';
+import { embeddingChunkText } from '../services/typescript-ast.js';
 import type { FileEntry, ChunkRecord } from '../types.js';
 
 interface WorkerInput {
@@ -39,7 +40,7 @@ async function processBatch(input: WorkerInput): Promise<WorkerOutput> {
   for (const file of files) {
     try {
       const chunks = chunkFile(file.content, file.relativePath);
-      const chunkContents = chunks.map(c => c.content);
+      const chunkContents = chunks.map(c => embeddingChunkText(c, file.relativePath));
 
       if (chunkContents.length === 0) continue;
 

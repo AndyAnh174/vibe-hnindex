@@ -40,12 +40,21 @@ export type InitOptions = {
   embeddingModel?: string;
   embeddingBaseUrl?: string;
   embeddingApiKey?: string;
+  codeGraphEnabled?: boolean;
+  astChunking?: boolean;
+  rerankProvider?: string;
+  rerankModel?: string;
+  rerankUrl?: string;
+  rerankApiKey?: string;
   dryRun: boolean;
   /** If true, write to --output instead of default path */
   output?: string;
 };
 
 export function runInit(opts: InitOptions): { written: boolean; filePath: string; json: string } {
+  if (opts.rerankProvider && !['none', 'http', 'voyage'].includes(opts.rerankProvider)) {
+    throw new Error('Invalid --rerank-provider: use none, http or voyage.');
+  }
   if (opts.embeddingProvider && !['ollama', 'openai', 'voyage', 'gemini', 'openai-compatible'].includes(opts.embeddingProvider)) {
     throw new Error('Invalid --embedding-provider: use ollama, openai, voyage, gemini, or openai-compatible.');
   }
@@ -68,6 +77,10 @@ export function runInit(opts: InitOptions): { written: boolean; filePath: string
   }
 
   const existingEnv = readExistingServerEnv(existing, resolved.format, opts.serverName);
+  const oldRerankProvider = existingEnv.RERANK_PROVIDER || (existingEnv.RERANK_URL ? 'http' : 'none');
+  if (opts.rerankProvider && opts.rerankProvider !== oldRerankProvider) {
+    for (const key of ['RERANK_URL', 'RERANK_MODEL', 'RERANK_API_KEY']) delete existingEnv[key];
+  }
   const changedProvider = opts.embeddingProvider && opts.embeddingProvider !== (existingEnv.EMBEDDING_PROVIDER || 'ollama');
   if (changedProvider) {
     // A new provider must not inherit the previous model, vector size, endpoint or generic key.
@@ -85,6 +98,12 @@ export function runInit(opts: InitOptions): { written: boolean; filePath: string
     embeddingModel: opts.embeddingModel,
     embeddingBaseUrl: opts.embeddingBaseUrl,
     embeddingApiKey: opts.embeddingApiKey,
+    codeGraphEnabled: opts.codeGraphEnabled,
+    astChunking: opts.astChunking,
+    rerankProvider: opts.rerankProvider,
+    rerankModel: opts.rerankModel,
+    rerankUrl: opts.rerankUrl,
+    rerankApiKey: opts.rerankApiKey,
   });
   const env = { ...existingEnv, ...freshEnv };
   const block = defaultServerBlock(env);

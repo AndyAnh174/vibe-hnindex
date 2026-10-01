@@ -55,6 +55,9 @@ export interface SearchExtra {
 export interface SearchContext {
   server?: McpServer;
   extra?: SearchExtra;
+  /** Internal evaluation hook; not exposed as an MCP argument. */
+  onResults?: (results: SearchResult[]) => void;
+  skipCache?: boolean;
 }
 
 /** Keep the highest-scoring chunk per file path (first wins if scores tie). */
@@ -100,12 +103,11 @@ function simpleGlobMatch(filePath: string, pattern: string): boolean {
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  let timer: NodeJS.Timeout;
   return Promise.race([
     promise,
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new TimeoutError(ms)), ms)
-    ),
-  ]);
+    new Promise<never>((_, reject) => { timer = setTimeout(() => reject(new TimeoutError(ms)), ms); }),
+  ]).finally(() => clearTimeout(timer));
 }
 
 // Reciprocal Rank Fusion
@@ -157,19 +159,29 @@ export async function search(args: {
       : resolveSearchMode(args.query, rawMode as 'keyword' | 'semantic' | 'hybrid' | 'auto' | 'regex');
   const limit = args.limit || 10;
   const dedupeByFileEnabled = args.dedupe_by_file !== false;
-  const kwLimit = keywordFetchLimit(limit, dedupeByFileEnabled);
-  const candidateLimit = 20; // fetch more candidates for RRF
   const expandContext = args.expand_context || 0;
   const contentMode: ContentMode = args.content_mode === 'full' ? 'full' : 'compact';
   const maxContentChars = args.max_content_chars ?? DEFAULT_MAX_CONTENT_CHARS;
   const deprioritizePaths = args.deprioritize_generated_paths !== false;
   const explain = args.explain === true;
-  const useRerank = args.rerank !== false && config.searchRerankEnabled;
+  const useRerank = args.rerank !== false && config.searchRerankEnabled
+    && (config.rerankProvider === 'voyage' || config.rerankProvider === 'http')
+    && effectiveMode !== 'symbol' && effectiveMode !== 'regex';
   const poolCap = useRerank
-    ? Math.min(config.searchRerankPool, Math.max(limit, Math.min(50, limit * 5)))
+    ? Math.max(limit, Math.min(config.searchRerankPool, limit * 5))
     : limit;
   const dedupeTarget = useRerank ? poolCap : limit;
   const symbolKind = args.symbol_kind?.trim();
+  const kwLimit = keywordFetchLimit(dedupeTarget, dedupeByFileEnabled);
+  const candidateLimit = Math.max(20, dedupeTarget);
+  const cacheEligible = effectiveMode !== 'regex' && !ctx?.skipCache && expandContext === 0 && !explain;
+  const cacheKey = buildCacheKey({
+    projectName: args.project_name, query: args.query, mode: effectiveMode, limit,
+    filters: { language: args.language, file_pattern: args.file_pattern, symbol_kind: symbolKind,
+      dedupe: dedupeByFileEnabled, rerank: useRerank, fuzzy: args.fuzzy ?? config.searchFuzzyEnabled,
+      deprioritize: deprioritizePaths },
+  });
+  ctx?.onResults?.([]);
 
   const filters: SearchFilters = {};
   if (args.language) filters.language = args.language;
@@ -187,16 +199,10 @@ export async function search(args: {
   }
 
   // Check cache before searching (skip for regex as results are pattern-dependent)
-  if (effectiveMode !== 'regex') {
-    const cacheKey = buildCacheKey({
-      projectName: args.project_name,
-      query: args.query,
-      mode: effectiveMode,
-      limit,
-      filters: { language: args.language, file_pattern: args.file_pattern, symbol_kind: symbolKind },
-    });
+  if (cacheEligible) {
     const cached = getCachedResult(cacheKey);
     if (cached && cached.length > 0) {
+      ctx?.onResults?.(cached.slice(0, limit));
       // Return cached results with minimal formatting
       const header = `Found ${cached.length} results for "${args.query}" (mode: ${effectiveMode}) [cached]:\n`;
       const resultTexts = cached.slice(0, limit).map((r, i) => {
@@ -227,7 +233,7 @@ export async function search(args: {
 
   const semanticFetchLimit = dedupeByFileEnabled
     ? Math.min(200, Math.max(limit * 20, limit))
-    : limit;
+    : dedupeTarget;
 
   let keywordFallbackRan = false;
 
@@ -479,7 +485,7 @@ export async function search(args: {
       });
       if (built.length >= poolCap) break;
     }
-    finalResults = dedupeByFileEnabled ? built : built.slice(0, limit);
+    finalResults = dedupeByFileEnabled ? built : built.slice(0, dedupeTarget);
   } else if (keywordFallbackRan && semanticResults.length > 0) {
     actualMode = 'semantic';
     const ids = semanticResults.slice(0, semanticFetchLimit).map((r) => r.id);
@@ -519,7 +525,7 @@ export async function search(args: {
   } else {
     // Hybrid: RRF fusion
     const rrfScores = rrfFuse(keywordResults, semanticResults);
-    const hybridPool = dedupeByFileEnabled ? kwLimit : limit;
+    const hybridPool = dedupeByFileEnabled ? kwLimit : dedupeTarget;
     const sorted = [...rrfScores.entries()].sort((a, b) => b[1] - a[1]).slice(0, hybridPool);
 
     const resultMap = new Map<string, SearchResult>();
@@ -564,22 +570,10 @@ export async function search(args: {
   }
 
   // Fuzzy re-ranking (v0.8.1): boost results with high string similarity to query terms
-  const useFuzzy = args.fuzzy === true || (!args.fuzzy && config.searchFuzzyEnabled);
+  const useFuzzy = args.fuzzy ?? config.searchFuzzyEnabled;
   if (useFuzzy && finalResults.length > 0 && effectiveMode !== 'regex') {
     finalResults = applyFuzzyBoost(args.query, finalResults);
     actualMode = (actualMode + '+fuzzy') as SearchMode;
-  }
-
-  // Store results in cache for non-regex modes
-  if (effectiveMode !== 'regex' && finalResults.length > 0) {
-    const cacheKey = buildCacheKey({
-      projectName: args.project_name,
-      query: args.query,
-      mode: effectiveMode,
-      limit,
-      filters: { language: args.language, file_pattern: args.file_pattern, symbol_kind: symbolKind },
-    });
-    setCachedResult(cacheKey, finalResults);
   }
 
   // ── Phase 3/4: Post-processing ──
@@ -596,6 +590,8 @@ export async function search(args: {
     finalResults = await rerankSearchResults(args.query, finalResults, semanticRawById);
   }
   finalResults = finalResults.slice(0, limit);
+  ctx?.onResults?.(finalResults);
+  if (cacheEligible && finalResults.length > 0 && warnings.length === 0) setCachedResult(cacheKey, finalResults);
 
   // ── Phase 4/4: Streaming preview ──
   if (useStream && hasStreamContext && server && extra) {

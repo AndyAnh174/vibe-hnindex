@@ -139,4 +139,5 @@ jobs:
 
             Embedding providers: Ollama, OpenAI, Voyage, Gemini and OpenAI-compatible APIs.
             See [configuration](https://github.com/AndyAnh174/vibe-hnindex/blob/v${{ needs.check-versions.outputs.version }}/docs/embedding-providers.md).
+            Code Graph and labeled retrieval evaluation: [guide](https://github.com/AndyAnh174/vibe-hnindex/blob/v${{ needs.check-versions.outputs.version }}/docs/code-graph.md).
           generate_release_notes: true

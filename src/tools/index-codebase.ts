@@ -42,6 +42,8 @@ import {
 } from '../services/qdrant.js';
 import { healthCheck as embeddingHealthCheck, embeddingUnavailableMessage } from '../services/embeddings.js';
 import { startWatchingProject } from './watch-project.js';
+import { syncCodeGraph } from '../services/code-graph-store.js';
+import { isScriptFile } from '../services/typescript-ast.js';
 
 export async function indexCodebase(args: {
   path: string;
@@ -110,9 +112,13 @@ export async function indexCodebase(args: {
 
   // Scan and index files — single pass: detect changes, parse deps, queue for indexing
   const filesToIndex: FileEntry[] = [];
+  const scannedFiles = new Set<string>();
+  const graphInputs: Array<{ filePath: string; content: string }> = [];
 
   for await (const file of scanDirectory(rootPath)) {
     totalFiles++;
+    scannedFiles.add(file.relativePath);
+    if (config.codeGraphEnabled && isScriptFile(file.relativePath)) graphInputs.push({ filePath: file.relativePath, content: file.content });
 
     // Fast hash for change detection (SHA-1, ~2x faster than SHA-256)
     const fileHash = fastHash(file.content);
@@ -188,6 +194,24 @@ export async function indexCodebase(args: {
     filesToIndex.push(file);
   }
 
+  // Remove deleted/ignored files during a full scan, including stale vectors and metadata.
+  for (const filePath of projectFiles) {
+    if (scannedFiles.has(filePath)) continue;
+    const ids = deleteFileChunks(args.project_name, filePath);
+    deleteFileDependencies(args.project_name, filePath);
+    deleteFileExports(args.project_name, filePath);
+    deleteSymbolsForFile(args.project_name, filePath);
+    if (qdrantAvailable && ids.length) await deletePoints(args.project_name, ids);
+  }
+  let graphSummary = '';
+  try {
+    const graph = syncCodeGraph(args.project_name, rootPath, graphInputs);
+    graphSummary = `  Code graph: ${graph.nodes} nodes, ${graph.edges} edges, ${graph.unresolved} unresolved (${graph.rebuilt ? 'rebuilt' : 'unchanged'})`;
+    if (graph.warnings.length) graphSummary += `; ${graph.warnings.length} warnings`;
+  } catch (error) {
+    graphSummary = `  Code graph unavailable: ${error instanceof Error ? error.message : 'analysis failed'}`;
+  }
+
   // Parallel index the collected files
   if (filesToIndex.length > 0) {
     const batchSize = config.indexParallelBatch;
@@ -241,6 +265,7 @@ export async function indexCodebase(args: {
     `  Total chunks: ${finalChunkCount}`,
     `  Dependencies parsed: ${parsedDeps} files`,
     `  Duration: ${indexDuration}s`,
+    graphSummary,
   ];
 
   if (qdrantVerifyWarn) {

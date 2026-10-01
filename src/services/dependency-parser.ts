@@ -1,4 +1,6 @@
 import path from 'node:path';
+import ts from 'typescript';
+import { parseScript } from './typescript-ast.js';
 
 export interface ParsedImport {
   specifier: string;
@@ -37,63 +39,30 @@ export function parseImports(content: string, language: string): ParsedImport[] 
 }
 
 function parseTsJsImports(content: string): ParsedImport[] {
+  const source = parseScript(content, 'imports.ts');
   const results: ParsedImport[] = [];
-  const lines = content.split('\n');
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-
-    // import type { X } from 'path'
-    const typeImport = trimmed.match(/^import\s+type\s+\{([^}]*)\}\s+from\s+['"]([^'"]+)['"]/);
-    if (typeImport) {
-      const specs = typeImport[1].split(',').map(s => s.trim()).filter(Boolean);
-      results.push({ specifier: typeImport[2], specifiers: specs, importType: 'type-only' });
-      continue;
+  function visit(node: ts.Node) {
+    if (ts.isImportDeclaration(node) && ts.isStringLiteral(node.moduleSpecifier)) {
+      const clause = node.importClause;
+      const bindings = clause?.namedBindings;
+      const specifiers = bindings && ts.isNamedImports(bindings)
+        ? [...(clause?.name ? ['default'] : []), ...bindings.elements.map(element => (element.propertyName ?? element.name).text)]
+        : clause?.name ? ['default'] : null;
+      results.push({ specifier: node.moduleSpecifier.text, specifiers,
+        importType: clause?.isTypeOnly ? 'type-only' : 'static' });
+    } else if (ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
+      results.push({ specifier: node.moduleSpecifier.text,
+        specifiers: node.exportClause && ts.isNamedExports(node.exportClause)
+          ? node.exportClause.elements.map(element => (element.propertyName ?? element.name).text) : null,
+        importType: node.isTypeOnly ? 'type-only' : 'static' });
+    } else if (ts.isCallExpression(node) && node.arguments[0] && ts.isStringLiteral(node.arguments[0])
+      && (node.expression.kind === ts.SyntaxKind.ImportKeyword || (ts.isIdentifier(node.expression) && node.expression.text === 'require'))) {
+      results.push({ specifier: node.arguments[0].text, specifiers: null,
+        importType: node.expression.kind === ts.SyntaxKind.ImportKeyword ? 'dynamic' : 'require' });
     }
-
-    // import { X, Y } from 'path'
-    const namedImport = trimmed.match(/^import\s+\{([^}]*)\}\s+from\s+['"]([^'"]+)['"]/);
-    if (namedImport) {
-      const specs = namedImport[1].split(',').map(s => s.trim().split(/\s+as\s+/)[0]).filter(Boolean);
-      results.push({ specifier: namedImport[2], specifiers: specs, importType: 'static' });
-      continue;
-    }
-
-    // import X from 'path'
-    const defaultImport = trimmed.match(/^import\s+(\w+)\s+from\s+['"]([^'"]+)['"]/);
-    if (defaultImport) {
-      results.push({ specifier: defaultImport[2], specifiers: ['default'], importType: 'static' });
-      continue;
-    }
-
-    // import * as X from 'path'
-    const starImport = trimmed.match(/^import\s+\*\s+as\s+\w+\s+from\s+['"]([^'"]+)['"]/);
-    if (starImport) {
-      results.push({ specifier: starImport[1], specifiers: null, importType: 'static' });
-      continue;
-    }
-
-    // import 'path' (side-effect)
-    const sideEffect = trimmed.match(/^import\s+['"]([^'"]+)['"]/);
-    if (sideEffect) {
-      results.push({ specifier: sideEffect[1], specifiers: null, importType: 'static' });
-      continue;
-    }
-
-    // const X = require('path')
-    const requireMatch = trimmed.match(/(?:const|let|var)\s+(?:\{[^}]*\}|\w+)\s*=\s*require\s*\(\s*['"]([^'"]+)['"]\s*\)/);
-    if (requireMatch) {
-      results.push({ specifier: requireMatch[1], specifiers: null, importType: 'require' });
-      continue;
-    }
-
-    // import('path') — dynamic
-    const dynamicMatch = trimmed.match(/import\s*\(\s*['"]([^'"]+)['"]\s*\)/);
-    if (dynamicMatch && !trimmed.startsWith('import ')) {
-      results.push({ specifier: dynamicMatch[1], specifiers: null, importType: 'dynamic' });
-    }
+    ts.forEachChild(node, visit);
   }
-
+  visit(source);
   return results;
 }
 
@@ -205,54 +174,37 @@ export function parseExports(content: string, language: string): ParsedExport[] 
 }
 
 function parseTsJsExports(content: string): ParsedExport[] {
+  const source = parseScript(content, 'exports.ts');
   const results: ParsedExport[] = [];
-  const lines = content.split('\n');
-
-  for (let i = 0; i < lines.length; i++) {
-    const trimmed = lines[i].trim();
-    const lineNum = i + 1;
-
-    if (trimmed.match(/^export\s+default\s+/)) {
-      results.push({ name: 'default', exportType: 'default', lineNumber: lineNum });
+  for (const statement of source.statements) {
+    const lineNumber = source.getLineAndCharacterOfPosition(statement.getStart(source)).line + 1;
+    if (ts.isExportAssignment(statement) && !statement.isExportEquals) {
+      results.push({ name: 'default', exportType: 'default', lineNumber });
       continue;
     }
-
-    const funcMatch = trimmed.match(/^export\s+(?:async\s+)?function\s+(\w+)/);
-    if (funcMatch) {
-      results.push({ name: funcMatch[1], exportType: 'function', lineNumber: lineNum });
+    if (ts.isExportDeclaration(statement) && statement.exportClause && ts.isNamedExports(statement.exportClause)) {
+      for (const element of statement.exportClause.elements) results.push({
+        name: element.name.text, exportType: statement.isTypeOnly || element.isTypeOnly ? 'type' : 'variable', lineNumber,
+      });
       continue;
     }
-
-    const classMatch = trimmed.match(/^export\s+(?:abstract\s+)?class\s+(\w+)/);
-    if (classMatch) {
-      results.push({ name: classMatch[1], exportType: 'class', lineNumber: lineNum });
-      continue;
-    }
-
-    const varMatch = trimmed.match(/^export\s+(?:const|let|var)\s+(\w+)/);
-    if (varMatch) {
-      results.push({ name: varMatch[1], exportType: 'variable', lineNumber: lineNum });
-      continue;
-    }
-
-    const typeMatch = trimmed.match(/^export\s+type\s+(\w+)/);
-    if (typeMatch) {
-      results.push({ name: typeMatch[1], exportType: 'type', lineNumber: lineNum });
-      continue;
-    }
-
-    const ifaceMatch = trimmed.match(/^export\s+interface\s+(\w+)/);
-    if (ifaceMatch) {
-      results.push({ name: ifaceMatch[1], exportType: 'interface', lineNumber: lineNum });
-      continue;
-    }
-
-    const enumMatch = trimmed.match(/^export\s+enum\s+(\w+)/);
-    if (enumMatch) {
-      results.push({ name: enumMatch[1], exportType: 'enum', lineNumber: lineNum });
+    const modifiers = ts.canHaveModifiers(statement) ? ts.getModifiers(statement) : undefined;
+    if (!modifiers?.some(modifier => modifier.kind === ts.SyntaxKind.ExportKeyword)) continue;
+    if (modifiers.some(modifier => modifier.kind === ts.SyntaxKind.DefaultKeyword)) {
+      results.push({ name: 'default', exportType: 'default', lineNumber });
+    } else if (ts.isVariableStatement(statement)) {
+      for (const declaration of statement.declarationList.declarations) {
+        if (ts.isIdentifier(declaration.name)) results.push({ name: declaration.name.text, exportType: 'variable', lineNumber });
+      }
+    } else {
+      const exportType = ts.isFunctionDeclaration(statement) ? 'function' : ts.isClassDeclaration(statement) ? 'class'
+        : ts.isTypeAliasDeclaration(statement) ? 'type' : ts.isInterfaceDeclaration(statement) ? 'interface'
+        : ts.isEnumDeclaration(statement) ? 'enum' : undefined;
+      if (exportType && 'name' in statement && statement.name) {
+        results.push({ name: (statement.name as ts.Node).getText(source), exportType, lineNumber });
+      }
     }
   }
-
   return results;
 }
 

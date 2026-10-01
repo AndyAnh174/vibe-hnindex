@@ -1,5 +1,15 @@
 # Changelog (highlights)
 
+## v0.14.0 — AST Code Graph and Retrieval Evaluation
+
+- Added offline `index_code_graph`, `find_references`, `callers` and bounded `graph_context` tools using SQLite and TypeScript/JavaScript AST analysis.
+- Resolve indexed-file imports, alias/re-export chains, lexical symbols and typed methods using project compiler options; record source evidence and unresolved dynamic/external calls.
+- Update graph snapshots during full/file/watch indexing, re-resolve consumers after edits/deletions, hide stale graphs after analysis failure, and enrich smart_context with symbol relationships.
+- Added AST declaration chunks and embedding-only file/line context; versioned chunk profiles require one full re-index after upgrading.
+- Added native Voyage/custom HTTP reranking, strict score validation and full-body timeouts. Preserve RRF on fallback, rerank a wider pool before trim and cache final ranking with query options.
+- Added labeled `evaluate_retrieval`: file-level Recall@K, MRR, nDCG, p95 latency and measured cl100k_base output tokens, bypassing search cache.
+- Added CLI graph/chunking/rerank flags, documentation, lifecycle/quality regression tests and synchronized npm/Claude/MCP metadata.
+
 ## v0.13.0 — Multiple Embedding Providers
 
 - Added OpenAI, Voyage, Gemini and OpenAI-compatible embedding APIs alongside backwards-compatible Ollama support.

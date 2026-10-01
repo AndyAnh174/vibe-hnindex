@@ -12,7 +12,7 @@
 [![MCP](https://img.shields.io/badge/MCP-compatible-6366f1?style=flat-square)](https://modelcontextprotocol.io/)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
 
-**MCP server (`vibe-hnindex`) version: v0.13.0** · [`hnindex-cli`](https://www.npmjs.com/package/hnindex-cli) **v0.13.0** — [Docs](https://docs.hnindex.cloud) · [Changelog](https://hnindex.cloud/changelog) · [GitHub Releases](https://github.com/AndyAnh174/vibe-hnindex/releases)
+**MCP server (`vibe-hnindex`) version: v0.14.0** · [`hnindex-cli`](https://www.npmjs.com/package/hnindex-cli) **v0.14.0** — [Docs](https://docs.hnindex.cloud) · [Changelog](https://hnindex.cloud/changelog) · [GitHub Releases](https://github.com/AndyAnh174/vibe-hnindex/releases)
 
 </div>
 
@@ -96,21 +96,27 @@ See **[docs.hnindex.cloud](https://docs.hnindex.cloud)** for full documentation.
 
 For **Qdrant Cloud**, add `QDRANT_API_KEY` and set `QDRANT_URL` to your HTTPS cluster URL — details in [Getting started](docs/getting-started.md).
 
-### Optional rerank (`RERANK_URL`)
+### Code Graph (v0.14.0)
 
-Semantic/hybrid search already uses **Ollama** (`OLLAMA_URL`, `OLLAMA_MODEL` e.g. `bge-m3:567m`) for query vectors and **Qdrant** for retrieval. After that, the server can **reorder** the top pool of hits:
+Build a TypeScript/JavaScript symbol graph with `index_code_graph(path, project_name)` using SQLite alone. `index_codebase` also builds it; file indexing and watching update relationships automatically. Use `find_references`, `callers`, and `graph_context` to inspect source evidence and bounded relationship context. No graph database service is required.
 
-- **Without `RERANK_URL`:** reorder by **Qdrant semantic scores** (no extra network service). This is enough for most setups, including when you only run Ollama + Qdrant.
-- **With `RERANK_URL`:** POST JSON `{ "query", "documents" }` to your URL; response `{ "scores": number[] }` (same length as `documents`). Use a **small HTTP service** you host that wraps your reranker; Ollama does not expose this contract on `:11434` by default.
+AST chunking preserves function/class boundaries where possible. After upgrading, run `index_codebase` once to rebuild chunks and vectors. See [Code Graph guide](docs/code-graph.md) for resolution limits, offline usage, token budgets and quality evaluation.
 
-**Ollama vs rerank:** pulling a reranker model in Ollama (e.g. `qllama/bge-reranker-v2-m3`) does **not** replace `RERANK_URL`—you still need an adapter service unless you only rely on the built-in Qdrant reorder. See [Configuration → Rerank](docs/configuration.md#optional-rerank).
+### Optional rerank
+
+Hybrid search combines keyword results and embedding vectors using RRF. Optional reranking supports **Voyage** (`RERANK_PROVIDER=voyage`, `VOYAGE_API_KEY` or `RERANK_API_KEY`) and **custom HTTP** (`RERANK_PROVIDER=http`, `RERANK_URL`). Without a reranker, or if it fails, the original retrieval ranking is preserved. Exact symbol/regex modes skip reranking.
 
 | Env | Role |
 |-----|------|
-| `SEARCH_RERANK` | `false` disables post-retrieval reorder entirely (default: enabled). |
-| `SEARCH_RERANK_POOL` | Max candidates considered before trim (default `50`). |
-| `RERANK_URL` | Full URL of your `{query, documents}` → `{scores}` API (optional). |
-| `RERANK_TIMEOUT_MS` | Timeout for that POST (default `15000`). |
+| `SEARCH_RERANK` | `false` disables reranking. |
+| `SEARCH_RERANK_POOL` | Candidate pool before final trim (default `50`; at least the requested limit). |
+| `RERANK_PROVIDER` | `none`, `http`, `voyage`; defaults to `http` when `RERANK_URL` is set, otherwise `none`. |
+| `RERANK_MODEL` | Voyage model, default `rerank-3-lite`. |
+| `RERANK_URL` | Custom endpoint; HTTP contract is `{query, documents}` -> `{scores}`. |
+| `RERANK_API_KEY` | Optional Bearer credential; Voyage can use `VOYAGE_API_KEY`. |
+| `RERANK_TIMEOUT_MS` | Full request/body timeout, default `15000`. |
+
+See [Configuration](docs/configuration.md#optional-rerank).
 
 ### Timeouts
 

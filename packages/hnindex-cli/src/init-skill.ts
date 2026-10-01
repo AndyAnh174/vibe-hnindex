@@ -30,6 +30,13 @@ You have access to vibe-hnindex MCP tools for indexing and searching codebases. 
 - \`search(query, project_name, mode?, limit?, stream?, fuzzy?, ...)\` — Search indexed code.
 - \`list_projects\` — See what's indexed.
 
+### Code Graph (v0.14.0)
+- \`index_code_graph(path, project_name)\` — Offline TS/JS AST graph in SQLite.
+- \`find_references(project_name, symbol, file_path?)\` / \`callers(...)\` — Resolved use/call sites with source evidence.
+- \`graph_context(project_name, symbol?, file_path?, query?, depth?, token_budget?)\` — Bounded relationships and excerpts. Exact symbol/file mode works offline; query mode uses hybrid retrieval.
+- \`evaluate_retrieval(project_name, cases, k?)\` — Labeled file Recall@K, MRR, nDCG, latency and tokens.
+- Dynamic/external calls may be unresolved. Disambiguate with file_path and definition line. Re-index chunks once after upgrading.
+
 ### Search Modes
 | Mode | When to use |
 |------|-------------|

@@ -23,7 +23,7 @@ describe('embedding configuration and collection migration', () => {
   it('preserves historical collection names for the default Ollama setup', async () => {
     const { getCollectionName, getEmbeddingProfile } = await import('../src/config.js');
     expect(getCollectionName('my-project')).toBe('mcp_ck_my_project');
-    expect(getEmbeddingProfile()).toBe('legacy-ollama');
+    expect(getEmbeddingProfile()).toBe('legacy-ollama:chunks-v2:true:60:5');
   });
 
   it('separates equal-dimension vector spaces for different providers and models', async () => {

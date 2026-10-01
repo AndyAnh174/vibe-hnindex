@@ -38,6 +38,7 @@ const SKIP_FILES = new Set([
 const EXTENSION_LANGUAGE_MAP: Record<string, string> = {
   '.ts': 'typescript', '.tsx': 'tsx', '.js': 'javascript', '.jsx': 'jsx',
   '.mjs': 'javascript', '.cjs': 'javascript',
+  '.mts': 'typescript', '.cts': 'typescript',
   '.py': 'python', '.pyi': 'python',
   '.java': 'java',
   '.go': 'go',

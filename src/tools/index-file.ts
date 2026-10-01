@@ -38,6 +38,8 @@ import {
 import { invalidateCache } from '../services/search-cache.js';
 import { isIgnored, loadHnindexIgnore } from '../services/hnindex-ignore.js';
 import { getGitHead } from '../services/git.js';
+import { updateCodeGraphFile } from '../services/code-graph-store.js';
+import { embeddingChunkText } from '../services/typescript-ast.js';
 
 export async function indexFile(args: {
   file_path: string;
@@ -121,6 +123,7 @@ export async function indexFile(args: {
   // Check if unchanged
   const existingHash = getExistingFileHash(args.project_name, relativePath);
   if (existingHash === fileHash) {
+    updateCodeGraphFile(args.project_name, resolvedRoot, relativePath, content);
     return {
       content: [{ type: 'text', text: `File "${relativePath}" is unchanged. No re-indexing needed.` }],
     };
@@ -152,7 +155,7 @@ export async function indexFile(args: {
   }));
 
   try {
-    const vectors = await embed(records.map(r => r.content));
+    const vectors = await embed(records.map(r => embeddingChunkText(r, relativePath)));
     insertChunks(records);
 
     if (qdrantAvailable) {
@@ -216,6 +219,8 @@ export async function indexFile(args: {
   }
 
   // Invalidate cache for this project after file update
+  try { updateCodeGraphFile(args.project_name, resolvedRoot, relativePath, content); }
+  catch (error) { console.error('[index-file] Graph rebuild failed:', error); }
   invalidateCache(args.project_name);
 
   // Update stats

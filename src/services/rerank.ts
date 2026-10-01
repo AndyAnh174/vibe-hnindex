@@ -1,76 +1,38 @@
-/**
- * Optional reranker for search results.
- *
- * HTTP (set RERANK_URL): POST JSON body
- *   { "query": string, "documents": string[] }
- * Response JSON:
- *   { "scores": number[] }  // same length as documents, higher = more relevant
- *
- * If the request fails or RERANK_URL is empty, falls back to ordering by
- * semanticRawScore (Qdrant) when available.
- */
+/** Optional Voyage or custom HTTP reranker. Failure preserves the original ranking. */
 import { config } from '../config.js';
 import type { SearchResult } from '../types.js';
 
 export async function rerankSearchResults(
-  query: string,
-  results: SearchResult[],
-  semanticRawById: Map<string, number>
+  query: string, results: SearchResult[], _semanticRawById?: Map<string, number>,
 ): Promise<SearchResult[]> {
-  if (results.length <= 1) return results;
-  if (!config.searchRerankEnabled) return results;
-
-  const url = config.rerankUrl;
-  if (url) {
-    try {
-      const documents = results.map((r) => r.content.slice(0, 8000));
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), config.rerankTimeoutMs);
-      const res = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query, documents }),
-        signal: controller.signal,
-      });
-      clearTimeout(timer);
-      if (!res.ok) {
-        console.error('[rerank] HTTP', res.status, await res.text());
-        return reorderBySemantic(results, semanticRawById);
-      }
-      const data = (await res.json()) as { scores?: number[] };
-      const scores = data.scores;
-      if (!Array.isArray(scores) || scores.length !== results.length) {
-        console.error('[rerank] Invalid scores array length');
-        return reorderBySemantic(results, semanticRawById);
-      }
-      const indexed = results.map((r, i) => ({ r, s: scores[i] ?? 0 }));
-      indexed.sort((a, b) => b.s - a.s);
-      return indexed.map((x) => ({
-        ...x.r,
-        score: x.s,
-      }));
-    } catch (e) {
-      console.error('[rerank] Request failed:', e);
-      return reorderBySemantic(results, semanticRawById);
+  if (results.length <= 1 || !config.searchRerankEnabled || config.rerankProvider === 'none') return results;
+  const voyage = config.rerankProvider === 'voyage';
+  if (!voyage && config.rerankProvider !== 'http') return results;
+  const url = config.rerankUrl || (voyage ? 'https://api.voyageai.com/v1/rerank' : '');
+  if (!url || (voyage && !config.rerankApiKey)) return results;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), config.rerankTimeoutMs);
+  try {
+    const documents = results.map(result => `File: ${result.filePath}\n${result.content.slice(0, 8000)}`);
+    const response = await fetch(url, {
+      method: 'POST', signal: controller.signal,
+      headers: { 'Content-Type': 'application/json', ...(config.rerankApiKey ? { Authorization: `Bearer ${config.rerankApiKey}` } : {}) },
+      body: JSON.stringify({ query, documents, ...(voyage ? { model: config.rerankModel, truncation: true } : {}) }),
+    });
+    if (!response.ok) { console.error('[rerank] HTTP status', response.status); return results; }
+    const data = await response.json() as { scores?: unknown[]; data?: Array<{ index: number; relevance_score: number }> };
+    let scores = data.scores;
+    if (voyage) {
+      if (!Array.isArray(data.data) || data.data.length !== results.length) return results;
+      const indices = new Set(data.data.map(row => row.index));
+      if (indices.size !== results.length || [...indices].some(index => !Number.isInteger(index) || index < 0 || index >= results.length)) return results;
+      scores = new Array(results.length);
+      for (const row of data.data) scores[row.index] = row.relevance_score;
     }
-  }
-
-  return reorderBySemantic(results, semanticRawById);
-}
-
-function reorderBySemantic(
-  results: SearchResult[],
-  semanticRawById: Map<string, number>
-): SearchResult[] {
-  if (semanticRawById.size === 0) return results;
-  const copy = [...results];
-  copy.sort((a, b) => {
-    const sa = semanticRawById.get(a.id) ?? 0;
-    const sb = semanticRawById.get(b.id) ?? 0;
-    return sb - sa;
-  });
-  return copy.map((r) => ({
-    ...r,
-    score: semanticRawById.get(r.id) ?? r.score,
-  }));
+    if (!Array.isArray(scores) || scores.length !== results.length || scores.some(score => typeof score !== 'number' || !Number.isFinite(score))) return results;
+    return results.map((result, index) => ({ ...result, score: scores![index] as number })).sort((a, b) => b.score - a.score);
+  } catch {
+    console.error('[rerank] Request failed; preserving retrieval order.');
+    return results;
+  } finally { clearTimeout(timer); }
 }
