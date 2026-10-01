@@ -89,7 +89,7 @@
       },
       {
         "q": "Có hoạt động trên Windows không?",
-        "a": "Có! vibe-hnindex hỗ trợ Windows, macOS, và Linux. Trên Windows, khuyến nghị dùng Node 20 hoặc 22 LTS để tránh vấn đề C++ compiler."
+        "a": "Có! vibe-hnindex hỗ trợ Windows, macOS, và Linux. Trên Windows, khuyến nghị dùng Node 22 hoặc 24 để tránh vấn đề C++ compiler."
       }
     ]
   },

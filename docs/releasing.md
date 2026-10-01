@@ -1,6 +1,6 @@
 # Publishing a release
 
-Develop on a version branch, update both npm packages, `server.json`, the Claude plugin manifests, server version and changelogs, then open a pull request to `main`. Wait for CI on Node 20, 22 and 24 before merging.
+Develop on a version branch, update both npm packages, `server.json`, the Claude plugin manifests, server version and changelogs, then open a pull request to `main`. Wait for CI on Node 22 and 24 before merging. v0.14.0 requires Node 22+ for the N-API SQLite driver.
 
 ## GitHub Actions
 

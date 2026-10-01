@@ -182,7 +182,7 @@ hnindex init-skill --list`}</code></pre>
         {[
           { issue: "Ollama not reachable", fix: "Ensure ollama serve is running on the configured URL" },
           { issue: "Qdrant auth error (401)", fix: "Set QDRANT_API_KEY for Qdrant Cloud" },
-          { issue: "npm install fails (Windows)", fix: "Use Node 20 LTS or install VS Build Tools" },
+          { issue: "npm install fails (Windows)", fix: "Use Node 22 or 24 or install VS Build Tools" },
           { issue: "Server not showing up", fix: "Check file path and JSON syntax; restart tool" },
         ].map((item, i) => (
           <Card key={i} className="p-3">

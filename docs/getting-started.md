@@ -10,7 +10,7 @@ Follow this page in order. If `npm install` fails on **Windows**, see **§ Befor
 
 **Do this first (recommended):**
 
-- Use **Node.js 20.x or 22.x LTS** (from [nodejs.org](https://nodejs.org/) or [nvm-windows](https://github.com/coreybutler/nvm-windows)). Avoid very new versions (e.g. Node 24) if install fails without build tools.
+- Use **Node.js 22.x or 24.x** (from [nodejs.org](https://nodejs.org/) or [nvm-windows](https://github.com/coreybutler/nvm-windows)). Supported platforms receive bundled N-API SQLite binaries.
 
 **If `npm install` / `npm i vibe-hnindex` still fails with `node-gyp` / “Visual Studio” / “Desktop development with C++”:**
 
@@ -22,7 +22,7 @@ Details: [Troubleshooting](troubleshooting.md#windows-npm-install).
 
 ## Prerequisites
 
-### 1. Node.js ≥ 20
+### 1. Node.js ≥ 22
 
 ```bash
 node -v
@@ -58,7 +58,7 @@ docker run -d --name qdrant -p 6333:6333 -v qdrant_storage:/qdrant/storage qdran
 
 ## CLI installer (hnindex)
 
-Install the helper globally (Windows, macOS, Linux — needs Node ≥ 20):
+Install the helper globally (Windows, macOS, Linux — needs Node ≥ 22):
 
 ```bash
 npm install -g hnindex-cli

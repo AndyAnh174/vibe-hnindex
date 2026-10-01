@@ -2,6 +2,7 @@
 
 ## v0.14.0 — AST Code Graph and Retrieval Evaluation
 
+- Requires Node 22+; upgraded better-sqlite3 to 13.0.3 with bundled N-API binaries to avoid native statement cleanup crashes on Node 24.
 - Added offline `index_code_graph`, `find_references`, `callers` and bounded `graph_context` tools using SQLite and TypeScript/JavaScript AST analysis.
 - Resolve indexed-file imports, alias/re-export chains, lexical symbols and typed methods using project compiler options; record source evidence and unresolved dynamic/external calls.
 - Update graph snapshots during full/file/watch indexing, re-resolve consumers after edits/deletions, hide stale graphs after analysis failure, and enrich smart_context with symbol relationships.
