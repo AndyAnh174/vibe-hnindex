@@ -4,6 +4,8 @@ import { createHash } from 'node:crypto';
 
 export type EmbeddingProvider = 'ollama' | 'openai' | 'voyage' | 'gemini' | 'openai-compatible';
 const provider = (process.env.EMBEDDING_PROVIDER?.trim().toLowerCase() || 'ollama') as EmbeddingProvider;
+const rerankProvider = process.env.RERANK_PROVIDER?.trim() || (process.env.RERANK_URL?.trim() ? 'http' : 'none');
+if (!['none', 'http', 'voyage'].includes(rerankProvider)) throw new Error('Invalid RERANK_PROVIDER. Use none, http or voyage.');
 if (!['ollama', 'openai', 'voyage', 'gemini', 'openai-compatible'].includes(provider)) {
   throw new Error('Invalid EMBEDDING_PROVIDER. Use ollama, openai, voyage, gemini, or openai-compatible.');
 }
@@ -60,6 +62,9 @@ export const config = {
   // Chunking
   chunkSize: parseInt(process.env.CHUNK_SIZE || '60', 10),
   chunkOverlap: parseInt(process.env.CHUNK_OVERLAP || '5', 10),
+  astChunking: process.env.AST_CHUNKING !== 'false',
+  codeGraphEnabled: process.env.CODE_GRAPH_ENABLED !== 'false',
+  codeGraphMaxNodes: embeddingInteger('CODE_GRAPH_MAX_NODES', 40, 1, 100),
 
   // Indexing
   maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '1048576', 10), // 1MB
@@ -75,13 +80,16 @@ export const config = {
   /** When keyword mode returns no hits, run semantic once if Ollama+Qdrant are OK. */
   searchKeywordFallbackSemantic: process.env.SEARCH_KEYWORD_FALLBACK_SEMANTIC !== 'false',
 
-  /** Rerank top results after hybrid/semantic path scoring (HTTP and/or semantic reorder). */
+  /** Optional reranker; disabled/unavailable services preserve hybrid ranking. */
   searchRerankEnabled: process.env.SEARCH_RERANK !== 'false',
   /** Max distinct files before rerank trim (then cut to `limit`). */
-  searchRerankPool: parseInt(process.env.SEARCH_RERANK_POOL || '50', 10),
+  searchRerankPool: embeddingInteger('SEARCH_RERANK_POOL', 50, 1, 200),
   /** POST JSON `{ query, documents }` → `{ scores: number[] }`. Same length as documents. */
   rerankUrl: process.env.RERANK_URL?.trim() || '',
-  rerankTimeoutMs: parseInt(process.env.RERANK_TIMEOUT_MS || '15000', 10),
+  rerankProvider,
+  rerankModel: process.env.RERANK_MODEL?.trim() || 'rerank-3-lite',
+  rerankApiKey: process.env.RERANK_API_KEY?.trim() || (rerankProvider === 'voyage' ? process.env.VOYAGE_API_KEY?.trim() : '') || '',
+  rerankTimeoutMs: embeddingInteger('RERANK_TIMEOUT_MS', 15000, 1, 3600000),
 
   // Timeouts (prevents hanging when services are unresponsive)
   /** Timeout for Ollama API calls (embed, health check). Default 30s. */
@@ -154,5 +162,6 @@ export function getEmbeddingNamespace(): string {
 }
 
 export function getEmbeddingProfile(): string {
-  return getEmbeddingNamespace() || 'legacy-ollama';
+  // Source segmentation and embedding metadata changed in v0.14. Old chunks must be rebuilt.
+  return `${getEmbeddingNamespace() || 'legacy-ollama'}:chunks-v2:${config.astChunking}:${config.chunkSize}:${config.chunkOverlap}`;
 }

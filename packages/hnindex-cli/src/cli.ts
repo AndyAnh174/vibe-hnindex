@@ -51,6 +51,12 @@ Init options:
   --embedding-base-url <url>   API base URL including version (e.g. https://api.openai.com/v1)
   --embedding-api-key <key>    Optional generic key; alternatively set the provider's API key env
   --embedding-dimensions <n>   Vector size (provider default when omitted)
+  --code-graph <true|false>    Enable SQLite Code Graph (default true)
+  --ast-chunking <true|false>  TS/JS syntax boundaries (default true)
+  --rerank-provider <name>     none, http or voyage
+  --rerank-model <name>        Voyage model (default rerank-3-lite)
+  --rerank-url <url>           Custom HTTP rerank endpoint
+  --rerank-api-key <key>       Rerank credential; Voyage also accepts VOYAGE_API_KEY
   --qdrant-url <url>     Default: http://localhost:6333
   --qdrant-api-key <k>   Optional (Qdrant Cloud)
   --cwd <dir>            Working directory for project-scoped files (default: .)
@@ -145,6 +151,12 @@ function main(): void {
         'embedding-model': { type: 'string' },
         'embedding-base-url': { type: 'string' },
         'embedding-api-key': { type: 'string' },
+        'code-graph': { type: 'string' },
+        'ast-chunking': { type: 'string' },
+        'rerank-provider': { type: 'string' },
+        'rerank-model': { type: 'string' },
+        'rerank-url': { type: 'string' },
+        'rerank-api-key': { type: 'string' },
         'qdrant-url': { type: 'string' },
         'qdrant-api-key': { type: 'string' },
         cwd: { type: 'string' },
@@ -192,6 +204,12 @@ function main(): void {
 
   try {
     const dryRun = values['dry-run'] === true;
+    const booleanFlag = (name: string): boolean | undefined => {
+      const value = optStr(values[name]);
+      if (value === undefined) return undefined;
+      if (value !== 'true' && value !== 'false') throw new Error(`--${name} must be true or false.`);
+      return value === 'true';
+    };
     const result = runInit({
       cwd,
       mcp,
@@ -205,6 +223,12 @@ function main(): void {
       embeddingModel: optStr(values['embedding-model'])?.trim(),
       embeddingBaseUrl: optStr(values['embedding-base-url'])?.trim(),
       embeddingApiKey: optStr(values['embedding-api-key'])?.trim(),
+      codeGraphEnabled: booleanFlag('code-graph'),
+      astChunking: booleanFlag('ast-chunking'),
+      rerankProvider: optStr(values['rerank-provider'])?.trim(),
+      rerankModel: optStr(values['rerank-model'])?.trim(),
+      rerankUrl: optStr(values['rerank-url'])?.trim(),
+      rerankApiKey: optStr(values['rerank-api-key'])?.trim(),
       dryRun,
       output: optStr(values.output)?.trim(),
     });

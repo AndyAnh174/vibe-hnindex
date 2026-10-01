@@ -6,12 +6,12 @@
     "url": "https://github.com/AndyAnh174/vibe-hnindex",
     "source": "github"
   },
-  "version": "0.13.0",
+  "version": "0.14.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "vibe-hnindex",
-      "version": "0.13.0",
+      "version": "0.14.0",
       "transport": {
         "type": "stdio"
       },
@@ -274,6 +274,48 @@
           "format": "string",
           "isSecret": false,
           "name": "CHAT_MEMORY_VECTOR_ENABLED"
+        },
+        {
+          "name": "CODE_GRAPH_ENABLED",
+          "description": "Enable SQLite TS/JS code graph (default true)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        },
+        {
+          "name": "CODE_GRAPH_MAX_NODES",
+          "description": "Default graph traversal node cap, 1–100 (default 40)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        },
+        {
+          "name": "AST_CHUNKING",
+          "description": "Enable TS/JS AST chunks (default true); re-index after changes",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        },
+        {
+          "name": "RERANK_PROVIDER",
+          "description": "Optional reranker: none, http or voyage",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        },
+        {
+          "name": "RERANK_MODEL",
+          "description": "Voyage rerank model (default rerank-3-lite)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        },
+        {
+          "name": "RERANK_API_KEY",
+          "description": "Bearer key for rerank; Voyage can use VOYAGE_API_KEY",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true
         }
       ]
     }

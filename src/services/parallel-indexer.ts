@@ -10,6 +10,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Worker } from 'node:worker_threads';
 import { config } from '../config.js';
 import { fastHash } from './fast-hash.js';
+import { embeddingChunkText } from './typescript-ast.js';
 import type { FileEntry, ChunkRecord } from '../types.js';
 import { insertChunks } from './sqlite.js';
 import { upsertPoints } from './qdrant.js';
@@ -282,7 +283,7 @@ async function singleThreadIndex(
         };
 
         chunkBatch.push(record);
-        contentBatch.push(chunk.content);
+        contentBatch.push(embeddingChunkText(chunk, file.relativePath));
 
         if (chunkBatch.length >= config.embeddingBatchSize) {
           await flushBatch();

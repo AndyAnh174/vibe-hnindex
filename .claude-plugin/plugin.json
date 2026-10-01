@@ -1,7 +1,7 @@
 {
   "name": "vibe-hnindex",
-  "description": "Index source code into a local knowledge base, search with keyword + semantic + hybrid modes. Chat memory with hybrid SQLite+Qdrant storage for persistent AI context.",
-  "version": "0.13.0",
+  "description": "Hybrid code search with multiple embedding providers, SQLite AST Code Graph, references, callers, bounded source context, retrieval evaluation and chat memory.",
+  "version": "0.14.0",
   "author": {
     "name": "Ho Viet Anh (AndyAnh174)",
     "email": "hovietanh147@gmail.com"
@@ -25,7 +25,7 @@
       "command": "npx",
       "args": [
         "-y",
-        "vibe-hnindex@0.13.0"
+        "vibe-hnindex@0.14.0"
       ],
       "env": {
         "OLLAMA_URL": "http://localhost:11434",

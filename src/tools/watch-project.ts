@@ -35,6 +35,9 @@ import { healthCheck as embeddingHealthCheck } from '../services/embeddings.js';
 import { fastHash } from '../services/fast-hash.js';
 import { isIgnored, loadHnindexIgnore } from '../services/hnindex-ignore.js';
 import { getGitHead } from '../services/git.js';
+import { updateCodeGraphFile } from '../services/code-graph-store.js';
+import { embeddingChunkText } from '../services/typescript-ast.js';
+import { invalidateCache } from '../services/search-cache.js';
 
 // Track active watchers per project
 const activeWatchers = new Map<string, { watcher: fs.FSWatcher; count: number }>();
@@ -74,13 +77,19 @@ async function reindexFile(
   let content: string;
   try {
     const stat = fs.statSync(absolutePath);
-    if (stat.size > config.maxFileSize || stat.size === 0) return null;
+    if (stat.size > config.maxFileSize) {
+      updateCodeGraphFile(projectName, rootPath, relativePath, null);
+      return null;
+    }
 
     const buffer = fs.readFileSync(absolutePath);
     // Binary check
     const checkLen = Math.min(buffer.length, 8192);
     for (let i = 0; i < checkLen; i++) {
-      if (buffer[i] === 0) return null;
+      if (buffer[i] === 0) {
+        updateCodeGraphFile(projectName, rootPath, relativePath, null);
+        return null;
+      }
     }
     content = buffer.toString('utf-8');
   } catch {
@@ -123,7 +132,7 @@ async function reindexFile(
   const embeddingOk = await embeddingHealthCheck();
   if (embeddingOk && records.length > 0) {
     try {
-      const vectors = await embed(records.map(r => r.content));
+      const vectors = await embed(records.map(r => embeddingChunkText(r, relativePath)));
       insertChunks(records);
 
       const qdrantOk = await qdrantHealthCheck();
@@ -188,6 +197,8 @@ async function reindexFile(
   }
 
   // Update stats
+  updateCodeGraphFile(projectName, rootPath, relativePath, content);
+  invalidateCache(projectName);
   const fileCount = getProjectFileCount(projectName);
   const chunkCount = getProjectChunkCount(projectName);
   updateProjectStats(projectName, fileCount, chunkCount);
@@ -198,7 +209,7 @@ async function reindexFile(
 
 // Supported extensions for watch filtering
 const WATCH_EXTENSIONS = new Set([
-  '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '.py', '.pyi', '.java', '.go',
+  '.ts', '.tsx', '.mts', '.cts', '.js', '.jsx', '.mjs', '.cjs', '.py', '.pyi', '.java', '.go',
   '.rs', '.c', '.cpp', '.cc', '.cxx', '.h', '.hpp', '.hxx', '.cs', '.rb', '.php',
   '.swift', '.kt', '.kts', '.scala', '.lua', '.sh', '.bash', '.zsh', '.sql',
   '.vue', '.svelte', '.html', '.htm', '.css', '.scss', '.less', '.sass',
@@ -257,29 +268,33 @@ export async function startWatchingProject(projectName: string): Promise<{ ok: b
 
     pendingFiles.set(fullPath, setTimeout(async () => {
       pendingFiles.delete(fullPath);
-      if (getProjectEmbeddingProfile(projectName) !== getEmbeddingProfile()) return;
-
       const relativePath = path.relative(resolvedRoot, fullPath).replace(/\\/g, '/');
+      try {
+        if (getProjectEmbeddingProfile(projectName) !== getEmbeddingProfile()) return;
 
-      if (!fs.existsSync(fullPath)) {
-        const oldIds = deleteFileChunks(projectName, relativePath);
-        deleteFileDependencies(projectName, relativePath);
-        deleteFileExports(projectName, relativePath);
-        deleteSymbolsForFile(projectName, relativePath);
-        if (oldIds.length > 0) {
-          const qdrantOk = await qdrantHealthCheck();
-          if (qdrantOk) await deletePoints(projectName, oldIds);
+        if (!fs.existsSync(fullPath)) {
+          const oldIds = deleteFileChunks(projectName, relativePath);
+          deleteFileDependencies(projectName, relativePath);
+          deleteFileExports(projectName, relativePath);
+          deleteSymbolsForFile(projectName, relativePath);
+          updateCodeGraphFile(projectName, resolvedRoot, relativePath, null);
+          invalidateCache(projectName);
+          updateProjectStats(projectName, getProjectFileCount(projectName), getProjectChunkCount(projectName));
+          if (oldIds.length > 0) {
+            const qdrantOk = await qdrantHealthCheck();
+            if (qdrantOk) await deletePoints(projectName, oldIds);
+          }
+          console.error(`[watch] Removed: ${relativePath}`);
+          return;
         }
-        console.error(`[watch] Removed: ${relativePath}`);
-        return;
-      }
 
-      if (isIgnored(relativePath, ignorePatterns)) return;
+        if (isIgnored(relativePath, ignorePatterns)) return;
 
-      const result = await reindexFile(projectName, resolvedRoot, fullPath);
-      if (result) {
-        console.error(`[watch] Re-indexed: ${result}`);
-      }
+        const result = await reindexFile(projectName, resolvedRoot, fullPath);
+        if (result) {
+          console.error(`[watch] Re-indexed: ${result}`);
+        }
+      } catch (error) { console.error(`[watch] Re-index failed: ${relativePath}`, error); }
     }, DEBOUNCE_MS));
   });
 

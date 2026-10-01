@@ -72,7 +72,7 @@ describe('chunker', () => {
 
   it('should have overlap between consecutive chunks', () => {
     const content = Array.from({ length: 200 }, (_, i) => `unique-line-${i + 1}`).join('\n');
-    const chunks = chunkFile(content, 'overlap.ts');
+    const chunks = chunkFile(content, 'overlap.txt'); // line-based fallback retains overlap
 
     if (chunks.length >= 2) {
       // Last few lines of chunk N should appear in chunk N+1

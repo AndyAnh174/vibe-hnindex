@@ -6,6 +6,17 @@ export interface VersionEntry {
 
 export const changelogData: VersionEntry[] = [
   {
+    title: "v0.14.0 — AST Code Graph and Retrieval Evaluation",
+    items: [
+      "**Code Graph** — Offline TypeScript/JavaScript AST indexing in SQLite with references, callers and bounded source context.",
+      "**Resolution** — Alias/re-export chains, lexical symbols, typed methods and project compiler options, with evidence and unresolved-call labels.",
+      "**Lifecycle** — Graph refresh during indexing/watching; deleted/excluded source cleanup and stale-analysis protection.",
+      "**Retrieval** — AST chunks, native Voyage/custom HTTP rerank, preserved RRF fallback and correctly cached final rankings.",
+      "**Evaluation** — Labeled file-level Recall@K, MRR, nDCG, p95 latency and output tokens.",
+      "**CLI and versions** — Graph/chunking/rerank flags; server and CLI v0.14.0.",
+    ],
+  },
+  {
     title: "v0.13.0 — Multiple Embedding Providers",
     items: [
       "**Embedding providers** — Ollama, OpenAI, Voyage, Gemini and OpenAI-compatible APIs across indexing, search and chat memory.",

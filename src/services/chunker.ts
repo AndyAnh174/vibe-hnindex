@@ -1,5 +1,6 @@
 import { config } from '../config.js';
 import type { Chunk } from '../types.js';
+import { isScriptFile, scriptChunkRanges } from './typescript-ast.js';
 
 // Regex patterns that indicate a natural code boundary (start of a block)
 const BOUNDARY_PATTERNS = [
@@ -41,7 +42,7 @@ function isNaturalBreak(line: string): boolean {
   );
 }
 
-export function chunkFile(content: string, _filePath: string): Chunk[] {
+export function chunkFile(content: string, filePath: string): Chunk[] {
   const lines = content.split('\n');
   const totalLines = lines.length;
 
@@ -54,6 +55,13 @@ export function chunkFile(content: string, _filePath: string): Chunk[] {
       endLine: totalLines,
       chunkIndex: 0,
     }];
+  }
+
+  if (config.astChunking && isScriptFile(filePath)) {
+    const ranges = scriptChunkRanges(content, filePath, Math.max(1, config.chunkSize));
+    if (ranges) return ranges.map(([startLine, endLine], chunkIndex) => ({
+      content: lines.slice(startLine - 1, endLine).join('\n'), startLine, endLine, chunkIndex,
+    }));
   }
 
   const chunks: Chunk[] = [];

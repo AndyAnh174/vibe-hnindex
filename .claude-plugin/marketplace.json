@@ -5,15 +5,15 @@
     "email": "hovietanh147@gmail.com"
   },
   "metadata": {
-    "description": "MCP tools for indexing and searching codebases with keyword + semantic + hybrid modes. Supports streaming search, fuzzy matching, regex, symbol filters, parallel indexing, benchmarking, and chat memory.",
-    "version": "0.13.0"
+    "description": "Hybrid code search with multiple embedding providers, SQLite AST Code Graph, references, callers, bounded source context, retrieval evaluation and chat memory.",
+    "version": "0.14.0"
   },
   "plugins": [
     {
       "name": "vibe-hnindex",
       "source": "./",
-      "description": "Index source code into a local knowledge base, search with keyword + semantic + hybrid modes. Streaming search, fuzzy matching, regex, symbol filters, parallel indexing, benchmark tool, chat memory. Embeddings via Ollama, OpenAI, Voyage, Gemini or an OpenAI-compatible API.",
-      "version": "0.13.0",
+      "description": "Hybrid code search with multiple embedding providers, SQLite AST Code Graph, references, callers, bounded source context, retrieval evaluation and chat memory.",
+      "version": "0.14.0",
       "author": {
         "name": "Ho Viet Anh (AndyAnh174)",
         "email": "hovietanh147@gmail.com"

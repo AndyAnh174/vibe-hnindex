@@ -1,5 +1,13 @@
 # hnindex-cli
 
+v0.14.0 supports `--code-graph true|false`, `--ast-chunking true|false`, `--rerank-provider none|http|voyage`, `--rerank-model`, `--rerank-url`, and `--rerank-api-key` on `hnindex init`. Omitted graph/rerank flags preserve existing settings; changing rerank provider clears stale endpoint/model/key. Graph and AST chunking default to enabled in the server.
+
+```sh
+hnindex init --mcp claude --code-graph true --rerank-provider voyage
+```
+
+See the [Code Graph guide](../../docs/code-graph.md). After upgrading, restart MCP and run full `index_codebase` once to rebuild AST chunks/vectors; offline graph-only users can run `index_code_graph`.
+
 CLI to merge **[vibe-hnindex](https://www.npmjs.com/package/vibe-hnindex)** into your editor’s MCP JSON (Claude Code, Claude Desktop, Cursor, Antigravity, Windsurf, VS Code). Works on **Windows, macOS, and Linux** (Node.js **≥ 20**).
 
 ---

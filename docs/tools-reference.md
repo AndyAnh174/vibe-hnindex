@@ -29,6 +29,8 @@ index_file(file_path: "/path/to/file.ts", project_name: "my-app")
 
 ## `search`
 
+See [Code Graph tools](code-graph.md) for `index_code_graph`, `find_references`, `callers`, `graph_context`, and labeled `evaluate_retrieval`. Graph tools are exposed when `CODE_GRAPH_ENABLED` is enabled (default true); evaluation is always available.
+
 Search indexed code.
 
 | Mode | Mechanism | Best for |
@@ -50,7 +52,7 @@ search(query: "authentication middleware", project_name: "my-app", mode: "hybrid
 
 **Full pipeline:** see [How it works → Search pipeline](how-it-works.md#search-pipeline-query-to-response).
 
-**Rerank (v0.6+):** After retrieval, the server may **reorder** the top pool. If `RERANK_URL` is set in the MCP env, it POSTs `{query, documents}` to that URL and uses returned `scores`; if not, it reorders by **Qdrant semantic scores** (still no extra config). **Ollama** is only for embeddings (`OLLAMA_URL` / `OLLAMA_MODEL`)—not interchangeable with `RERANK_URL`. Agents: treat default search as sufficient; only use `rerank: false` when the user wants to skip reordering. See [Configuration → Optional rerank](configuration.md#optional-rerank).
+**Rerank (v0.14.0):** Voyage or custom HTTP can rerank a wider candidate pool before the final limit. No configured provider or a failed request preserves retrieval order. Symbol/regex modes skip reranking. Embeddings and rerank are configured separately; see [Configuration](configuration.md#optional-rerank).
 
 ### Regex Search (v0.8.0+)
 

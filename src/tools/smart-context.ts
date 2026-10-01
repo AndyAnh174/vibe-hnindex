@@ -12,6 +12,8 @@ import { isGitRepo, getFileHistory } from '../services/git.js';
 import { search } from './search.js';
 import { autoTrack, summarizeSmartContext } from '../services/chat-memory.js';
 import { config } from '../config.js';
+import { graphContextTool } from './code-graph.js';
+import { graphState } from '../services/code-graph-store.js';
 
 function findTestFiles(dependents: Array<{ sourceFile: string }>, filePath: string): string[] {
   const testPatterns = /\.(test|spec)\.(ts|tsx|js|jsx|py|go|rs|java|rb)$/;
@@ -157,6 +159,12 @@ export async function smartContextTool(args: {
     sections.push('');
 
     // Imports
+    if (graphState(args.project_name)) {
+      const graph = await graphContextTool({ project_name: args.project_name, file_path: args.file_path,
+        depth: taskType === 'refactor' || taskType === 'debug' ? 2 : 1, token_budget: 1500 });
+      sections.push('### Symbol relationships', graph.content[0].text, '');
+    }
+
     const deps = getDependencies(args.project_name, args.file_path);
     if (deps.length > 0) {
       sections.push(`### Imports (${deps.length})`);

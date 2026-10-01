@@ -107,7 +107,7 @@ describe('embedding providers through real HTTP and indexing workers', () => {
     expect(reindexed.content[0].text).toContain('Files unchanged (skipped): 2');
     expect(state.requests.length).toBe(before);
     expect(state.requests.some(request => request.url.endsWith('/api/tags'))).toBe(provider === 'ollama');
-  });
+  }, 30000); // cold AST module loading + real worker startup on Windows
 
   it('re-embeds unchanged sources when switching provider and switching back', async () => {
     const args = { path: path.join(temp, 'repo'), project_name: 'demo', watch: false };
@@ -137,4 +137,49 @@ describe('embedding providers through real HTTP and indexing workers', () => {
     expect(result.content[0].text).toContain('Ready: yes');
     expect(sqlite!.getProjectEmbeddingProfile('demo')).toBe(api.getEmbeddingProfile());
   });
+
+  it('full scans remove deleted sources, vector points and graph edges', async () => {
+    const api = await initialize('openai');
+    const args = { path: path.join(temp, 'repo'), project_name: 'demo', watch: false };
+    fs.writeFileSync(path.join(temp, 'repo', 'second.ts'), "import { providerSearch } from './first'; export function secondResult() { return providerSearch(); }");
+    await api.indexCodebase(args);
+    const graph = await import('../src/services/code-graph-store.js');
+    expect(graph.graphCounts('demo').unresolved).toBe(0);
+    fs.unlinkSync(path.join(temp, 'repo', 'first.ts'));
+    await api.indexCodebase(args);
+    expect(sqlite!.getAllProjectFiles('demo')).toEqual(['second.ts']);
+    expect(state.collections.get(api.getCollectionName('demo'))!.size).toBe(1);
+    expect(graph.findGraphNodes('demo', { symbol: 'providerSearch' })).toEqual([]);
+    expect(graph.graphCounts('demo').unresolved).toBeGreaterThan(0);
+  }, 30000);
+
+  it('single-file indexing re-resolves consumers of a changed export', async () => {
+    const api = await initialize('openai');
+    const args = { path: path.join(temp, 'repo'), project_name: 'demo', watch: false };
+    fs.writeFileSync(path.join(temp, 'repo', 'second.ts'), "import { providerSearch } from './first'; export function secondResult() { return providerSearch(); }");
+    await api.indexCodebase(args);
+    fs.writeFileSync(path.join(temp, 'repo', 'first.ts'), 'export function replacement() {}');
+    const { indexFile } = await import('../src/tools/index-file.js');
+    await indexFile({ project_name: 'demo', file_path: path.join(temp, 'repo', 'first.ts') });
+    const graph = await import('../src/services/code-graph-store.js');
+    expect(graph.findGraphNodes('demo', { symbol: 'providerSearch' })).toEqual([]);
+    expect(graph.graphCounts('demo').unresolved).toBeGreaterThan(0);
+  }, 30000);
+
+  it('watcher updates relationships after changes and deletion', async () => {
+    const api = await initialize('openai');
+    const args = { path: path.join(temp, 'repo'), project_name: 'demo', watch: false };
+    fs.writeFileSync(path.join(temp, 'repo', 'second.ts'), "import { providerSearch } from './first'; export function secondResult() { return providerSearch(); }");
+    await api.indexCodebase(args);
+    const watch = await import('../src/tools/watch-project.js');
+    const graph = await import('../src/services/code-graph-store.js');
+    expect((await watch.startWatchingProject('demo')).ok).toBe(true);
+    try {
+      fs.writeFileSync(path.join(temp, 'repo', 'first.ts'), 'export function replacement() {}');
+      await vi.waitFor(() => expect(graph.findGraphNodes('demo', { symbol: 'replacement' })).toHaveLength(1), { timeout: 10000, interval: 100 });
+      fs.unlinkSync(path.join(temp, 'repo', 'second.ts'));
+      await vi.waitFor(() => expect(graph.findGraphNodes('demo', { symbol: 'secondResult' })).toHaveLength(0), { timeout: 10000, interval: 100 });
+      expect(sqlite!.getAllProjectFiles('demo')).toEqual(['first.ts']);
+    } finally { await watch.unwatchProjectTool({ project_name: 'demo' }); }
+  }, 30000);
 });

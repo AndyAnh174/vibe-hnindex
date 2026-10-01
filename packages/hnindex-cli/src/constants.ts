@@ -20,6 +20,12 @@ export function defaultEnv(options: {
   embeddingModel?: string;
   embeddingBaseUrl?: string;
   embeddingApiKey?: string;
+  codeGraphEnabled?: boolean;
+  astChunking?: boolean;
+  rerankProvider?: string;
+  rerankModel?: string;
+  rerankUrl?: string;
+  rerankApiKey?: string;
 }): Record<string, string> {
   const env: Record<string, string> = {
     // ── Required ──
@@ -72,5 +78,11 @@ export function defaultEnv(options: {
   if (options.embeddingDimensions != null && options.embeddingDimensions > 0) {
     env.EMBEDDING_DIMENSIONS = String(options.embeddingDimensions);
   }
+  if (options.codeGraphEnabled !== undefined) env.CODE_GRAPH_ENABLED = String(options.codeGraphEnabled);
+  if (options.astChunking !== undefined) env.AST_CHUNKING = String(options.astChunking);
+  if (options.rerankProvider) env.RERANK_PROVIDER = options.rerankProvider;
+  if (options.rerankModel) env.RERANK_MODEL = options.rerankModel;
+  if (options.rerankUrl) env.RERANK_URL = options.rerankUrl;
+  if (options.rerankApiKey) env.RERANK_API_KEY = options.rerankApiKey;
   return env;
 }

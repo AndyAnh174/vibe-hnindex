@@ -22,6 +22,11 @@
 |------|---------|------------|
 | `index_codebase` | Index entire directory | `path`, `project_name`, `watch` (default true) |
 | `index_file` | Re-index single file | `file_path`, `project_name` |
+| `index_code_graph` | Offline TS/JS AST graph (SQLite) | `path`, `project_name` |
+| `find_references` | Resolved symbol use sites | `project_name`, `symbol`, `file_path`, `line` |
+| `callers` | Resolved call sites | `project_name`, `symbol`, `file_path`, `line` |
+| `graph_context` | Bounded source/relationship context | `project_name`, `symbol` / `file_path` / `query`, `depth`, `token_budget` |
+| `evaluate_retrieval` | Labeled Recall@K/MRR/nDCG/latency/tokens | `project_name`, `cases`, `k` |
 | `search` | Full-text + vector + symbol + regex | `query`, `project_name`, `mode`, `stream`, `fuzzy` |
 | `list_projects` | List indexed projects | — |
 | `delete_project` | Delete project data | `project_name` |
@@ -47,6 +52,9 @@
 | `chat_context` | Chat memory (save/load/clear/ingest) | `action`, `project_name`, `semantic_query` |
 
 ## Search Modes
+
+Code Graph is enabled by default in v0.14.0. `index_code_graph` works without embedding/Qdrant services; exact symbol/file graph tools use static source evidence. Dynamic/external calls may be unresolved. Use `file_path` and definition `line` for ambiguous names. After upgrading, run full `index_codebase` once for the new AST chunks/vectors. See [Code Graph](docs/code-graph.md). Rerank supports `RERANK_PROVIDER=none|http|voyage`; no service or failed requests preserve hybrid order.
+
 
 | Mode | Use When | Speed |
 |------|----------|-------|

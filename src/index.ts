@@ -29,13 +29,15 @@ import { codeApply } from './tools/code-apply.js';
 import { chatContextTool, chatContextSchema } from './tools/chat-context.js';
 import { getContextResource } from './services/chat-memory.js';
 import { config } from './config.js';
+import { indexCodeGraphTool, findReferencesTool, callersTool, graphContextTool } from './tools/code-graph.js';
+import { evaluateRetrievalTool } from './tools/evaluate-retrieval.js';
 
 // Initialize database on startup
 initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.13.0',
+  version: '0.14.0',
 }, {
   capabilities: { logging: {}, prompts: {} },
 });
@@ -99,9 +101,37 @@ server.tool(
 );
 
 // --- Tool: search ---
+if (config.codeGraphEnabled) {
+  server.tool('index_code_graph', 'Build an AST-based TypeScript/JavaScript code graph in SQLite, independently of embedding/vector services. Honors scanner exclusions and .hnindexignore. Re-run after changes if not using index_codebase/watch_project.', {
+    path: z.string().describe('Absolute repository directory'),
+    project_name: z.string().describe('Unique project name'),
+  }, indexCodeGraphTool);
+  const symbolArgs = {
+    project_name: z.string(), symbol: z.string().min(1).describe('Exact declared symbol name'),
+    file_path: z.string().optional().describe('Relative file path to disambiguate'),
+    line: z.number().int().min(1).optional().describe('Definition start line to disambiguate'),
+    limit: z.number().int().min(1).max(200).optional(),
+  };
+  server.tool('find_references', 'Find statically resolved symbol references with file/line/column evidence. Ambiguous names require file_path and optionally line.', symbolArgs, findReferencesTool);
+  server.tool('callers', 'Find resolved call sites of a function/method/class. Dynamic and external calls may be missing.', symbolArgs, callersTool);
+  server.tool('graph_context', 'Collect source context and evidence along bounded code graph relationships. Exact symbol/file works offline; query mode seeds from hybrid search. Token budget uses cl100k_base and may differ from the consuming model.', {
+    project_name: z.string(), symbol: z.string().min(1).optional(), file_path: z.string().optional(),
+    line: z.number().int().min(1).optional(), query: z.string().min(1).optional(),
+    depth: z.number().int().min(0).max(3).default(1), max_nodes: z.number().int().min(1).max(100).optional(),
+    token_budget: z.number().int().min(256).max(20000).default(4000),
+    direction: z.enum(['incoming', 'outgoing', 'both']).default('both'),
+  }, graphContextTool);
+}
+
+server.tool('evaluate_retrieval', 'Measure file-level Recall@K, MRR, nDCG, p95 latency and output tokens for labeled retrieval cases. Bypasses search cache. Semantic/hybrid cases use configured services and may incur API cost.', {
+  project_name: z.string(), k: z.number().int().min(1).max(50).default(5), rerank: z.boolean().optional(),
+  cases: z.array(z.object({ query: z.string().min(1), expected_files: z.array(z.string().min(1)).min(1),
+    mode: z.enum(['keyword', 'semantic', 'hybrid', 'symbol', 'regex']).optional() })).min(1).max(100),
+}, evaluateRetrievalTool);
+
 server.tool(
   'search',
-  'Search the indexed codebase. Returns matching code chunks with file paths, line numbers, and relevance scores. Modes: keyword (FTS5), semantic (vector), hybrid (RRF fusion), auto (heuristic when SEARCH_AUTO_ROUTE), symbol (SQLite symbol index by identifier), regex (pattern matching with /pattern/flags). Results are cached (LRU, 5min TTL) for non-regex modes. Filter by symbol_kind to only see files with functions, classes, etc. Enable fuzzy:true to boost results with approximate string matching (Levenshtein) — useful for misspelled queries. Post-retrieval ordering: if RERANK_URL is set, the server POSTs {query, documents} for optional cross-encoder-style scores; if not set, results are still reordered by Qdrant semantic similarity (no extra service). The configured embedding provider (Ollama, OpenAI, Voyage, Gemini or OpenAI-compatible) generates index/query vectors—not the same as RERANK_URL. Agents: you do not need to "enable" rerank manually unless the user asks to skip it (use rerank:false) or tune env; default behavior is already optimal for most tasks. Prefer a narrow file_pattern and a small limit on the first pass.',
+  'Search the indexed codebase. Returns matching code chunks with file paths, line numbers, and relevance scores. Modes: keyword (FTS5), semantic (vector), hybrid (RRF fusion), auto (heuristic when SEARCH_AUTO_ROUTE), symbol (SQLite symbol index by identifier), regex (pattern matching with /pattern/flags). Results are cached (LRU, 5min TTL) for non-regex modes. Filter by symbol_kind to only see files with functions, classes, etc. Enable fuzzy:true to boost results with approximate string matching (Levenshtein) — useful for misspelled queries. Optional reranking supports Voyage or a custom HTTP endpoint. Without a configured reranker, or when it fails, the hybrid/semantic order is preserved. Identifier/regex modes skip reranking. Prefer a narrow file_pattern and a small limit on the first pass.',
   {
     query: z.string().describe('Search query — natural language, keywords, or a symbol name when mode is symbol'),
     project_name: z.string().describe('Project to search in'),
@@ -122,7 +152,7 @@ server.tool(
       .boolean()
       .optional()
       .describe(
-        'When false, skip post-retrieval reorder (HTTP rerank if RERANK_URL is set, else semantic reorder by Qdrant scores). Default follows SEARCH_RERANK. Use false for speed or when raw hybrid/semantic order is preferred.',
+        'When false, skip Voyage/custom HTTP reranking. Default follows SEARCH_RERANK and RERANK_PROVIDER. Unavailable rerankers preserve retrieval order.',
       ),
     fuzzy: z
       .boolean()
@@ -508,7 +538,7 @@ async function main() {
   autoResumeWatch();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started (v0.13.0)');
+  console.error('[vibe-hnindex] Server started (v0.14.0)');
 }
 
 main().catch((error) => {

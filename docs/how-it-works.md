@@ -62,7 +62,7 @@ Depending on branch, results are merged (RRF), sorted by semantic score, or take
 If **`SEARCH_RERANK`** is not `false` and the tool argument **`rerank`** is not `false`, **`rerankSearchResults`** runs:
 
 - With **`RERANK_URL`:** HTTP POST `{ "query", "documents" }` → `{ "scores" }` (same length); on failure or bad payload, falls back to ordering by **Qdrant raw similarity** per chunk when available.
-- Without **`RERANK_URL`:** reorder by **semantic raw scores** from Qdrant (no extra service).
+- Without a configured reranker, or on failure, preserve retrieval order and RRF scores. Native Voyage uses `RERANK_PROVIDER=voyage`; custom HTTP uses `RERANK_PROVIDER=http` and `RERANK_URL`. Exact symbol/regex search skips this step.
 
 If rerank is disabled, this step is skipped.
 
@@ -77,7 +77,7 @@ flowchart TD
   combine[Combine_RRF_sort_or_symbol_rank]
   pool[Dedupe_to_internal_pool]
   pathq[Path_quality_scores]
-  rerankStep[Rerank_or_semantic_reorder]
+  rerankStep[Optional_rerank]
   trim[Trim_to_limit]
   format[Format_snippet_expand_explain]
   resolve --> retrieve

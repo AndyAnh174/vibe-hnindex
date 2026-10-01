@@ -21,29 +21,38 @@ See [Embedding providers](embedding-providers.md) for Ollama, OpenAI, Voyage, Ge
 | `QDRANT_API_KEY` | *(unset)* | **Required** for Qdrant Cloud and any cluster that checks the `api-key` header. Omit for local Docker with no auth. |
 | `QDRANT_COLLECTION_PREFIX` | `mcp_ck_` | Prefix for Qdrant collection names |
 | `CHUNK_SIZE` | `60` | Target lines per chunk |
-| `CHUNK_OVERLAP` | `5` | Overlap lines between chunks |
+| `CHUNK_OVERLAP` | `5` | Overlap in line-based fallback; AST chunks are non-overlapping |
+| `AST_CHUNKING` | `true` | TS/JS syntax boundaries; oversized declarations still have a line cap |
+| `CODE_GRAPH_ENABLED` | `true` | Enable SQLite code graph and graph MCP tools |
+| `CODE_GRAPH_MAX_NODES` | `40` | Default traversal node cap, 1–100 |
 | `MAX_FILE_SIZE` | `1048576` | Max file size in bytes (1 MB) |
 | `INDEX_WORKERS` | `auto` | CPU count − 1 (min 1), capped at 4 for non-Ollama providers. `0` or `1` forces single-threaded. Explicit positive values override the automatic cap. |
 | `INDEX_PARALLEL_BATCH` | `8` | Files per worker batch during parallel indexing. Higher = more throughput but more memory. |
 | `SEARCH_AUTO_ROUTE` | `false` | When `true`, omitting `search`’s `mode` behaves like `mode: auto` (heuristic keyword vs hybrid). |
 | `SEARCH_KEYWORD_FALLBACK_SEMANTIC` | `true` | When not `false`, if `mode` is keyword and FTS returns no hits, run one semantic search when the selected embedding provider and Qdrant are available. |
-| `SEARCH_RERANK` | *(enabled)* | Set to `false` to disable post-retrieval reorder (both HTTP rerank and semantic reorder). |
+| `SEARCH_RERANK` | *(enabled)* | Set to `false` to disable Voyage/custom HTTP reranking. |
 | `SEARCH_RERANK_POOL` | `50` | Max distinct results pulled into the rerank pool before trimming to `limit`. |
+| `RERANK_PROVIDER` | `http` if URL set, else `none` | `none`, `http`, `voyage` |
+| `RERANK_MODEL` | `rerank-3-lite` | Voyage model |
+| `RERANK_API_KEY` | *(unset)* | Bearer key; Voyage falls back to `VOYAGE_API_KEY` |
 | `RERANK_URL` | *(empty)* | If set, POST JSON `{ "query": string, "documents": string[] }`; expect JSON `{ "scores": number[] }` (same length as `documents`, higher = more relevant). |
-| `RERANK_TIMEOUT_MS` | `15000` | Timeout (ms) for the `RERANK_URL` request. |
+| `RERANK_TIMEOUT_MS` | `15000` | Full request/body timeout in ms for either rerank provider. |
 | `SEARCH_CACHE_SIZE` | `100` | Max cache entries for search results (LRU eviction). |
 | `SEARCH_CACHE_TTL_MS` | `300000` | Cache TTL in milliseconds (5 min). Cache is skipped for `regex` mode. |
 | `SEARCH_FUZZY_ENABLED` | `false` | When `true`, enable fuzzy search re-ranking for all searches by default. Can be overridden per-query with `fuzzy: true/false` tool argument. |
 | `SEARCH_STREAM_ENABLED` | `false` | When `true`, enable streaming search by default for all non-regex, non-symbol searches. Runs keyword + semantic in parallel with progress notifications and early result preview via MCP logging. Can be overridden per-query with `stream: true/false` tool argument. |
 
-### Parallel indexing (v0.8.0)
+### Optional rerank
 
-**Ollama + `OLLAMA_MODEL` (e.g. `bge-m3:567m`)** handles **embeddings** only (index + query vectors). That is **not** `RERANK_URL`.
+Set `RERANK_PROVIDER=voyage` for the native Voyage API, or `RERANK_PROVIDER=http` with `RERANK_URL` for a custom `{query, documents}` -> `{scores}` service. The Voyage default model is `rerank-3-lite`; override with `RERANK_MODEL`. Voyage uses `RERANK_API_KEY` or `VOYAGE_API_KEY`. Custom HTTP only sends the explicitly supplied `RERANK_API_KEY`, never an embedding provider's credential.
 
-- **No `RERANK_URL`:** after hybrid/semantic retrieval, the server **reorders** candidates using **Qdrant similarity scores**. No separate rerank service required.
-- **`RERANK_URL` set:** the server sends the query and top chunk texts to **your** HTTP endpoint for finer ranking (e.g. cross-encoder). Ollama’s HTTP API does **not** implement this contract; if you use an Ollama-hosted reranker model, run a tiny proxy that translates `{query, documents}` ↔ your model calls.
+No provider configured, invalid/non-finite scores, missing credentials, timeout or service errors preserve the original ranking. Reranking runs on a candidate pool before the final `limit`; symbol and regex modes skip it. Set `rerank:false` per search or `SEARCH_RERANK=false` globally to skip calls. `RERANK_TIMEOUT_MS` covers the response body as well as headers. Remote response bodies and credentials are not logged.
 
-**For AI agents:** do not ask users to set `RERANK_URL` unless they need a custom reranker. Default behavior (Qdrant reorder when no URL) is appropriate for normal code search. Use tool argument `rerank: false` only when skipping reorder is desired (speed or debugging).
+### Code Graph and AST chunking
+
+`CODE_GRAPH_ENABLED=true` and `AST_CHUNKING=true` are defaults. `CODE_GRAPH_MAX_NODES` defaults to 40 (1–100) for traversal. Graph data stays in SQLite; graph-only indexing works without embeddings/Qdrant. Other languages retain their existing chunking and symbol behavior. See [Code Graph](code-graph.md).
+
+After upgrading from v0.13.0, restart and run a full `index_codebase` to rebuild source chunks, symbol metadata and vectors. Changes to AST chunking, chunk size/overlap also require full re-indexing. Graph-only users can run `index_code_graph` instead. Both full scans remove deleted/excluded graph files; `index_codebase` also removes their chunks/vectors.
 
 ### Parallel indexing (v0.8.0)
 
@@ -70,7 +79,7 @@ Search results are cached in-memory with LRU eviction and TTL. The cache key inc
 - **`SEARCH_CACHE_SIZE`** (default 100): maximum number of cached search results.
 - **`SEARCH_CACHE_TTL_MS`** (default 300000 = 5 min): how long cached results are valid.
 
-Cache is automatically invalidated when the project is re-indexed. Cache is **not used** for `regex` mode since results depend on the pattern.
+Cache is automatically invalidated when the project is re-indexed. Cache is bypassed for regex, expanded/explained output and labeled evaluation. It stores final ranked results; ranking, fuzzy, path and dedupe options are included in the key.
 
 ### Fuzzy search (v0.8.1)
 
