@@ -1,5 +1,15 @@
 # Changelog (highlights)
 
+## v0.13.0 — Multiple Embedding Providers
+
+- Added OpenAI, Voyage, Gemini and OpenAI-compatible embedding APIs alongside backwards-compatible Ollama support.
+- Shared provider configuration covers indexing workers, file watching, semantic/hybrid search, diagnostics and chat memory.
+- Added document/query retrieval semantics, ordered responses, strict vector validation, full-request timeouts, bounded 429/5xx retries and cached cloud health probes.
+- Isolated vector collections by provider/model/dimensions/endpoint; tracked embedding profiles and full re-indexing when switching providers or recovering an incomplete index.
+- Unified file hashes across indexing paths to avoid paying for unchanged files; automatic non-Ollama worker concurrency is capped at four.
+- CLI supports provider/model/base URL/API key options and clears stale generic settings when switching provider.
+- Updated configuration docs, website changelog and package/marketplace metadata to v0.13.0.
+
 ## v0.12.1 — 🚫 Tool Priority Enforcement
 
 - **🚫 Hardened agent_rules_stub** — Ultra-compact BANNED/INSTEAD table at top of generated rules. Shorter, punchier, harder to ignore.

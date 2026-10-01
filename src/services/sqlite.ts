@@ -187,6 +187,18 @@ function migrateProjectsIndexedGitHead(db: Database.Database): void {
   if (!cols.some((c) => c.name === 'indexed_git_head')) {
     db.exec(`ALTER TABLE projects ADD COLUMN indexed_git_head TEXT`);
   }
+  if (!cols.some((c) => c.name === 'embedding_profile')) {
+    db.exec(`ALTER TABLE projects ADD COLUMN embedding_profile TEXT`);
+  }
+}
+
+export function getProjectEmbeddingProfile(projectName: string): string {
+  const row = getDb().prepare('SELECT embedding_profile FROM projects WHERE project_name = ?').get(projectName) as { embedding_profile: string | null } | undefined;
+  return row?.embedding_profile ?? 'legacy-ollama';
+}
+
+export function setProjectEmbeddingProfile(projectName: string, profile: string): void {
+  getDb().prepare('UPDATE projects SET embedding_profile = ? WHERE project_name = ?').run(profile, projectName);
 }
 
 // --- Projects ---

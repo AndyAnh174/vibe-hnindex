@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 vi.mock('../src/services/embeddings.js', () => ({
   healthCheck: vi.fn().mockResolvedValue(true),
   embedSingle: vi.fn().mockResolvedValue(new Array(1024).fill(0)),
+  embeddingUnavailableMessage: vi.fn().mockReturnValue('Embedding service unavailable'),
 }));
 
 vi.mock('../src/services/qdrant.js', () => ({

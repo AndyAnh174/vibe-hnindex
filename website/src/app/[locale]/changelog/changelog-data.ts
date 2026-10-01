@@ -6,6 +6,16 @@ export interface VersionEntry {
 
 export const changelogData: VersionEntry[] = [
   {
+    title: "v0.13.0 — Multiple Embedding Providers",
+    items: [
+      "**Embedding providers** — Ollama, OpenAI, Voyage, Gemini and OpenAI-compatible APIs across indexing, search and chat memory.",
+      "**Provider-aware retrieval** — Document/query modes, strict vector validation, request timeouts, bounded retries and cached health probes.",
+      "**Safe migration** — Separate vector spaces and complete re-indexing after changing provider/model/dimensions/endpoint. Consistent file hashes prevent unnecessary re-embedding.",
+      "**CLI** — Provider, model, base URL and API key flags with preserved settings and provider-switch cleanup.",
+      "**Versions** — vibe-hnindex v0.13.0, hnindex-cli v0.13.0.",
+    ],
+  },
+  {
     title: "v0.12.1 — 🚫 Tool Priority Enforcement",
     items: [
       "**🚫 Hardened agent_rules_stub** — Ultra-compact BANNED/INSTEAD table at top. Claude Code can't miss it.",

@@ -41,7 +41,7 @@ After a successful `init`, **restart the editor** or reload MCP servers so the n
 
 ## Prerequisites (for the MCP server itself)
 
-`hnindex-cli` only writes JSON; **[vibe-hnindex](https://www.npmjs.com/package/vibe-hnindex)** needs **Ollama** (embeddings) and usually **Qdrant** for semantic search. See the repo [Getting started](https://github.com/AndyAnh174/vibe-hnindex/blob/main/docs/getting-started.md).
+`hnindex-cli` only writes JSON; **vibe-hnindex** uses Ollama (default), OpenAI, Voyage, Gemini, or an OpenAI-compatible API for embeddings, plus Qdrant for semantic search. See [Embedding providers](https://github.com/AndyAnh174/vibe-hnindex/blob/main/docs/embedding-providers.md).
 
 ---
 
@@ -73,6 +73,10 @@ hnindex init --list
 | `--name <label>` | JSON key for the server (default: `vibe-hnindex`). |
 | `--ollama-url <url>` | Default: `http://localhost:11434` |
 | `--ollama-model <name>` | Default: `bge-m3:567m` |
+| `--embedding-provider <name>` | `ollama`, `openai`, `voyage`, `gemini`, `openai-compatible` |
+| `--embedding-model <name>` | Override provider model |
+| `--embedding-base-url <url>` | Override API base URL including version |
+| `--embedding-api-key <key>` | Write generic `EMBEDDING_API_KEY`; provider-specific keys may also be set in the MCP env block |
 | `--embedding-dimensions <n>` | Writes `EMBEDDING_DIMENSIONS` for vibe-hnindex (must match Ollama output for that model, e.g. `768`). Re-running `init` **merges** env: if you omit this flag, a previous `EMBEDDING_DIMENSIONS` in the MCP file is kept. |
 | `--qdrant-url <url>` | Default: `http://localhost:6333` |
 | `--qdrant-api-key <key>` | Optional; use with Qdrant Cloud. |

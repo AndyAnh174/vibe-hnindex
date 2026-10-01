@@ -6,10 +6,10 @@
     "npm": "npm"
   },
   "hero": {
-    "badge": "v0.12.1 · Mã nguồn mở · MIT",
+    "badge": "v0.13.0 · Mã nguồn mở · MIT",
     "title": "Index Một Lần,",
     "titleHighlight": "Tìm Kiếm Mọi Phiên",
-    "subtitle": "MCP server cục bộ index codebase của bạn và cho phép mọi trợ lý AI tìm kiếm với đường dẫn, phạm vi dòng, và hiểu ngữ nghĩa. Code của bạn ở trên máy bạn.",
+    "subtitle": "MCP server cục bộ lập chỉ mục codebase cho mọi trợ lý AI. Chọn embedding qua Ollama cục bộ, OpenAI, Voyage, Gemini hoặc API tương thích.",
     "getStarted": "Bắt Đầu",
     "viewOnGithub": "Xem trên GitHub",
     "terminal": "npx -y vibe-hnindex"
@@ -29,11 +29,11 @@
       },
       {
         "title": "Lưu Trữ Cục Bộ",
-        "desc": "SQLite cho metadata + FTS, Qdrant cho vectors. Tất cả dữ liệu nằm trên máy bạn — không cần đám mây."
+        "desc": "SQLite lưu metadata và tìm kiếm keyword, Qdrant lưu vector. Chọn embedding hoàn toàn cục bộ hoặc nhà cung cấp đám mây."
       },
       {
         "title": "Index Tăng Dần",
-        "desc": "SHA-256 file hashing bỏ qua các file không thay đổi. Index một lần, re-index chỉ những gì đã thay đổi."
+        "desc": "SHA-1 file hashing bỏ qua các file không thay đổi. Index một lần, re-index chỉ những gì đã thay đổi."
       },
       {
         "title": "AI-Native",
@@ -61,13 +61,13 @@
     "yourCodebase": "Codebase Của Bạn",
     "mcpServer": "vibe-hnindex",
     "mcpSubtitle": "MCP Server",
-    "ollama": "Ollama",
-    "ollamaModel": "bge-m3",
+    "ollama": "Nguồn Embedding",
+    "ollamaModel": "Ollama / API đám mây",
     "sqlite": "SQLite",
     "sqliteSubtitle": "FTS5 · BM25",
     "keyword": "Từ khóa",
     "qdrant": "Qdrant",
-    "qdrantSubtitle": "1024-dim Vectors",
+    "qdrantSubtitle": "Vector theo Model",
     "semantic": "Ngữ nghĩa",
     "hybrid": "Tìm Kiếm Hybrid RRF",
     "hybridSubtitle": "Reciprocal Rank Fusion"
@@ -77,7 +77,7 @@
     "items": [
       {
         "q": "Tôi có cần API key không?",
-        "a": "Không. vibe-hnindex chạy hoàn toàn trên máy bạn. Ollama cung cấp embeddings cục bộ, và Qdrant lưu vectors cục bộ. Không cần API key đám mây."
+        "a": "Ollama cục bộ không cần API key. OpenAI, Voyage và Gemini cần key của nhà cung cấp tương ứng. API embedding đám mây nhận nội dung bạn đưa vào embedding."
       },
       {
         "q": "Tôi có thể dùng mà không cần Qdrant không?",
@@ -113,5 +113,3 @@
     "languageSwitcher": "Ngôn ngữ"
   }
 }
-
-

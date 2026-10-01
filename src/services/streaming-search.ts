@@ -16,7 +16,7 @@ import type { SearchResult } from '../types.js';
 import { config } from '../config.js';
 import { searchKeyword, getChunksByIds } from './sqlite.js';
 import { searchSimilar, healthCheck as qdrantHealthCheck } from './qdrant.js';
-import { embedSingle, healthCheck as ollamaHealthCheck } from './embeddings.js';
+import { embedSingle, embeddingUnavailableMessage, healthCheck as embeddingHealthCheck } from './embeddings.js';
 import { tokenizeForFts, buildFtsOrQuery } from './keyword-query.js';
 import { fuzzyScore } from './fuzzy.js';
 
@@ -109,7 +109,7 @@ export async function parallelSearch(
   semanticResults: Array<{ id: string; score: number }>;
   warnings: string[];
   keywordFallbackRan: boolean;
-  ollamaAvailable: boolean;
+  embeddingAvailable: boolean;
   qdrantAvailable: boolean;
 }> {
   const warnings: string[] = [];
@@ -143,30 +143,30 @@ export async function parallelSearch(
   // ---- Prepare semantic search promise ----
   const semanticPromise = (async (): Promise<{
     results: Array<{ id: string; score: number }>;
-    ollamaOk: boolean;
+    embeddingOk: boolean;
     qdrantOk: boolean;
   }> => {
-    const ollamaOk = await ollamaHealthCheck();
+    const embeddingOk = await embeddingHealthCheck();
     const qdrantOk = await qdrantHealthCheck();
 
-    if (!ollamaOk || !qdrantOk) {
-      if (!ollamaOk) {
-        warnings.push(`Ollama not available at ${config.ollamaUrl}. Semantic search disabled.`);
+    if (!embeddingOk || !qdrantOk) {
+      if (!embeddingOk) {
+        warnings.push(`${embeddingUnavailableMessage()} Semantic search disabled.`);
       }
       if (!qdrantOk) {
         warnings.push(`Qdrant not available at ${config.qdrantUrl}. Semantic search disabled.`);
       }
-      return { results: [], ollamaOk, qdrantOk };
+      return { results: [], embeddingOk, qdrantOk };
     }
 
     try {
       const queryVector = await embedSingle(query);
       const results = await searchSimilar(projectName, queryVector, semanticLimit, filters);
-      return { results, ollamaOk, qdrantOk };
+      return { results, embeddingOk, qdrantOk };
     } catch (error) {
       console.error('[streaming-search] Semantic search error:', error);
       warnings.push('Semantic search failed.');
-      return { results: [], ollamaOk, qdrantOk };
+      return { results: [], embeddingOk, qdrantOk };
     }
   })();
 
@@ -174,7 +174,7 @@ export async function parallelSearch(
   const [keywordResults, semanticResult] = await Promise.all([keywordPromise, semanticPromise]);
 
   // Handle keyword fallback to semantic
-  if (keywordResults.length === 0 && config.searchKeywordFallbackSemantic && semanticResult.ollamaOk && semanticResult.qdrantOk && semanticResult.results.length > 0) {
+  if (keywordResults.length === 0 && config.searchKeywordFallbackSemantic && semanticResult.embeddingOk && semanticResult.qdrantOk && semanticResult.results.length > 0) {
     keywordFallbackRan = true;
     warnings.push('Keyword had no hits; semantic fallback used.');
   }
@@ -184,7 +184,7 @@ export async function parallelSearch(
     semanticResults: semanticResult.results,
     warnings,
     keywordFallbackRan,
-    ollamaAvailable: semanticResult.ollamaOk,
+    embeddingAvailable: semanticResult.embeddingOk,
     qdrantAvailable: semanticResult.qdrantOk,
   };
 }

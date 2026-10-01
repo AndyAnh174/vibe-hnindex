@@ -1,5 +1,6 @@
 import { QdrantClient } from '@qdrant/js-client-rest';
-import { config, getCollectionName } from '../config.js';
+import { config, getCollectionName, getEmbeddingNamespace, getEmbeddingProfile } from '../config.js';
+import { getProjectEmbeddingProfile } from './sqlite.js';
 
 let client: QdrantClient;
 let cloudConfigWarned = false;
@@ -54,17 +55,22 @@ export async function verifyCollectionReady(projectName: string): Promise<{
   }
 }
 
-export async function ensureCollection(projectName: string): Promise<void> {
+/** Returns true when a new vector space was created and all files need embedding. */
+export async function ensureCollection(projectName: string): Promise<boolean> {
   const collectionName = getCollectionName(projectName);
   const qdrant = getQdrantClient();
 
   try {
-    await qdrant.getCollection(collectionName);
-    // Collection already exists
+    const info = await qdrant.getCollection(collectionName);
+    const vectors = info.config.params.vectors;
+    if (!vectors || !('size' in vectors) || vectors.size !== config.embeddingDimensions) {
+      throw new Error('Qdrant vector dimensions differ from the embedding configuration. Re-index into a new collection.');
+    }
+    return false;
   } catch (error: unknown) {
     // Only create if collection not found (404), re-throw other errors
     const status = (error as { status?: number })?.status;
-    if (status && status !== 404) {
+    if (status !== 404) {
       throw error;
     }
     await qdrant.createCollection(collectionName, {
@@ -78,6 +84,7 @@ export async function ensureCollection(projectName: string): Promise<void> {
       on_disk_payload: true,
     });
     console.error(`[qdrant] Created collection: ${collectionName}`);
+    return true;
   }
 }
 
@@ -108,6 +115,9 @@ export async function searchSimilar(
   limit: number,
   filters?: { language?: string; file_pattern?: string }
 ): Promise<Array<{ id: string; score: number }>> {
+  if (getProjectEmbeddingProfile(projectName) !== getEmbeddingProfile()) {
+    throw new Error('Embedding configuration changed or indexing is incomplete. Run index_codebase before semantic search.');
+  }
   const collectionName = getCollectionName(projectName);
 
   try {
@@ -178,7 +188,7 @@ export async function deleteCollection(projectName: string): Promise<void> {
 
 export function getChatCollectionName(projectName: string): string {
   const sanitized = projectName.replace(/[^a-zA-Z0-9_]/g, '_');
-  return `${config.qdrantCollectionPrefix}chat_${sanitized}`;
+  return `${config.qdrantCollectionPrefix}chat_${sanitized}${getEmbeddingNamespace()}`;
 }
 
 export async function ensureChatCollection(projectName: string): Promise<void> {

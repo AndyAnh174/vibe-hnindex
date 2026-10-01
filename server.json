@@ -1,21 +1,98 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.AndyAnh174/vibe-hnindex",
-  "description": "Index source code into a local knowledge base, search with keyword + semantic + hybrid modes. Supports streaming search, fuzzy matching, regex, symbol filters, and parallel indexing.",
+  "description": "Index and search codebases with keyword and semantic retrieval. Embeddings: Ollama, OpenAI, Voyage, Gemini and OpenAI-compatible APIs.",
   "repository": {
     "url": "https://github.com/AndyAnh174/vibe-hnindex",
     "source": "github"
   },
-  "version": "0.12.1",
+  "version": "0.13.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "vibe-hnindex",
-      "version": "0.12.1",
+      "version": "0.13.0",
       "transport": {
         "type": "stdio"
       },
       "environmentVariables": [
+        {
+          "name": "EMBEDDING_PROVIDER",
+          "description": "ollama (default), openai, voyage, gemini, or openai-compatible",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        },
+        {
+          "name": "EMBEDDING_MODEL",
+          "description": "Override the embedding provider model",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        },
+        {
+          "name": "EMBEDDING_BASE_URL",
+          "description": "API base URL including version; required for openai-compatible",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        },
+        {
+          "name": "EMBEDDING_API_KEY",
+          "description": "Generic embedding API key override",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true
+        },
+        {
+          "name": "OPENAI_API_KEY",
+          "description": "OpenAI embedding API key",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true
+        },
+        {
+          "name": "VOYAGE_API_KEY",
+          "description": "Voyage embedding API key",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true
+        },
+        {
+          "name": "GEMINI_API_KEY",
+          "description": "Gemini embedding API key",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true
+        },
+        {
+          "name": "GOOGLE_API_KEY",
+          "description": "Alternative Gemini API key",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true
+        },
+        {
+          "name": "EMBEDDING_BATCH_SIZE",
+          "description": "Texts per embedding batch (default 32, range 1-128)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        },
+        {
+          "name": "EMBEDDING_TIMEOUT_MS",
+          "description": "Per-request embedding timeout in ms (default 30000); 0 disables timeout",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        },
+        {
+          "name": "EMBEDDING_MAX_RETRIES",
+          "description": "Extra retries for HTTP 429/5xx (default 2, range 0-5)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        },
         {
           "description": "Ollama embedding server URL",
           "isRequired": false,
@@ -31,7 +108,7 @@
           "name": "OLLAMA_MODEL"
         },
         {
-          "description": "Embedding vector size — must match Ollama output for OLLAMA_MODEL (default: 1024)",
+          "description": "Embedding vector size; provider default when unset. Re-index after changing provider/model/dimensions.",
           "isRequired": false,
           "format": "string",
           "isSecret": false,
@@ -202,5 +279,3 @@
     }
   ]
 }
-
-

@@ -166,6 +166,8 @@ END:    chat_context(action="ingest", messages=[entire conversation])
 
 ## Key Env Vars
 
+Since v0.13.0, embeddings can use `EMBEDDING_PROVIDER=ollama|openai|voyage|gemini|openai-compatible`. Configure `OPENAI_API_KEY`, `VOYAGE_API_KEY`, or `GEMINI_API_KEY` for cloud providers; `EMBEDDING_API_KEY` overrides provider keys. Generic `EMBEDDING_MODEL`, `EMBEDDING_BASE_URL` and `EMBEDDING_DIMENSIONS` override defaults. See [Embedding providers](docs/embedding-providers.md). After changing provider/model/dimensions/endpoint, restart MCP and run `index_codebase` for the entire project. Local Ollama defaults and legacy env variables remain supported.
+
 | Var | Default | Purpose |
 |-----|---------|---------|
 | `OLLAMA_URL` | localhost:11434 | Ollama server |

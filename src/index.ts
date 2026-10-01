@@ -35,7 +35,7 @@ initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.12.1',
+  version: '0.13.0',
 }, {
   capabilities: { logging: {}, prompts: {} },
 });
@@ -101,7 +101,7 @@ server.tool(
 // --- Tool: search ---
 server.tool(
   'search',
-  'Search the indexed codebase. Returns matching code chunks with file paths, line numbers, and relevance scores. Modes: keyword (FTS5), semantic (vector), hybrid (RRF fusion), auto (heuristic when SEARCH_AUTO_ROUTE), symbol (SQLite symbol index by identifier), regex (pattern matching with /pattern/flags). Results are cached (LRU, 5min TTL) for non-regex modes. Filter by symbol_kind to only see files with functions, classes, etc. Enable fuzzy:true to boost results with approximate string matching (Levenshtein) — useful for misspelled queries. Post-retrieval ordering: if RERANK_URL is set, the server POSTs {query, documents} for optional cross-encoder-style scores; if not set, results are still reordered by Qdrant semantic similarity (no extra service). Ollama (OLLAMA_URL + OLLAMA_MODEL) is only for embeddings at index/query time—not the same as RERANK_URL. Agents: you do not need to "enable" rerank manually unless the user asks to skip it (use rerank:false) or tune env; default behavior is already optimal for most tasks. Prefer a narrow file_pattern and a small limit on the first pass.',
+  'Search the indexed codebase. Returns matching code chunks with file paths, line numbers, and relevance scores. Modes: keyword (FTS5), semantic (vector), hybrid (RRF fusion), auto (heuristic when SEARCH_AUTO_ROUTE), symbol (SQLite symbol index by identifier), regex (pattern matching with /pattern/flags). Results are cached (LRU, 5min TTL) for non-regex modes. Filter by symbol_kind to only see files with functions, classes, etc. Enable fuzzy:true to boost results with approximate string matching (Levenshtein) — useful for misspelled queries. Post-retrieval ordering: if RERANK_URL is set, the server POSTs {query, documents} for optional cross-encoder-style scores; if not set, results are still reordered by Qdrant semantic similarity (no extra service). The configured embedding provider (Ollama, OpenAI, Voyage, Gemini or OpenAI-compatible) generates index/query vectors—not the same as RERANK_URL. Agents: you do not need to "enable" rerank manually unless the user asks to skip it (use rerank:false) or tune env; default behavior is already optimal for most tasks. Prefer a narrow file_pattern and a small limit on the first pass.',
   {
     query: z.string().describe('Search query — natural language, keywords, or a symbol name when mode is symbol'),
     project_name: z.string().describe('Project to search in'),
@@ -145,7 +145,7 @@ server.tool(
 // --- Tool: server_diagnostics ---
 server.tool(
   'server_diagnostics',
-  'Health check: Ollama, Qdrant, embedding probe, and config summary. Optionally pass project_name to compare SQLite chunk count with Qdrant point count.',
+  'Health check: configured embedding provider, Qdrant, embedding probe, and config summary. Optionally pass project_name to compare SQLite chunk count with Qdrant point count.',
   {
     project_name: z.string().optional().describe('If set, compare indexed chunks vs Qdrant vectors for this project'),
   },
@@ -508,7 +508,7 @@ async function main() {
   autoResumeWatch();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started (v0.12.1)');
+  console.error('[vibe-hnindex] Server started (v0.13.0)');
 }
 
 main().catch((error) => {

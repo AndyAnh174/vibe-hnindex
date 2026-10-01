@@ -28,7 +28,11 @@ Details: [Troubleshooting](troubleshooting.md#windows-npm-install).
 node -v
 ```
 
-### 2. Ollama (embedding server)
+### 2. Embedding provider
+
+Choose [OpenAI, Voyage, Gemini or an OpenAI-compatible API](embedding-providers.md) to run without Ollama. Set `EMBEDDING_PROVIDER` and the selected provider's API key in MCP `env`.
+
+For the default local Ollama setup:
 
 ```bash
 # https://ollama.com/download

@@ -12,7 +12,7 @@
 
 ```
 Scan directory → filter (40+ extensions; skip node_modules, .git, dist…)
-  → SHA-256 hash → skip unchanged files
+  → SHA-1 hash → skip unchanged files
   → chunk (≈60 lines, boundary-aware, overlap)
   → embed (Ollama bge-m3, batch 32, 1024-dim)
   → SQLite (text + FTS5) + Qdrant (vectors)

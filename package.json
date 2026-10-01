@@ -1,6 +1,6 @@
 {
   "name": "vibe-hnindex",
-  "version": "0.12.1",
+  "version": "0.13.0",
   "workspaces": [
     "packages/*"
   ],
@@ -15,7 +15,7 @@
     "build": "tsc && npm run build -w hnindex-cli",
     "dev": "tsx src/index.ts",
     "start": "node dist/index.js",
-    "prepack": "tsc || true",
+    "prepack": "tsc",
     "test": "vitest run",
     "test:watch": "vitest",
     "bench:perf": "node scripts/perf-compare.mjs",
@@ -73,5 +73,3 @@
     "url": "https://github.com/AndyAnh174/vibe-hnindex/issues"
   }
 }
-
-

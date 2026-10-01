@@ -1,24 +1,49 @@
 import path from 'node:path';
 import os from 'node:os';
+import { createHash } from 'node:crypto';
 
-function parseEmbeddingDimensions(): number {
-  const raw = process.env.EMBEDDING_DIMENSIONS?.trim();
-  if (raw === undefined || raw === '') return 1024;
-  const n = parseInt(raw, 10);
-  if (!Number.isFinite(n) || n < 1 || n > 16384) {
-    console.warn(
-      `[config] Invalid EMBEDDING_DIMENSIONS "${raw}" — must be 1–16384; using 1024`
-    );
-    return 1024;
+export type EmbeddingProvider = 'ollama' | 'openai' | 'voyage' | 'gemini' | 'openai-compatible';
+const provider = (process.env.EMBEDDING_PROVIDER?.trim().toLowerCase() || 'ollama') as EmbeddingProvider;
+if (!['ollama', 'openai', 'voyage', 'gemini', 'openai-compatible'].includes(provider)) {
+  throw new Error('Invalid EMBEDDING_PROVIDER. Use ollama, openai, voyage, gemini, or openai-compatible.');
+}
+const defaults = {
+  ollama: { model: process.env.OLLAMA_MODEL || 'bge-m3:567m', dimensions: 1024, url: process.env.OLLAMA_URL || 'http://localhost:11434', key: '' },
+  openai: { model: 'text-embedding-3-small', dimensions: 1536, url: process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1', key: process.env.OPENAI_API_KEY },
+  voyage: { model: 'voyage-code-3', dimensions: 1024, url: process.env.VOYAGE_BASE_URL || 'https://api.voyageai.com/v1', key: process.env.VOYAGE_API_KEY },
+  gemini: { model: 'gemini-embedding-2', dimensions: 3072, url: process.env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta', key: process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY },
+  'openai-compatible': { model: '', dimensions: 1024, url: '', key: process.env.OPENAI_API_KEY },
+}[provider];
+
+function embeddingInteger(name: string, fallback: number, min: number, max: number): number {
+  const raw = process.env[name]?.trim();
+  if (!raw) return fallback;
+  const n = Number(raw);
+  if (!Number.isInteger(n) || n < min || n > max) {
+    throw new Error(`${name} must be an integer between ${min} and ${max}.`);
   }
   return n;
 }
 
+function parseEmbeddingDimensions(): number {
+  const raw = process.env.EMBEDDING_DIMENSIONS?.trim();
+  if (raw === undefined || raw === '') return defaults.dimensions;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 1 || n > 16384) {
+    throw new Error('EMBEDDING_DIMENSIONS must be an integer between 1 and 16384.');
+  }
+  if (!Number.isInteger(n)) throw new Error('EMBEDDING_DIMENSIONS must be an integer.');
+  return n;
+}
+
 export const config = {
-  // Ollama
+  // Embedding provider (legacy OLLAMA_* variables remain supported)
+  embeddingProvider: provider,
+  embeddingBaseUrl: (process.env.EMBEDDING_BASE_URL?.trim() || defaults.url).replace(/\/+$/, ''),
+  embeddingApiKey: process.env.EMBEDDING_API_KEY?.trim() || defaults.key?.trim() || '',
   ollamaUrl: process.env.OLLAMA_URL || 'http://localhost:11434',
-  embeddingModel: process.env.OLLAMA_MODEL || 'bge-m3:567m',
-  /** Must match the vector size returned by `OLLAMA_MODEL` (Qdrant collection size). Change only with a new model + re-index / new Qdrant collection. */
+  embeddingModel: provider === 'gemini' ? (process.env.EMBEDDING_MODEL?.trim() || defaults.model).replace(/^models\//, '') : process.env.EMBEDDING_MODEL?.trim() || defaults.model,
+  /** Must match provider output and Qdrant collection size. Re-index after changing the model. */
   embeddingDimensions: parseEmbeddingDimensions(),
 
   // Storage (SQLite)
@@ -40,7 +65,9 @@ export const config = {
   maxFileSize: parseInt(process.env.MAX_FILE_SIZE || '1048576', 10), // 1MB
 
   // Embedding batching
-  embeddingBatchSize: 32,
+  embeddingBatchSize: embeddingInteger('EMBEDDING_BATCH_SIZE', 32, 1, 128),
+  embeddingTimeoutMs: embeddingInteger('EMBEDDING_TIMEOUT_MS', embeddingInteger('OLLAMA_TIMEOUT_MS', 30000, 0, 3600000), 0, 3600000),
+  embeddingMaxRetries: embeddingInteger('EMBEDDING_MAX_RETRIES', 2, 0, 5),
 
   // Search (v0.4.0)
   /** When true and `mode` is omitted, behave like `mode: auto` (heuristic keyword/hybrid). */
@@ -116,5 +143,16 @@ export const config = {
 
 export function getCollectionName(projectName: string): string {
   const sanitized = projectName.replace(/[^a-zA-Z0-9_]/g, '_');
-  return `${config.qdrantCollectionPrefix}${sanitized}`;
+  return `${config.qdrantCollectionPrefix}${sanitized}${getEmbeddingNamespace()}`;
+}
+
+/** Keep the historical default Ollama collection; isolate every other vector space. */
+export function getEmbeddingNamespace(): string {
+  if (config.embeddingProvider === 'ollama' && config.embeddingModel === 'bge-m3:567m' && config.embeddingDimensions === 1024 && config.embeddingBaseUrl === 'http://localhost:11434') return '';
+  const identity = [config.embeddingProvider, config.embeddingBaseUrl, config.embeddingModel, config.embeddingDimensions];
+  return `_${createHash('sha256').update(JSON.stringify(identity)).digest('hex').slice(0, 12)}`;
+}
+
+export function getEmbeddingProfile(): string {
+  return getEmbeddingNamespace() || 'legacy-ollama';
 }

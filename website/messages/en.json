@@ -6,10 +6,10 @@
     "npm": "npm"
   },
   "hero": {
-    "badge": "v0.12.1 · Open Source · MIT",
+    "badge": "v0.13.0 · Open Source · MIT",
     "title": "Index Once,",
     "titleHighlight": "Search Every Session",
-    "subtitle": "A local MCP server that indexes your codebase and lets any AI assistant search it with paths, line ranges, and semantic understanding. Your code stays on your machine.",
+    "subtitle": "A local MCP server that indexes your codebase for any AI assistant. Choose local Ollama or OpenAI, Voyage, Gemini and compatible embedding APIs.",
     "getStarted": "Get Started",
     "viewOnGithub": "View on GitHub",
     "terminal": "npx -y vibe-hnindex"
@@ -29,11 +29,11 @@
       },
       {
         "title": "Local-First Storage",
-        "desc": "SQLite for metadata + FTS, Qdrant for vectors. All data stays on your machine — no cloud required."
+        "desc": "SQLite for metadata and keyword search, Qdrant for vectors. Choose fully local embeddings or a cloud provider."
       },
       {
         "title": "Incremental Indexing",
-        "desc": "SHA-256 file hashing skips unchanged files. Index once, re-index only what changed."
+        "desc": "SHA-1 file hashing skips unchanged files. Index once, re-index only what changed."
       },
       {
         "title": "AI-Native",
@@ -61,13 +61,13 @@
     "yourCodebase": "Your Codebase",
     "mcpServer": "vibe-hnindex",
     "mcpSubtitle": "MCP Server",
-    "ollama": "Ollama",
-    "ollamaModel": "bge-m3",
+    "ollama": "Embedding Provider",
+    "ollamaModel": "Ollama / Cloud API",
     "sqlite": "SQLite",
     "sqliteSubtitle": "FTS5 · BM25",
     "keyword": "Keyword",
     "qdrant": "Qdrant",
-    "qdrantSubtitle": "1024-dim Vectors",
+    "qdrantSubtitle": "Model-sized Vectors",
     "semantic": "Semantic",
     "hybrid": "Hybrid RRF Search",
     "hybridSubtitle": "Reciprocal Rank Fusion"
@@ -77,7 +77,7 @@
     "items": [
       {
         "q": "Do I need an API key?",
-        "a": "No. vibe-hnindex runs entirely on your machine. Ollama provides local embeddings, and Qdrant stores vectors locally. No cloud API keys needed."
+        "a": "Local Ollama needs no embedding API key. OpenAI, Voyage and Gemini require a key for the selected provider. Cloud embedding APIs receive the content you embed."
       },
       {
         "q": "Can I use it without Qdrant?",
@@ -113,5 +113,3 @@
     "languageSwitcher": "Language"
   }
 }
-
-

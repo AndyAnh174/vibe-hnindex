@@ -5,9 +5,11 @@
  */
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import fs from 'node:fs';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { Worker } from 'node:worker_threads';
 import { config } from '../config.js';
+import { fastHash } from './fast-hash.js';
 import type { FileEntry, ChunkRecord } from '../types.js';
 import { insertChunks } from './sqlite.js';
 import { upsertPoints } from './qdrant.js';
@@ -29,7 +31,8 @@ function getWorkerCount(): number {
   const env = process.env.INDEX_WORKERS?.trim();
   if (env === '0') return 0; // force single-threaded
   // auto-detect: os.cpus().length - 1, min 1
-  const auto = Math.max(1, os.cpus().length - 1);
+  const cpuWorkers = Math.max(1, os.cpus().length - 1);
+  const auto = config.embeddingProvider === 'ollama' ? cpuWorkers : Math.min(4, cpuWorkers);
   if (!env || env === 'auto') return auto;
   const n = parseInt(env, 10);
   if (Number.isFinite(n) && n > 0) return n;
@@ -51,7 +54,7 @@ function runWorker(
   files: FileEntry[],
   projectName: string,
   batchIndex: number
-): Promise<{ chunkRecords: ChunkRecord[]; vectors: number[][] }> {
+): Promise<{ chunkRecords: ChunkRecord[]; vectors: number[][]; skippedFiles: number }> {
   return new Promise((resolve, reject) => {
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
@@ -62,18 +65,27 @@ function runWorker(
       'chunk-embed.worker.js'
     );
 
-    const worker = new Worker(workerPath, {
+    let entry: string | URL = workerPath;
+    if (!fs.existsSync(workerPath)) {
+      // tsx development/test runs have .ts sources, while the published build has .js workers.
+      const source = pathToFileURL(workerPath.replace(/\.js$/, '.ts')).href;
+      const loader = import.meta.resolve('tsx/esm/api');
+      const bootstrap = `import { tsImport } from ${JSON.stringify(loader)}; await tsImport(${JSON.stringify(source)}, ${JSON.stringify(import.meta.url)});`;
+      entry = new URL(`data:text/javascript,${encodeURIComponent(bootstrap)}`);
+    }
+    const worker = new Worker(entry, {
       workerData: { files, projectName, batchIndex },
+      env: { ...process.env },
     });
 
-    worker.on('message', (msg: { type: string; batchIndex: number; chunkResults: Array<{ chunk: ChunkRecord; vector: number[] }>; error?: string }) => {
+    worker.on('message', (msg: { type: string; batchIndex: number; chunkResults: Array<{ chunk: ChunkRecord; vector: number[] }>; skippedFiles?: number; error?: string }) => {
       if (msg.type === 'result') {
         if (msg.error && msg.chunkResults.length === 0) {
           reject(new Error(msg.error));
         } else {
           const chunkRecords = msg.chunkResults.map(r => r.chunk);
           const vectors = msg.chunkResults.map(r => r.vector);
-          resolve({ chunkRecords, vectors });
+          resolve({ chunkRecords, vectors, skippedFiles: msg.skippedFiles ?? 0 });
         }
       }
     });
@@ -123,7 +135,7 @@ export async function parallelIndex(
       const batch = batches[idx];
 
       try {
-        const { chunkRecords, vectors } = await runWorker(batch, projectName, idx);
+        const { chunkRecords, vectors, skippedFiles: failedFiles } = await runWorker(batch, projectName, idx);
 
         // Insert into SQLite
         if (chunkRecords.length > 0) {
@@ -152,7 +164,8 @@ export async function parallelIndex(
         }
 
         totalChunks += chunkRecords.length;
-        completedFiles += batch.length;
+        completedFiles += batch.length - failedFiles;
+        skippedFiles += failedFiles;
       } catch (error) {
         console.error(`[parallel-index] Batch ${idx} failed:`, error);
         skippedFiles += batch.length;
@@ -251,7 +264,7 @@ async function singleThreadIndex(
     try {
       const chunks = chunkFile(file.content, file.relativePath);
       const now = new Date().toISOString();
-      const fileHash = crypto.createHash('sha256').update(file.content).digest('hex');
+      const fileHash = fastHash(file.content);
 
       for (const chunk of chunks) {
         const record: ChunkRecord = {

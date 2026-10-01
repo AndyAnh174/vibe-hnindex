@@ -1,7 +1,7 @@
 {
   "name": "vibe-hnindex",
   "description": "Index source code into a local knowledge base, search with keyword + semantic + hybrid modes. Chat memory with hybrid SQLite+Qdrant storage for persistent AI context.",
-  "version": "0.12.1",
+  "version": "0.13.0",
   "author": {
     "name": "Ho Viet Anh (AndyAnh174)",
     "email": "hovietanh147@gmail.com"
@@ -9,11 +9,24 @@
   "homepage": "https://github.com/AndyAnh174/vibe-hnindex",
   "repository": "https://github.com/AndyAnh174/vibe-hnindex",
   "license": "MIT",
-  "keywords": ["mcp", "codebase", "search", "indexing", "semantic-search", "qdrant", "sqlite", "rag", "chat-memory"],
+  "keywords": [
+    "mcp",
+    "codebase",
+    "search",
+    "indexing",
+    "semantic-search",
+    "qdrant",
+    "sqlite",
+    "rag",
+    "chat-memory"
+  ],
   "mcpServers": {
     "vibe-hnindex": {
       "command": "npx",
-      "args": ["-y", "vibe-hnindex"],
+      "args": [
+        "-y",
+        "vibe-hnindex@0.13.0"
+      ],
       "env": {
         "OLLAMA_URL": "http://localhost:11434",
         "OLLAMA_MODEL": "bge-m3:567m",

@@ -20,10 +20,41 @@ export default function ConfigurationPage() {
       <h1>Configuration</h1>
       <p>
         Configure vibe-hnindex through environment variables set in your MCP config file.
-        All variables are optional with sensible defaults.
+        Ollama has local defaults; cloud embedding providers require an API key.
       </p>
 
       <h2 id="environment-variables">Environment Variables</h2>
+
+      <h3 id="embedding-providers">Embedding Providers (v0.13.0)</h3>
+      <p>
+        Choose Ollama, OpenAI, Voyage, Gemini or an OpenAI-compatible API.
+        Cloud providers receive the snippets, queries and enabled chat content being embedded.
+        After changing provider, model, dimensions or endpoint, restart MCP and run
+        <code> index_codebase</code> for the entire project.
+      </p>
+      <table>
+        <thead><tr><th>Provider</th><th>Default model</th><th>Dimensions</th><th>Key</th></tr></thead>
+        <tbody>
+          <tr><td>ollama</td><td>bge-m3:567m</td><td>1024</td><td>None</td></tr>
+          <tr><td>openai</td><td>text-embedding-3-small</td><td>1536</td><td>OPENAI_API_KEY</td></tr>
+          <tr><td>voyage</td><td>voyage-code-3</td><td>1024</td><td>VOYAGE_API_KEY</td></tr>
+          <tr><td>gemini</td><td>gemini-embedding-2</td><td>3072</td><td>GEMINI_API_KEY</td></tr>
+          <tr><td>openai-compatible</td><td>Set EMBEDDING_MODEL</td><td>Set to match model</td><td>Optional EMBEDDING_API_KEY</td></tr>
+        </tbody>
+      </table>
+      <p>
+        Use <code>EMBEDDING_PROVIDER</code> to choose a provider;
+        <code> EMBEDDING_MODEL</code>, <code>EMBEDDING_BASE_URL</code>,
+        <code> EMBEDDING_API_KEY</code> and <code>EMBEDDING_DIMENSIONS</code> override defaults.
+        Compatible APIs require a base URL including the API version.
+        Configure <code>EMBEDDING_TIMEOUT_MS</code>, <code>EMBEDDING_BATCH_SIZE</code> and
+        <code> EMBEDDING_MAX_RETRIES</code> to tune requests.
+      </p>
+      <pre><code>{`"env": {
+  "EMBEDDING_PROVIDER": "openai",
+  "OPENAI_API_KEY": "YOUR_OPENAI_API_KEY",
+  "QDRANT_URL": "http://localhost:6333"
+}`}</code></pre>
 
       <h3 id="core-config">Core Configuration</h3>
       <table>
@@ -33,7 +64,7 @@ export default function ConfigurationPage() {
         <tbody>
           <tr><td><code>OLLAMA_URL</code></td><td><code>http://localhost:11434</code></td><td>Ollama server URL</td></tr>
           <tr><td><code>OLLAMA_MODEL</code></td><td><code>bge-m3:567m</code></td><td>Embedding model name</td></tr>
-          <tr><td><code>EMBEDDING_DIMENSIONS</code></td><td><code>1024</code></td><td>Vector size from Ollama model. Must match model output.</td></tr>
+          <tr><td><code>EMBEDDING_DIMENSIONS</code></td><td>Provider default</td><td>Vector size; must match model output. Re-index after changing.</td></tr>
           <tr><td><code>STORAGE_PATH</code></td><td><code>~/.vibe-hnindex</code></td><td>SQLite database directory</td></tr>
           <tr><td><code>QDRANT_URL</code></td><td><code>http://localhost:6333</code></td><td>Qdrant REST URL</td></tr>
           <tr><td><code>QDRANT_API_KEY</code></td><td><em>(unset)</em></td><td>Required for Qdrant Cloud</td></tr>

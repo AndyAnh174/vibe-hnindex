@@ -1,13 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import { config } from '../config.js';
+import { config, getEmbeddingProfile } from '../config.js';
 import type { ChunkRecord, DependencyRecord, ExportRecord } from '../types.js';
 import { chunkFile } from '../services/chunker.js';
 import { detectLanguage } from '../services/file-scanner.js';
 import { embed } from '../services/embeddings.js';
 import {
   getProject,
+  getProjectEmbeddingProfile,
   insertChunks,
   deleteFileChunks,
   getExistingFileHash,
@@ -30,7 +31,8 @@ import {
   deletePoints,
   healthCheck as qdrantHealthCheck,
 } from '../services/qdrant.js';
-import { healthCheck as ollamaHealthCheck } from '../services/embeddings.js';
+import { healthCheck as embeddingHealthCheck } from '../services/embeddings.js';
+import { fastHash } from '../services/fast-hash.js';
 import { isIgnored, loadHnindexIgnore } from '../services/hnindex-ignore.js';
 import { getGitHead } from '../services/git.js';
 
@@ -63,6 +65,9 @@ async function reindexFile(
   rootPath: string,
   absolutePath: string,
 ): Promise<string | null> {
+  if (getProjectEmbeddingProfile(projectName) !== getEmbeddingProfile()) {
+    return 'Embedding configuration changed or indexing is incomplete. Run index_codebase before watching changes.';
+  }
   const relativePath = path.relative(rootPath, absolutePath).replace(/\\/g, '/');
 
   // Read file
@@ -83,7 +88,7 @@ async function reindexFile(
   }
 
   // Hash check
-  const fileHash = crypto.createHash('sha256').update(content).digest('hex');
+  const fileHash = fastHash(content);
   const existingHash = getExistingFileHash(projectName, relativePath);
   if (existingHash === fileHash) return null; // unchanged
 
@@ -115,8 +120,8 @@ async function reindexFile(
     indexedAt: now,
   }));
 
-  const ollamaOk = await ollamaHealthCheck();
-  if (ollamaOk && records.length > 0) {
+  const embeddingOk = await embeddingHealthCheck();
+  if (embeddingOk && records.length > 0) {
     try {
       const vectors = await embed(records.map(r => r.content));
       insertChunks(records);
@@ -227,6 +232,10 @@ export async function startWatchingProject(projectName: string): Promise<{ ok: b
     };
   }
 
+  if (getProjectEmbeddingProfile(projectName) !== getEmbeddingProfile()) {
+    return { ok: false, message: 'Embedding configuration changed or indexing is incomplete. Run index_codebase before watching this project.' };
+  }
+
   const rootPath = project.rootPath;
   const resolvedRoot = path.resolve(rootPath);
   const ignorePatterns = loadHnindexIgnore(resolvedRoot);
@@ -248,6 +257,7 @@ export async function startWatchingProject(projectName: string): Promise<{ ok: b
 
     pendingFiles.set(fullPath, setTimeout(async () => {
       pendingFiles.delete(fullPath);
+      if (getProjectEmbeddingProfile(projectName) !== getEmbeddingProfile()) return;
 
       const relativePath = path.relative(resolvedRoot, fullPath).replace(/\\/g, '/');
 
