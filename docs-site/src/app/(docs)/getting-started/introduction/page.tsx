@@ -102,7 +102,7 @@ export default function IntroductionPage() {
 
       <h2 id="requirements">Requirements</h2>
       <ul>
-        <li><strong>Node.js</strong> ≥ 20 (LTS recommended)</li>
+        <li><strong>Node.js</strong> ≥ 22 (LTS recommended)</li>
         <li><strong>Ollama</strong> — for embeddings (required for semantic/hybrid search)</li>
         <li><strong>Qdrant</strong> — Docker or Qdrant Cloud (optional; keyword search works without it)</li>
       </ul>

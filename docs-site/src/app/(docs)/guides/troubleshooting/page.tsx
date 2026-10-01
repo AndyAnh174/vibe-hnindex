@@ -49,7 +49,7 @@ export default function TroubleshootingPage() {
         <Card className="p-4">
           <h4 className="text-sm font-bold text-primary mb-2">1. Use LTS Node</h4>
           <p className="text-xs text-muted-foreground">
-            Use Node.js 20.x or 22.x LTS. Many LTS versions have prebuilt
+            Use Node.js 22.x or 24.x. Many LTS versions have prebuilt
             <code>better-sqlite3</code>. No compiler needed.
           </p>
         </Card>

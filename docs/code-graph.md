@@ -32,6 +32,8 @@ Context includes source-site evidence and declaration excerpts (up to 80 lines e
 
 ## AST chunks and migration
 
+v0.14.0 requires Node 22 or later. The SQLite driver uses bundled N-API binaries; CI verifies Node 22 and 24.
+
 TS/JS large files split along declarations, including leading comments; oversized functions/classes still have a line cap. AST chunks do not overlap. Small files stay single chunks. Invalid syntax and other file types use existing line chunking. Stored chunk text remains source text with exact line spans; embedding inputs add file/line metadata for TS/JS.
 
 After upgrading from v0.13.0, restart MCP and run a full `index_codebase` once. The changed chunk profile forces re-embedding, which can incur provider cost. Changing `AST_CHUNKING`, `CHUNK_SIZE`, or `CHUNK_OVERLAP` requires the same rebuild. Graph-only usage needs `index_code_graph` instead and has no embedding charge.

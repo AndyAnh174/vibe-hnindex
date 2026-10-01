@@ -15,7 +15,7 @@
 
 **What to do (pick one)**
 
-1. **Use Node 20 or 22 LTS** (recommended first step). Install from [nodejs.org](https://nodejs.org/) or switch with [nvm-windows](https://github.com/coreybutler/nvm-windows). Then run `npm i` again. Many LTS versions get a prebuilt `better-sqlite3` and **no compiler** is needed.
+1. **Use Node 22 or 24** (recommended first step). Install from [nodejs.org](https://nodejs.org/) or switch with [nvm-windows](https://github.com/coreybutler/nvm-windows). Then run `npm i` again. Many LTS versions get a prebuilt `better-sqlite3` and **no compiler** is needed.
 2. **Install build tools** — [Visual Studio Build Tools](https://visualstudio.microsoft.com/visual-cpp-build-tools/) → workload **“Desktop development with C++”**, then run `npm i` again.
 3. **Avoid bleeding-edge Node** (e.g. very new major versions) on Windows if installs keep failing without VS — prebuilds often lag.
 

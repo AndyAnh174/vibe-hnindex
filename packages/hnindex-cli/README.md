@@ -8,7 +8,7 @@ hnindex init --mcp claude --code-graph true --rerank-provider voyage
 
 See the [Code Graph guide](../../docs/code-graph.md). After upgrading, restart MCP and run full `index_codebase` once to rebuild AST chunks/vectors; offline graph-only users can run `index_code_graph`.
 
-CLI to merge **[vibe-hnindex](https://www.npmjs.com/package/vibe-hnindex)** into your editor’s MCP JSON (Claude Code, Claude Desktop, Cursor, Antigravity, Windsurf, VS Code). Works on **Windows, macOS, and Linux** (Node.js **≥ 20**).
+CLI to merge **[vibe-hnindex](https://www.npmjs.com/package/vibe-hnindex)** into your editor’s MCP JSON (Claude Code, Claude Desktop, Cursor, Antigravity, Windsurf, VS Code). Works on **Windows, macOS, and Linux** (Node.js **≥ 22**).
 
 ---
 

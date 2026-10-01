@@ -8,6 +8,7 @@ export const changelogData: VersionEntry[] = [
   {
     title: "v0.14.0 — AST Code Graph and Retrieval Evaluation",
     items: [
+      "**Runtime** — Node 22+; bundled N-API SQLite driver fixes native cleanup crashes on Node 24.",
       "**Code Graph** — Offline TypeScript/JavaScript AST indexing in SQLite with references, callers and bounded source context.",
       "**Resolution** — Alias/re-export chains, lexical symbols, typed methods and project compiler options, with evidence and unresolved-call labels.",
       "**Lifecycle** — Graph refresh during indexing/watching; deleted/excluded source cleanup and stale-analysis protection.",

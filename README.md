@@ -67,7 +67,7 @@ See **[docs.hnindex.cloud](https://docs.hnindex.cloud)** for full documentation.
 
 ## Install in 5 steps
 
-1. **Node.js** — v20+ ([nodejs.org](https://nodejs.org/)). On **Windows**, **Node 20 or 22 LTS** is strongly recommended so `npm install` does not need a C++ compiler. See [Troubleshooting → Windows](docs/troubleshooting.md#windows-npm-install) if `npm i vibe-hnindex` fails.
+1. **Node.js** — v22+ ([nodejs.org](https://nodejs.org/)). CI verifies Node 22 and 24. SQLite uses N-API binaries bundled for supported platforms; see [Troubleshooting → Windows](docs/troubleshooting.md#windows-npm-install) if `npm i vibe-hnindex` fails.
 2. **Embedding provider** — choose [OpenAI, Voyage, Gemini or a compatible API](docs/embedding-providers.md), or use local **Ollama**: install from [ollama.com](https://ollama.com/), then: `ollama pull bge-m3:567m` and keep `ollama serve` running (or set `OLLAMA_URL` to a remote server).
 3. **Qdrant** — for semantic/hybrid search: `docker run -d --name qdrant -p 6333:6333 qdrant/qdrant` (or use Qdrant Cloud). Keyword-only search works without Qdrant.
 4. **MCP config** — add the server to your assistant’s MCP settings. Minimal example (self-hosted Qdrant):

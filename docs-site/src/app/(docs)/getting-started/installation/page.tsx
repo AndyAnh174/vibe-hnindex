@@ -24,9 +24,9 @@ export default function InstallationPage() {
 
       <h2 id="prerequisites">Prerequisites</h2>
 
-      <h3 id="nodejs">1. Node.js ≥ 20</h3>
+      <h3 id="nodejs">1. Node.js ≥ 22</h3>
       <p>
-        vibe-hnindex requires Node.js 20 or later. Check your version:
+        vibe-hnindex requires Node.js 22 or later. Check your version:
       </p>
       <pre><code>node -v</code></pre>
       <p>
@@ -34,8 +34,8 @@ export default function InstallationPage() {
         use <a href="https://github.com/coreybutler/nvm-windows" target="_blank" rel="noopener noreferrer">nvm-windows</a>.
       </p>
       <blockquote>
-        <strong>Windows users:</strong> Use Node 20 or 22 LTS. Avoid very new versions (e.g., Node 24) if installs
-        fail without build tools. See the <a href="/guides/troubleshooting">Troubleshooting guide</a> for details.
+        <strong>Windows users:</strong> Use Node 22 or 24. Supported platforms use bundled N-API SQLite binaries. If installs
+        fail, see the <a href="/guides/troubleshooting">Troubleshooting guide</a> for details.
       </blockquote>
 
       <h3 id="ollama">2. Ollama (Embedding Server)</h3>
