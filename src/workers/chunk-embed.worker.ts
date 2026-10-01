@@ -1,11 +1,12 @@
 /**
- * Worker thread: receives batches of files, chunks them, computes embeddings via Ollama.
+ * Worker thread: receives batches of files, chunks them, computes embeddings via the selected provider.
  * Communicates with the main thread via parentPort.
  */
 import crypto from 'node:crypto';
 import { parentPort, workerData } from 'node:worker_threads';
 import { chunkFile } from '../services/chunker.js';
 import { embed } from '../services/embeddings.js';
+import { fastHash } from '../services/fast-hash.js';
 import type { FileEntry, ChunkRecord } from '../types.js';
 
 interface WorkerInput {
@@ -23,6 +24,7 @@ interface WorkerOutput {
   type: 'result';
   batchIndex: number;
   chunkResults: WorkerChunkResult[];
+  skippedFiles?: number;
   error?: string;
 }
 
@@ -32,6 +34,7 @@ const input = workerData as WorkerInput;
 async function processBatch(input: WorkerInput): Promise<WorkerOutput> {
   const { files, projectName, batchIndex } = input;
   const chunkResults: WorkerChunkResult[] = [];
+  let skippedFiles = 0;
 
   for (const file of files) {
     try {
@@ -43,7 +46,7 @@ async function processBatch(input: WorkerInput): Promise<WorkerOutput> {
       const vectors = await embed(chunkContents);
 
       const now = new Date().toISOString();
-      const fileHash = crypto.createHash('sha256').update(file.content).digest('hex');
+      const fileHash = fastHash(file.content);
 
       for (let i = 0; i < chunks.length; i++) {
         const chunk = chunks[i];
@@ -67,12 +70,13 @@ async function processBatch(input: WorkerInput): Promise<WorkerOutput> {
         });
       }
     } catch (error) {
+      skippedFiles++;
       console.error(`[worker] Error processing file ${file.relativePath}:`, error);
       // Continue with other files
     }
   }
 
-  return { type: 'result', batchIndex, chunkResults };
+  return { type: 'result', batchIndex, chunkResults, skippedFiles };
 }
 
 processBatch(input)

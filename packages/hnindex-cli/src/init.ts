@@ -36,12 +36,19 @@ export type InitOptions = {
   qdrantApiKey?: string;
   /** Omitted → keep prior `EMBEDDING_DIMENSIONS` in the MCP file if any; else vibe-hnindex defaults to 1024. */
   embeddingDimensions?: number;
+  embeddingProvider?: string;
+  embeddingModel?: string;
+  embeddingBaseUrl?: string;
+  embeddingApiKey?: string;
   dryRun: boolean;
   /** If true, write to --output instead of default path */
   output?: string;
 };
 
 export function runInit(opts: InitOptions): { written: boolean; filePath: string; json: string } {
+  if (opts.embeddingProvider && !['ollama', 'openai', 'voyage', 'gemini', 'openai-compatible'].includes(opts.embeddingProvider)) {
+    throw new Error('Invalid --embedding-provider: use ollama, openai, voyage, gemini, or openai-compatible.');
+  }
   const resolved = opts.output
     ? {
         target: opts.mcp,
@@ -61,12 +68,23 @@ export function runInit(opts: InitOptions): { written: boolean; filePath: string
   }
 
   const existingEnv = readExistingServerEnv(existing, resolved.format, opts.serverName);
+  const changedProvider = opts.embeddingProvider && opts.embeddingProvider !== (existingEnv.EMBEDDING_PROVIDER || 'ollama');
+  if (changedProvider) {
+    // A new provider must not inherit the previous model, vector size, endpoint or generic key.
+    for (const key of ['EMBEDDING_MODEL', 'EMBEDDING_DIMENSIONS', 'EMBEDDING_BASE_URL', 'EMBEDDING_API_KEY']) delete existingEnv[key];
+  } else if (opts.embeddingModel && opts.embeddingModel !== existingEnv.EMBEDDING_MODEL && opts.embeddingDimensions === undefined) {
+    delete existingEnv.EMBEDDING_DIMENSIONS;
+  }
   const freshEnv = defaultEnv({
     ollamaUrl: opts.ollamaUrl,
     ollamaModel: opts.ollamaModel,
     qdrantUrl: opts.qdrantUrl,
     qdrantApiKey: opts.qdrantApiKey,
     embeddingDimensions: opts.embeddingDimensions,
+    embeddingProvider: opts.embeddingProvider,
+    embeddingModel: opts.embeddingModel,
+    embeddingBaseUrl: opts.embeddingBaseUrl,
+    embeddingApiKey: opts.embeddingApiKey,
   });
   const env = { ...existingEnv, ...freshEnv };
   const block = defaultServerBlock(env);

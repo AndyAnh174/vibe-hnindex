@@ -13,7 +13,7 @@ import {
 import { autoTrack, summarizeSearchResults } from '../services/chat-memory.js';
 import { rerankSearchResults } from '../services/rerank.js';
 import { searchSimilar, healthCheck as qdrantHealthCheck } from '../services/qdrant.js';
-import { embedSingle, healthCheck as ollamaHealthCheck } from '../services/embeddings.js';
+import { embedSingle, embeddingUnavailableMessage, healthCheck as embeddingHealthCheck } from '../services/embeddings.js';
 import { tokenizeForFts, buildFtsOrQuery } from '../services/keyword-query.js';
 import { applyPathQualityScores, deprioritizeMultiplier } from '../services/path-quality.js';
 import {
@@ -254,12 +254,12 @@ export async function search(args: {
     keywordFallbackRan = parallelResult.keywordFallbackRan;
     warnings.push(...parallelResult.warnings);
 
-    if (!parallelResult.ollamaAvailable || !parallelResult.qdrantAvailable) {
-      if (effectiveMode === 'semantic' && !parallelResult.ollamaAvailable) {
+    if (!parallelResult.embeddingAvailable || !parallelResult.qdrantAvailable) {
+      if (effectiveMode === 'semantic' && !parallelResult.embeddingAvailable) {
         return {
           content: [{
             type: 'text',
-            text: `Error: Ollama not running at ${config.ollamaUrl}. Run: ollama serve && ollama pull ${config.embeddingModel}`,
+            text: `Error: ${embeddingUnavailableMessage()}`,
           }],
         };
       }
@@ -309,9 +309,9 @@ export async function search(args: {
     keywordResults.length === 0 &&
     config.searchKeywordFallbackSemantic
   ) {
-    const ollamaOk = await ollamaHealthCheck();
+    const embeddingOk = await embeddingHealthCheck();
     const qdrantOk = await qdrantHealthCheck();
-    if (ollamaOk && qdrantOk) {
+    if (embeddingOk && qdrantOk) {
       try {
         const queryVector = await embedSingle(args.query);
         semanticResults = await searchSimilar(
@@ -333,18 +333,18 @@ export async function search(args: {
 
   // Semantic search (skip if keyword fallback already populated semanticResults)
   if ((effectiveMode === 'semantic' || effectiveMode === 'hybrid') && !keywordFallbackRan) {
-    const ollamaOk = await ollamaHealthCheck();
+    const embeddingOk = await embeddingHealthCheck();
     const qdrantOk = await qdrantHealthCheck();
 
-    if (!ollamaOk) {
-      warnings.push(`Ollama not available at ${config.ollamaUrl}. Semantic search disabled.`);
+    if (!embeddingOk) {
+      warnings.push(`${embeddingUnavailableMessage()} Semantic search disabled.`);
       if (effectiveMode === 'hybrid') {
         actualMode = 'keyword';
       } else {
         return {
           content: [{
             type: 'text',
-            text: `Error: Ollama not running at ${config.ollamaUrl}. Run: ollama serve && ollama pull ${config.embeddingModel}`,
+            text: `Error: ${embeddingUnavailableMessage()}`,
           }],
         };
       }
@@ -715,7 +715,7 @@ export async function search(args: {
       return {
         content: [{
           type: 'text',
-          text: `Error: Search timed out after ${config.searchTimeoutMs}ms. The operation may be slow due to unresponsive services (Ollama/Qdrant). Try a simpler query or check that Ollama and Qdrant are running and healthy.`,
+          text: `Error: Search timed out after ${config.searchTimeoutMs}ms. The operation may be slow due to unresponsive embedding provider or Qdrant. Try a simpler query or check the configured services.`,
         }],
       };
     }

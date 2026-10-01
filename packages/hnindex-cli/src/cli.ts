@@ -46,7 +46,11 @@ Init options:
   --name <label>         Server key in JSON (default: vibe-hnindex)
   --ollama-url <url>     Default: http://localhost:11434
   --ollama-model <name> Default: bge-m3:567m
-  --embedding-dimensions <n>  Vector size from Ollama for this model (default: 1024). Set e.g. 768 for nomic-embed-text-v2-moe.
+  --embedding-provider <name>  ollama (default), openai, voyage, gemini, openai-compatible
+  --embedding-model <name>     Override the provider's default model
+  --embedding-base-url <url>   API base URL including version (e.g. https://api.openai.com/v1)
+  --embedding-api-key <key>    Optional generic key; alternatively set the provider's API key env
+  --embedding-dimensions <n>   Vector size (provider default when omitted)
   --qdrant-url <url>     Default: http://localhost:6333
   --qdrant-api-key <k>   Optional (Qdrant Cloud)
   --cwd <dir>            Working directory for project-scoped files (default: .)
@@ -137,6 +141,10 @@ function main(): void {
         'ollama-url': { type: 'string' },
         'ollama-model': { type: 'string' },
         'embedding-dimensions': { type: 'string' },
+        'embedding-provider': { type: 'string' },
+        'embedding-model': { type: 'string' },
+        'embedding-base-url': { type: 'string' },
+        'embedding-api-key': { type: 'string' },
         'qdrant-url': { type: 'string' },
         'qdrant-api-key': { type: 'string' },
         cwd: { type: 'string' },
@@ -172,8 +180,8 @@ function main(): void {
   const embDimRaw = optStr(values['embedding-dimensions'])?.trim();
   let embeddingDimensions: number | undefined;
   if (embDimRaw !== undefined) {
-    const n = parseInt(embDimRaw, 10);
-    if (!Number.isFinite(n) || n < 1 || n > 16384) {
+    const n = Number(embDimRaw);
+    if (!Number.isInteger(n) || n < 1 || n > 16384) {
       console.error(
         'Invalid --embedding-dimensions: expected integer 1–16384 (e.g. 768 for nomic-embed-text-v2-moe)'
       );
@@ -193,6 +201,10 @@ function main(): void {
       qdrantUrl: optStr(values['qdrant-url'])?.trim() || 'http://localhost:6333',
       qdrantApiKey: optStr(values['qdrant-api-key'])?.trim(),
       embeddingDimensions,
+      embeddingProvider: optStr(values['embedding-provider'])?.trim().toLowerCase(),
+      embeddingModel: optStr(values['embedding-model'])?.trim(),
+      embeddingBaseUrl: optStr(values['embedding-base-url'])?.trim(),
+      embeddingApiKey: optStr(values['embedding-api-key'])?.trim(),
       dryRun,
       output: optStr(values.output)?.trim(),
     });

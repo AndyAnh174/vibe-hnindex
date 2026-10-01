@@ -9,143 +9,132 @@ on:
       - '.github/workflows/publish.yml'
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-release
+  cancel-in-progress: false
+
 jobs:
-  check-vibe-hnindex:
+  validate:
+    uses: ./.github/workflows/ci.yml
+
+  check-versions:
     runs-on: ubuntu-latest
     outputs:
-      should_publish: ${{ steps.check.outputs.should_publish }}
+      server_publish: ${{ steps.check.outputs.server_publish }}
+      cli_publish: ${{ steps.check.outputs.cli_publish }}
       version: ${{ steps.check.outputs.version }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Check vibe-hnindex version vs npm
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Check exact package versions on npm
         id: check
-        run: |
-          LOCAL_VERSION=$(node -p "require('./package.json').version")
-          NPM_VERSION=$(npm view vibe-hnindex version 2>/dev/null || echo "0.0.0")
-          echo "vibe-hnindex local=$LOCAL_VERSION npm=$NPM_VERSION"
-          if [ "$LOCAL_VERSION" != "$NPM_VERSION" ]; then
-            echo "should_publish=true" >> "$GITHUB_OUTPUT"
-            echo "version=$LOCAL_VERSION" >> "$GITHUB_OUTPUT"
-          else
-            echo "should_publish=false" >> "$GITHUB_OUTPUT"
-          fi
-
-  check-hnindex-cli:
-    runs-on: ubuntu-latest
-    outputs:
-      should_publish: ${{ steps.check.outputs.should_publish }}
-      version: ${{ steps.check.outputs.version }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Check hnindex-cli version vs npm
-        id: check
-        run: |
-          LOCAL_VERSION=$(node -p "require('./packages/hnindex-cli/package.json').version")
-          NPM_VERSION=$(npm view hnindex-cli version 2>/dev/null || echo "0.0.0")
-          echo "hnindex-cli local=$LOCAL_VERSION npm=$NPM_VERSION"
-          if [ "$LOCAL_VERSION" != "$NPM_VERSION" ]; then
-            echo "should_publish=true" >> "$GITHUB_OUTPUT"
-            echo "version=$LOCAL_VERSION" >> "$GITHUB_OUTPUT"
-          else
-            echo "should_publish=false" >> "$GITHUB_OUTPUT"
-          fi
+        run: node scripts/check-npm-release.mjs
 
   publish-vibe-hnindex:
-    needs: check-vibe-hnindex
-    if: needs.check-vibe-hnindex.outputs.should_publish == 'true'
+    needs: [validate, check-versions]
+    if: needs.check-versions.outputs.server_publish == 'true'
     runs-on: ubuntu-latest
     permissions:
-      contents: write
-
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-
-      - name: Publish vibe-hnindex to npm
-        run: npm publish --access public
+      - run: npm install -g npm@11
+      - run: npm ci
+      - run: npm run build
+      - name: Publish server
+        run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ needs.check-vibe-hnindex.outputs.version }}
-          name: v${{ needs.check-vibe-hnindex.outputs.version }}
-          body: |
-            ## vibe-hnindex v${{ needs.check-vibe-hnindex.outputs.version }}
-
-            Published to npm: [`vibe-hnindex@${{ needs.check-vibe-hnindex.outputs.version }}`](https://www.npmjs.com/package/vibe-hnindex)
-
-            Optional CLI installer: [`hnindex-cli`](https://www.npmjs.com/package/hnindex-cli) (`npm install -g hnindex-cli`)
-
-            ```bash
-            npx -y vibe-hnindex
-            ```
-          generate_release_notes: true
-
   publish-hnindex-cli:
-    needs: check-hnindex-cli
-    if: needs.check-hnindex-cli.outputs.should_publish == 'true'
+    needs: [validate, check-versions]
+    if: needs.check-versions.outputs.cli_publish == 'true'
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
           registry-url: 'https://registry.npmjs.org'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build
-        run: npm run build
-
-      - name: Publish hnindex-cli to npm
-        run: npm publish -w hnindex-cli --access public
+      - run: npm install -g npm@11
+      - run: npm ci
+      - run: npm run build
+      - name: Publish CLI
+        run: npm publish -w hnindex-cli --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   create-release:
-    needs: check-vibe-hnindex
-    if: needs.check-vibe-hnindex.outputs.should_publish == 'true'
+    needs: [validate, check-versions, publish-vibe-hnindex, publish-hnindex-cli]
+    if: >-
+      always() && !cancelled() && needs.validate.result == 'success' &&
+      needs.check-versions.result == 'success' &&
+      (needs.publish-vibe-hnindex.result == 'success' || needs.publish-vibe-hnindex.result == 'skipped') &&
+      (needs.publish-hnindex-cli.result == 'success' || needs.publish-hnindex-cli.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: write
-
     steps:
       - uses: actions/checkout@v4
-
+        with:
+          fetch-depth: 0
+      - name: Check whether release already exists
+        id: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.check-versions.outputs.version }}
+        run: |
+          if gh release view "v$VERSION" >/dev/null 2>&1; then
+            echo 'exists=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'exists=false' >> "$GITHUB_OUTPUT"
+          fi
+      - name: Create annotated version tag
+        if: steps.release.outputs.exists == 'false'
+        env:
+          VERSION: ${{ needs.check-versions.outputs.version }}
+        run: |
+          if git rev-parse "v$VERSION" >/dev/null 2>&1; then
+            test "$(git rev-list -n 1 "v$VERSION")" = "$GITHUB_SHA"
+          else
+            git config user.name 'github-actions[bot]'
+            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+            git tag -a "v$VERSION" -m "Release v$VERSION" "$GITHUB_SHA"
+            git push origin "v$VERSION"
+          fi
       - name: Create GitHub Release
+        if: steps.release.outputs.exists == 'false'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ needs.check-vibe-hnindex.outputs.version }}
-          name: v${{ needs.check-vibe-hnindex.outputs.version }}
+          tag_name: v${{ needs.check-versions.outputs.version }}
+          target_commitish: ${{ github.sha }}
+          name: v${{ needs.check-versions.outputs.version }}
           body: |
-            ## vibe-hnindex v${{ needs.check-vibe-hnindex.outputs.version }}
+            Published packages:
+            - [vibe-hnindex@${{ needs.check-versions.outputs.version }}](https://www.npmjs.com/package/vibe-hnindex/v/${{ needs.check-versions.outputs.version }})
+            - [hnindex-cli@${{ needs.check-versions.outputs.version }}](https://www.npmjs.com/package/hnindex-cli/v/${{ needs.check-versions.outputs.version }})
 
-            Published to npm: [`vibe-hnindex@${{ needs.check-vibe-hnindex.outputs.version }}`](https://www.npmjs.com/package/vibe-hnindex)
-
-            Optional CLI installer: [`hnindex-cli`](https://www.npmjs.com/package/hnindex-cli) (`npm install -g hnindex-cli`)
-
-            ```bash
-            npx -y vibe-hnindex
+            Claude Code marketplace:
+            ```text
+            /plugin marketplace add AndyAnh174/vibe-hnindex
+            /plugin install vibe-hnindex@vibe-hnindex-marketplace
             ```
+
+            Embedding providers: Ollama, OpenAI, Voyage, Gemini and OpenAI-compatible APIs.
+            See [configuration](https://github.com/AndyAnh174/vibe-hnindex/blob/v${{ needs.check-versions.outputs.version }}/docs/embedding-providers.md).
           generate_release_notes: true

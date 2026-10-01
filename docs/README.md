@@ -21,6 +21,7 @@ Use this page to pick **one** path, or jump to a topic.
 | [Getting started](getting-started.md) | First-time setup from zero |
 | [Integrations](integrations.md) | Config file paths per editor / assistant |
 | [Configuration](configuration.md) | Environment variables, `.hnindexignore` |
+| [Embedding providers](embedding-providers.md) | Ollama, OpenAI, Voyage, Gemini, compatible APIs and provider migration |
 | [Tools reference](tools-reference.md) | MCP tools (`index_codebase`, `search`, …) |
 | [How it works](how-it-works.md) | Indexing pipeline, hybrid RRF, search pipeline, where data lives |
 | [Changelog](changelog.md) | What changed per release |

@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { config } from '../config.js';
+import { config, getEmbeddingProfile } from '../config.js';
 import type { ChunkRecord, FileEntry } from '../types.js';
 import { scanDirectory } from '../services/file-scanner.js';
 import { chunkFile } from '../services/chunker.js';
@@ -11,6 +11,8 @@ import { invalidateCache } from '../services/search-cache.js';
 import { fastHash } from '../services/fast-hash.js';
 import {
   upsertProject,
+  getProjectEmbeddingProfile,
+  setProjectEmbeddingProfile,
   insertChunks,
   deleteFileChunks,
   getExistingFileHash,
@@ -32,12 +34,13 @@ import { extractSymbols, toSymbolRecords } from '../services/symbol-extractor.js
 import type { DependencyRecord, ExportRecord } from '../types.js';
 import {
   ensureCollection,
+  deleteCollection,
   upsertPoints,
   deletePoints,
   healthCheck as qdrantHealthCheck,
   verifyCollectionReady,
 } from '../services/qdrant.js';
-import { healthCheck as ollamaHealthCheck } from '../services/embeddings.js';
+import { healthCheck as embeddingHealthCheck, embeddingUnavailableMessage } from '../services/embeddings.js';
 import { startWatchingProject } from './watch-project.js';
 
 export async function indexCodebase(args: {
@@ -55,14 +58,14 @@ export async function indexCodebase(args: {
   }
 
   // Check services health
-  const ollamaOk = await ollamaHealthCheck();
+  const embeddingOk = await embeddingHealthCheck();
   const qdrantOk = await qdrantHealthCheck();
 
-  if (!ollamaOk) {
+  if (!embeddingOk) {
     return {
       content: [{
         type: 'text',
-        text: `Error: Ollama is not running at ${config.ollamaUrl}.\nRun: ollama serve && ollama pull ${config.embeddingModel}`,
+        text: `Error: ${embeddingUnavailableMessage()}`,
       }],
     };
   }
@@ -71,9 +74,18 @@ export async function indexCodebase(args: {
   upsertProject(args.project_name, rootPath);
 
   let qdrantAvailable = qdrantOk;
+  const profile = getEmbeddingProfile();
+  let forceReembed = getProjectEmbeddingProfile(args.project_name) !== profile;
   if (qdrantOk) {
     try {
-      await ensureCollection(args.project_name);
+      const created = await ensureCollection(args.project_name);
+      const state = await verifyCollectionReady(args.project_name);
+      forceReembed = created || forceReembed || state.pointsCount !== getProjectChunkCount(args.project_name);
+      if (forceReembed && !created) {
+        // Existing vectors refer to previous SQLite chunk IDs; rebuild the active collection.
+        await deleteCollection(args.project_name);
+        await ensureCollection(args.project_name);
+      }
     } catch (error) {
       console.error('[index] Failed to ensure Qdrant collection:', error);
       qdrantAvailable = false;
@@ -81,6 +93,8 @@ export async function indexCodebase(args: {
   }
 
   const indexStartTime = Date.now();
+  // Interrupted migrations must retry every file, even when source hashes match.
+  setProjectEmbeddingProfile(args.project_name, `pending:${profile}`);
   let totalFiles = 0;
   let indexedFiles = 0;
   let skippedFiles = 0;
@@ -104,7 +118,7 @@ export async function indexCodebase(args: {
     const fileHash = fastHash(file.content);
     const existingHash = getExistingFileHash(args.project_name, file.relativePath);
 
-    if (existingHash === fileHash) {
+    if (!forceReembed && existingHash === fileHash) {
       unchangedFiles++;
       continue;
     }
@@ -238,6 +252,10 @@ export async function indexCodebase(args: {
     ready = false;
   }
 
+  if (skippedFiles > 0) ready = false;
+  if (ready && qdrantVectors === finalChunkCount) setProjectEmbeddingProfile(args.project_name, profile);
+  else ready = false;
+  parts.push(`  Embedding provider: ${config.embeddingProvider} (${config.embeddingModel})`);
   parts.push(`  Ready: ${ready ? 'yes' : 'no'}`);
   if (qdrantVectors !== undefined) {
     parts.push(`  qdrant_vectors: ${qdrantVectors}`);

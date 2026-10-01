@@ -1,14 +1,16 @@
 import crypto from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
-import { config } from '../config.js';
+import { config, getEmbeddingProfile } from '../config.js';
 import type { ChunkRecord } from '../types.js';
 import { detectLanguage } from '../services/file-scanner.js';
 import { chunkFile } from '../services/chunker.js';
 import { embed } from '../services/embeddings.js';
-import { healthCheck as ollamaHealthCheck } from '../services/embeddings.js';
+import { healthCheck as embeddingHealthCheck, embeddingUnavailableMessage } from '../services/embeddings.js';
+import { fastHash } from '../services/fast-hash.js';
 import {
   getProject,
+  getProjectEmbeddingProfile,
   insertChunks,
   deleteFileChunks,
   getExistingFileHash,
@@ -61,6 +63,10 @@ export async function indexFile(args: {
     };
   }
 
+  if (getProjectEmbeddingProfile(args.project_name) !== getEmbeddingProfile()) {
+    return { content: [{ type: 'text', text: 'Embedding configuration changed or indexing is incomplete. Run index_codebase for the entire project first.' }] };
+  }
+
   // Path traversal protection: file must be inside project root
   const resolvedRoot = path.resolve(project.rootPath);
   if (!absolutePath.startsWith(resolvedRoot + path.sep) && absolutePath !== resolvedRoot) {
@@ -83,13 +89,13 @@ export async function indexFile(args: {
     };
   }
 
-  // Check Ollama
-  const ollamaOk = await ollamaHealthCheck();
-  if (!ollamaOk) {
+  // Check selected embedding provider
+  const embeddingOk = await embeddingHealthCheck();
+  if (!embeddingOk) {
     return {
       content: [{
         type: 'text',
-        text: `Error: Ollama is not running at ${config.ollamaUrl}.\nRun: ollama serve && ollama pull ${config.embeddingModel}`,
+        text: `Error: ${embeddingUnavailableMessage()}`,
       }],
     };
   }
@@ -98,7 +104,10 @@ export async function indexFile(args: {
   let qdrantAvailable = qdrantOk;
   if (qdrantOk) {
     try {
-      await ensureCollection(args.project_name);
+      const created = await ensureCollection(args.project_name);
+      if (created) {
+        return { content: [{ type: 'text', text: 'Embedding collection is new. Run index_codebase to embed the entire project with this configuration.' }] };
+      }
     } catch {
       qdrantAvailable = false;
     }
@@ -106,7 +115,7 @@ export async function indexFile(args: {
 
   // Read file
   const content = fs.readFileSync(absolutePath, 'utf-8');
-  const fileHash = crypto.createHash('sha256').update(content).digest('hex');
+  const fileHash = fastHash(content);
   const language = detectLanguage(absolutePath);
 
   // Check if unchanged

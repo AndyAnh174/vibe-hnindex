@@ -1,5 +1,5 @@
 import { config } from '../config.js';
-import { healthCheck as ollamaHealthCheck, embedSingle } from '../services/embeddings.js';
+import { healthCheck as embeddingHealthCheck, embedSingle, embeddingUnavailableMessage } from '../services/embeddings.js';
 import { healthCheck as qdrantHealthCheck, verifyCollectionReady } from '../services/qdrant.js';
 import { getProject, getProjectChunkCount } from '../services/sqlite.js';
 
@@ -14,7 +14,9 @@ export async function serverDiagnosticsTool(args: {
 
   lines.push('## Configuration');
   lines.push('');
-  lines.push(`- **Ollama URL:** ${mdEscape(config.ollamaUrl)}`);
+  lines.push(`- **Embedding provider:** ${config.embeddingProvider}`);
+  lines.push(`- **Embedding URL:** ${mdEscape(config.embeddingBaseUrl)}`);
+  lines.push(`- **API key:** ${config.embeddingApiKey ? 'configured (hidden)' : 'not configured'}`);
   lines.push(`- **Embedding model:** ${mdEscape(config.embeddingModel)}`);
   lines.push(`- **Embedding dimensions (expected):** ${config.embeddingDimensions}`);
   lines.push(`- **Storage path:** ${mdEscape(config.storagePath)}`);
@@ -26,12 +28,12 @@ export async function serverDiagnosticsTool(args: {
   );
   lines.push('');
 
-  const ollamaOk = await ollamaHealthCheck();
-  lines.push('## Ollama');
+  const embeddingOk = await embeddingHealthCheck();
+  lines.push(config.embeddingProvider === 'ollama' ? '## Ollama' : `## Embedding provider: ${config.embeddingProvider}`);
   lines.push('');
-  lines.push(`- **Reachable:** ${ollamaOk ? 'yes' : 'no'}`);
-  let embedProbe = 'skipped (Ollama down)';
-  if (ollamaOk) {
+  lines.push(`- **Reachable:** ${embeddingOk ? 'yes' : 'no'}`);
+  let embedProbe = embeddingUnavailableMessage();
+  if (embeddingOk) {
     try {
       await embedSingle('ping');
       embedProbe = 'ok (single embed dimensions match config)';

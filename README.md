@@ -4,7 +4,7 @@
 
 **Local MCP server — index your repo once, search it in every AI session**
 
-*Keyword (SQLite FTS5) · Semantic (Qdrant + Ollama embeddings) · Hybrid — your code stays on disk*
+*Keyword (SQLite FTS5) · Semantic (Qdrant + configurable embeddings) · Hybrid — local or cloud embedding providers*
 
 [![npm vibe-hnindex](https://img.shields.io/npm/v/vibe-hnindex.svg?style=flat-square&logo=npm&label=vibe-hnindex)](https://www.npmjs.com/package/vibe-hnindex)
 [![npm hnindex-cli](https://img.shields.io/npm/v/hnindex-cli.svg?style=flat-square&logo=npm&label=hnindex-cli)](https://www.npmjs.com/package/hnindex-cli)
@@ -12,7 +12,7 @@
 [![MCP](https://img.shields.io/badge/MCP-compatible-6366f1?style=flat-square)](https://modelcontextprotocol.io/)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
 
-**MCP server (`vibe-hnindex`) latest: v0.12.0** · [`hnindex-cli`](https://www.npmjs.com/package/hnindex-cli) **v0.12.0** — [Docs](https://docs.hnindex.cloud) · [Changelog](https://hnindex.cloud/changelog) · [GitHub Releases](https://github.com/AndyAnh174/vibe-hnindex/releases)
+**MCP server (`vibe-hnindex`) version: v0.13.0** · [`hnindex-cli`](https://www.npmjs.com/package/hnindex-cli) **v0.13.0** — [Docs](https://docs.hnindex.cloud) · [Changelog](https://hnindex.cloud/changelog) · [GitHub Releases](https://github.com/AndyAnh174/vibe-hnindex/releases)
 
 </div>
 
@@ -20,7 +20,7 @@
 
 ## What this does
 
-[vibe-hnindex](https://www.npmjs.com/package/vibe-hnindex) is a [Model Context Protocol](https://modelcontextprotocol.io/) server. After you **index** a folder once, assistants (Claude, Cursor, Windsurf, Antigravity, …) can **search** that codebase with paths and line ranges — data is stored locally (SQLite + optional Qdrant). Embeddings use **Ollama**; vectors use **Qdrant** (Docker, local, or [Qdrant Cloud](https://cloud.qdrant.io/) with `QDRANT_API_KEY`).
+[vibe-hnindex](https://www.npmjs.com/package/vibe-hnindex) is a [Model Context Protocol](https://modelcontextprotocol.io/) server. After you **index** a folder once, assistants (Claude, Cursor, Windsurf, Antigravity, …) can **search** that codebase with paths and line ranges — data is stored locally (SQLite + optional Qdrant). Embeddings use **Ollama** (default), **OpenAI**, **Voyage**, **Gemini**, or an **OpenAI-compatible API**; see [Embedding providers](docs/embedding-providers.md). Cloud providers receive the content being embedded; vectors use **Qdrant** (Docker, local, or [Qdrant Cloud](https://cloud.qdrant.io/) with `QDRANT_API_KEY`).
 
 ---
 
@@ -68,7 +68,7 @@ See **[docs.hnindex.cloud](https://docs.hnindex.cloud)** for full documentation.
 ## Install in 5 steps
 
 1. **Node.js** — v20+ ([nodejs.org](https://nodejs.org/)). On **Windows**, **Node 20 or 22 LTS** is strongly recommended so `npm install` does not need a C++ compiler. See [Troubleshooting → Windows](docs/troubleshooting.md#windows-npm-install) if `npm i vibe-hnindex` fails.
-2. **Ollama** — install from [ollama.com](https://ollama.com/), then: `ollama pull bge-m3:567m` and keep `ollama serve` running (or set `OLLAMA_URL` to a remote server).
+2. **Embedding provider** — choose [OpenAI, Voyage, Gemini or a compatible API](docs/embedding-providers.md), or use local **Ollama**: install from [ollama.com](https://ollama.com/), then: `ollama pull bge-m3:567m` and keep `ollama serve` running (or set `OLLAMA_URL` to a remote server).
 3. **Qdrant** — for semantic/hybrid search: `docker run -d --name qdrant -p 6333:6333 qdrant/qdrant` (or use Qdrant Cloud). Keyword-only search works without Qdrant.
 4. **MCP config** — add the server to your assistant’s MCP settings. Minimal example (self-hosted Qdrant):
 
@@ -153,6 +153,7 @@ Step-by-step: [Integrations → Google Antigravity](docs/integrations.md#google-
 | **Indexing** | Incremental (SHA-1 hash), parallel workers (~3-4× faster), watch mode (auto re-index on save), 40+ languages, `.hnindexignore` |
 | **Resilience** | Keyword search works without Qdrant or Ollama; graceful degradation |
 | **Benchmark** | Built-in `benchmark_search` tool — compare streaming vs non-streaming, all search modes |
+| **Multiple Embedding Providers (v0.13.0)** | Ollama, OpenAI, Voyage, Gemini and OpenAI-compatible APIs; provider/model-aware vector collections |
 | **Multiple Embedding Models** | bge-m3 (default), nomic-embed-text, qwen3-embedding, mxbai-embed-large, and more |
 
 ---

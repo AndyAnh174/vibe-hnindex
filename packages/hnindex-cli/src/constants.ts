@@ -16,6 +16,10 @@ export function defaultEnv(options: {
   qdrantUrl: string;
   qdrantApiKey?: string;
   embeddingDimensions?: number;
+  embeddingProvider?: string;
+  embeddingModel?: string;
+  embeddingBaseUrl?: string;
+  embeddingApiKey?: string;
 }): Record<string, string> {
   const env: Record<string, string> = {
     // ── Required ──
@@ -61,6 +65,10 @@ export function defaultEnv(options: {
   if (options.qdrantApiKey) {
     env.QDRANT_API_KEY = options.qdrantApiKey;
   }
+  if (options.embeddingProvider) env.EMBEDDING_PROVIDER = options.embeddingProvider;
+  if (options.embeddingModel) env.EMBEDDING_MODEL = options.embeddingModel;
+  if (options.embeddingBaseUrl) env.EMBEDDING_BASE_URL = options.embeddingBaseUrl;
+  if (options.embeddingApiKey) env.EMBEDDING_API_KEY = options.embeddingApiKey;
   if (options.embeddingDimensions != null && options.embeddingDimensions > 0) {
     env.EMBEDDING_DIMENSIONS = String(options.embeddingDimensions);
   }
