@@ -46,6 +46,7 @@ export type InitOptions = {
   rerankModel?: string;
   rerankUrl?: string;
   rerankApiKey?: string;
+  projectRoot?: string;
   dryRun: boolean;
   /** If true, write to --output instead of default path */
   output?: string;
@@ -106,6 +107,9 @@ export function runInit(opts: InitOptions): { written: boolean; filePath: string
     rerankApiKey: opts.rerankApiKey,
   });
   const env = { ...existingEnv, ...freshEnv };
+  // Global installations follow client roots; project files bind to their directory.
+  if (opts.projectRoot !== undefined) env.HNINDEX_PROJECT_ROOT = path.resolve(opts.cwd, opts.projectRoot);
+  else if (['claude', 'cursor-project', 'vscode'].includes(opts.mcp)) env.HNINDEX_PROJECT_ROOT = path.resolve(opts.cwd);
   const block = defaultServerBlock(env);
 
   const merged = mergeServerEntry(existing, resolved.format, opts.serverName, block as Record<string, unknown>);

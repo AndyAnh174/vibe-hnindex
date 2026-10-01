@@ -1,5 +1,9 @@
 # Tools reference
 
+## Workspace and locations (v0.15.0)
+
+Start with `workspace_context(path?, project_name?, task?, session_id?, clear_task?, token_budget?)` for active project purpose, Git/index state and a declared task persisted per project/session. Use `locate_code(query?, symbol?, path?, project_name?, file_pattern?, mode?, limit?, token_budget?)` before editing for file/line evidence and freshness. Auto mode is local; hybrid explicitly uses configured services. See [Workspace and code locations](workspace.md).
+
 These are the MCP **tools** the server exposes. Your assistant calls them by name with arguments (exact names match below). For setup, see [Getting started](getting-started.md).
 
 ---

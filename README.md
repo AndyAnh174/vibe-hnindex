@@ -12,7 +12,7 @@
 [![MCP](https://img.shields.io/badge/MCP-compatible-6366f1?style=flat-square)](https://modelcontextprotocol.io/)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
 
-**MCP server (`vibe-hnindex`) version: v0.14.0** · [`hnindex-cli`](https://www.npmjs.com/package/hnindex-cli) **v0.14.0** — [Docs](https://docs.hnindex.cloud) · [Changelog](https://hnindex.cloud/changelog) · [GitHub Releases](https://github.com/AndyAnh174/vibe-hnindex/releases)
+**MCP server (`vibe-hnindex`) version: v0.15.0** · [`hnindex-cli`](https://www.npmjs.com/package/hnindex-cli) **v0.15.0** — [Docs](https://docs.hnindex.cloud) · [Changelog](https://hnindex.cloud/changelog) · [GitHub Releases](https://github.com/AndyAnh174/vibe-hnindex/releases)
 
 </div>
 
@@ -95,6 +95,12 @@ See **[docs.hnindex.cloud](https://docs.hnindex.cloud)** for full documentation.
 5. **Restart** the IDE or assistant, then in chat ask to **index** a path and **search** — see [First steps](docs/getting-started.md#first-steps-in-chat).
 
 For **Qdrant Cloud**, add `QDRANT_API_KEY` and set `QDRANT_URL` to your HTTPS cluster URL — details in [Getting started](docs/getting-started.md).
+
+### Agent Workspace (v0.15.0)
+
+`workspace_context` identifies the active project purpose, Git/index state and a declared task persisted per project/session. `locate_code` finds files/symbols then keywords locally, returning line evidence and freshness. Explicit hybrid mode uses configured semantic APIs. MCP startup instructions and `knowledge://workspace` expose this workflow. Project-scoped CLI installs bind their root automatically; global installs follow client roots unless explicitly configured.
+
+See [Workspace and code locations](docs/workspace.md). Refresh stale positions before editing; use filesystem tools for unavailable or excluded code.
 
 ### Code Graph (v0.14.0)
 

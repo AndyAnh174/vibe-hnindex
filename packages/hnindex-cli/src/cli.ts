@@ -59,6 +59,7 @@ Init options:
   --rerank-api-key <key>       Rerank credential; Voyage also accepts VOYAGE_API_KEY
   --qdrant-url <url>     Default: http://localhost:6333
   --qdrant-api-key <k>   Optional (Qdrant Cloud)
+  --project-root <dir>   Explicit workspace binding for global configurations
   --cwd <dir>            Working directory for project-scoped files (default: .)
   --output <path>        Write to this file instead of the default path for --mcp
   --dry-run              Print JSON to stdout; do not write files
@@ -152,6 +153,7 @@ function main(): void {
         'embedding-base-url': { type: 'string' },
         'embedding-api-key': { type: 'string' },
         'code-graph': { type: 'string' },
+        'project-root': { type: 'string' },
         'ast-chunking': { type: 'string' },
         'rerank-provider': { type: 'string' },
         'rerank-model': { type: 'string' },
@@ -187,7 +189,7 @@ function main(): void {
 
   const mcp = parseTarget(String(values.mcp));
   const cwdOpt = optStr(values.cwd);
-  const cwd = cwdOpt ? join(process.cwd(), cwdOpt) : process.cwd();
+  const cwd = cwdOpt ? resolve(process.cwd(), cwdOpt) : process.cwd();
 
   const embDimRaw = optStr(values['embedding-dimensions'])?.trim();
   let embeddingDimensions: number | undefined;
@@ -213,6 +215,7 @@ function main(): void {
     const result = runInit({
       cwd,
       mcp,
+      projectRoot: optStr(values['project-root']),
       serverName: optStr(values.name)?.trim() || 'vibe-hnindex',
       ollamaUrl: optStr(values['ollama-url'])?.trim() || 'http://localhost:11434',
       ollamaModel: optStr(values['ollama-model'])?.trim() || 'bge-m3:567m',

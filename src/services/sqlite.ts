@@ -29,6 +29,13 @@ export function initDatabase(): void {
   db.pragma('foreign_keys = ON');
 
   db.exec(`
+    CREATE TABLE IF NOT EXISTS agent_workspace_tasks (
+      project_name TEXT NOT NULL REFERENCES projects(project_name) ON DELETE CASCADE,
+      session_id TEXT NOT NULL,
+      task TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY(project_name, session_id)
+    );
     CREATE TABLE IF NOT EXISTS projects (
       project_name TEXT PRIMARY KEY,
       root_path TEXT NOT NULL,

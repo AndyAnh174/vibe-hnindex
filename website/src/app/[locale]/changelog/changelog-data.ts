@@ -6,6 +6,16 @@ export interface VersionEntry {
 
 export const changelogData: VersionEntry[] = [
   {
+    title: "v0.15.0 — Agent Workspace and Code Locations",
+    items: [
+      "**Workspace** — Active project purpose, Git/index state and explicit selection for multiple roots.",
+      "**Declared task** — Durable SQLite state per project/session; objective comes from the agent/user.",
+      "**Locations** — Offline file/symbol/keyword navigation with line evidence, ambiguity and freshness. Explicit hybrid mode for concepts.",
+      "**Agent workflow** — MCP startup instructions, workspace resource and updated skills/prompts with filesystem fallback.",
+      "**CLI** — Project root binding and --project-root for global installs; server/CLI v0.15.0.",
+    ],
+  },
+  {
     title: "v0.14.0 — AST Code Graph and Retrieval Evaluation",
     items: [
       "**Runtime** — Node 22+; bundled N-API SQLite driver fixes native cleanup crashes on Node 24.",

@@ -11,6 +11,16 @@ function env(extra: Partial<InitOptions> = {}) {
     ollamaUrl: 'http://localhost:11434', ollamaModel: 'bge-m3:567m', qdrantUrl: 'http://localhost:6333', dryRun: false, ...extra }).json).mcpServers['vibe-hnindex'].env;
 }
 describe('CLI graph and rerank configuration', () => {
+  it('binds project configurations to cwd and allows explicit root overrides', () => {
+    expect(env().HNINDEX_PROJECT_ROOT).toBe(temp);
+    expect(env({ projectRoot: 'nested' }).HNINDEX_PROJECT_ROOT).toBe(path.join(temp, 'nested'));
+    expect(env().HNINDEX_PROJECT_ROOT).toBe(temp);
+  });
+  it('does not pin global configurations implicitly, and preserves explicit binding', () => {
+    expect(env({ mcp: 'windsurf' })).not.toHaveProperty('HNINDEX_PROJECT_ROOT');
+    env({ mcp: 'windsurf', projectRoot: temp });
+    expect(env({ mcp: 'windsurf' }).HNINDEX_PROJECT_ROOT).toBe(temp);
+  });
   it('writes explicit false flags and preserves them when omitted', () => {
     env({ codeGraphEnabled: false, astChunking: false });
     expect(env()).toMatchObject({ CODE_GRAPH_ENABLED: 'false', AST_CHUNKING: 'false' });

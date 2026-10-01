@@ -17,6 +17,7 @@ See [Embedding providers](embedding-providers.md) for Ollama, OpenAI, Voyage, Ge
 | `EMBEDDING_TIMEOUT_MS` | `30000` | Per-request timeout through response body parsing; falls back to `OLLAMA_TIMEOUT_MS`; `0` disables timeout |
 | `EMBEDDING_MAX_RETRIES` | `2` | Extra attempts for HTTP 429/5xx; Retry-After/exponential delay capped at 10 seconds; 0–5 |
 | `STORAGE_PATH` | `~/.vibe-hnindex` | SQLite database directory |
+| `HNINDEX_PROJECT_ROOT` | *(unset)* | Workspace binding for context/locator/resource. CLI project installations set this automatically; global installations otherwise follow current MCP client roots. See [workspace setup](workspace.md). |
 | `QDRANT_URL` | `http://localhost:6333` | Qdrant REST URL. For **Qdrant Cloud**, use the full HTTPS URL from the cluster page (often includes `:6333`). |
 | `QDRANT_API_KEY` | *(unset)* | **Required** for Qdrant Cloud and any cluster that checks the `api-key` header. Omit for local Docker with no auth. |
 | `QDRANT_COLLECTION_PREFIX` | `mcp_ck_` | Prefix for Qdrant collection names |
