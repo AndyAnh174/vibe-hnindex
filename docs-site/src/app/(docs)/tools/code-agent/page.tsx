@@ -18,7 +18,7 @@ export default function CodeAgentPage() {
       ]}
       pageNav={pageNav}
     >
-      <Badge variant="secondary" className="mb-4">Tools · v0.11.0</Badge>
+      <Badge variant="secondary" className="mb-4">Tools</Badge>
       <h1>Code Agent</h1>
       <p>
         Code Agent pushes vibe-hnindex from a <strong>search server</strong> to a{" "}
@@ -28,7 +28,7 @@ export default function CodeAgentPage() {
       </p>
 
       <div className="not-prose my-6 p-4 rounded-lg border border-border bg-card">
-        <p className="text-sm font-semibold mb-2">✨ New in v0.11.0</p>
+        <p className="text-sm font-semibold mb-2">✨ Introduced in v0.11.0</p>
         <p className="text-sm text-muted-foreground">
           Two new tools: <code>code_session</code> for context gathering and{" "}
           <code>code_apply</code> for safe code changes. Opt-in via{" "}

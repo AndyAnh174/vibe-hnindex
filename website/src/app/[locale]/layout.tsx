@@ -1,9 +1,10 @@
-import { hasLocale } from 'next-intl';
-import { NextIntlClientProvider } from 'next-intl';
-import { getMessages, getTranslations } from 'next-intl/server';
-import { notFound } from 'next/navigation';
-import { routing } from '@/i18n/routing';
-import { FloatingHeader } from '@/components/floating-header';
+import { hasLocale } from "next-intl";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages, getTranslations } from "next-intl/server";
+import { notFound } from "next/navigation";
+import { routing } from "@/i18n/routing";
+import { VERSION } from "@/lib/release";
+import { FloatingHeader } from "@/components/floating-header";
 
 export default async function LocaleLayout({
   children,
@@ -20,40 +21,40 @@ export default async function LocaleLayout({
   return (
     <NextIntlClientProvider locale={locale} messages={messages}>
       <HeaderWrapper locale={locale} />
-      <main className="flex-1">{children}</main>
+      <main id="main-content" className="flex-1">
+        {children}
+      </main>
       <Footer locale={locale} />
     </NextIntlClientProvider>
   );
 }
 
 async function HeaderWrapper({ locale }: { locale: string }) {
-  const t = await getTranslations({ locale, namespace: 'nav' });
+  const t = await getTranslations({ locale, namespace: "nav" });
   return (
     <FloatingHeader
       locale={locale}
-      docs={t('docs')}
-      changelog={t('changelog')}
-      github={t('github')}
-      npm={t('npm')}
+      docs={t("docs")}
+      changelog={t("changelog")}
+      github={t("github")}
+      npm={t("npm")}
     />
   );
 }
 
 async function Footer({ locale }: { locale: string }) {
-  const t = await getTranslations({ locale, namespace: 'footer' });
   return (
-    <footer className="border-t bg-gray-50 py-8 text-center text-sm text-muted-foreground">
-      <div className="container mx-auto px-4">
-        <p>
-          {t('builtBy')}{" "}
-          <a href="https://github.com/AndyAnh174" className="underline underline-offset-2 hover:text-foreground">
-            AndyAnh174
+    <footer className="site-footer">
+      <div className="site-container footer-inner">
+        <span>hnindex · v{VERSION} · MIT</span>
+        <div className="footer-links">
+          <a href="https://docs.hnindex.cloud">
+            {locale === "vi" ? "Tài liệu" : "Documentation"}
           </a>
-          {" "}· MIT License ·{" "}
-          <a href="https://github.com/AndyAnh174/vibe-hnindex" className="underline underline-offset-2 hover:text-foreground">
-            GitHub
-          </a>
-        </p>
+          <a href="https://github.com/AndyAnh174/vibe-hnindex">GitHub ↗</a>
+          <a href="https://www.npmjs.com/package/vibe-hnindex">npm ↗</a>
+          <a href="https://github.com/AndyAnh174">AndyAnh174</a>
+        </div>
       </div>
     </footer>
   );

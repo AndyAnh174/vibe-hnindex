@@ -11,7 +11,7 @@ export function Toc() {
   if (items.length === 0) return null;
 
   return (
-    <aside className="hidden xl:block sticky top-14 h-[calc(100vh-3.5rem)] w-56 shrink-0">
+    <aside className="hidden xl:block sticky top-[76px] h-[calc(100vh-3.5rem)] w-56 shrink-0">
       <div className="p-4 pt-6">
         <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70 mb-3">
           {t("common.onThisPage")}
@@ -26,7 +26,7 @@ export function Toc() {
                 item.level === 3 && "pl-6",
                 activeId === item.id
                   ? "border-primary text-primary font-medium"
-                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
+                  : "border-transparent text-muted-foreground hover:text-foreground hover:border-border",
               )}
             >
               {item.text}

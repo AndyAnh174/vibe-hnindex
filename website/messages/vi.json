@@ -6,7 +6,7 @@
     "npm": "npm"
   },
   "hero": {
-    "badge": "v0.13.0 · Mã nguồn mở · MIT",
+    "badge": "Mã nguồn mở · MIT",
     "title": "Index Một Lần,",
     "titleHighlight": "Tìm Kiếm Mọi Phiên",
     "subtitle": "MCP server cục bộ lập chỉ mục codebase cho mọi trợ lý AI. Chọn embedding qua Ollama cục bộ, OpenAI, Voyage, Gemini hoặc API tương thích.",

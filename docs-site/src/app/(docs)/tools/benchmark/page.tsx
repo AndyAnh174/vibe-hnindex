@@ -17,7 +17,7 @@ export default function BenchmarkPage() {
       ]}
       pageNav={pageNav}
     >
-      <Badge variant="secondary" className="mb-4">Tools · v0.9.5</Badge>
+      <Badge variant="secondary" className="mb-4">Tools</Badge>
       <h1>Benchmark</h1>
       <p>
         The <code>benchmark_search</code> tool runs a battery of test queries across different

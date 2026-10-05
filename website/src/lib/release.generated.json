@@ -1,0 +1,136 @@
+{
+  "version": "0.15.1",
+  "releases": [
+    {
+      "version": "0.15.1",
+      "title": "Website and Documentation Refresh",
+      "items": [
+        "Redesigned the main website and docs with a shared visual identity, responsive navigation, keyboard focus states and English/Vietnamese interface controls.",
+        "Generate both sites’ version and full release history from package.json and docs/changelog.md; check committed data in CI and regenerate before site builds.",
+        "Added a docs changelog and code graph guide; refreshed installation and quick start around offline workspace context and source locations.",
+        "Clarified optional embedding providers, cloud code-chunk transmission, declared task behavior and graph/freshness limits.",
+        "Synchronized server, CLI, MCP and Claude marketplace metadata for the documentation patch release."
+      ]
+    },
+    {
+      "version": "0.15.0",
+      "title": "Agent Workspace and Code Locations",
+      "items": [
+        "Added local `workspace_context`: explicit project/path, configured root, MCP client roots or indexed cwd; require selection for multiple roots/project names. Read live bounded purpose documents, Git state and index readiness.",
+        "Persist declared tasks in SQLite per project/session with clear and deletion cleanup. Git changes are evidence, never inferred intent.",
+        "Added `locate_code`: file/symbol/keyword locations without embeddings, explicit hybrid mode, ambiguity, excerpts and per-file freshness including relationship endpoints.",
+        "Added MCP startup instructions and `knowledge://workspace`; updated prompts/rules/skills with filesystem fallback for missing/stale/excluded code.",
+        "CLI binds project installs to their root and adds `--project-root` for global configurations; fixed absolute `--cwd` resolution.",
+        "Server/CLI/Claude/MCP metadata v0.15.0; workspace isolation, persistence, freshness, offline, boundary and token-budget checks."
+      ]
+    },
+    {
+      "version": "0.14.0",
+      "title": "AST Code Graph and Retrieval Evaluation",
+      "items": [
+        "Requires Node 22+; upgraded better-sqlite3 to 13.0.3 with bundled N-API binaries to avoid native statement cleanup crashes on Node 24.",
+        "Added offline `index_code_graph`, `find_references`, `callers` and bounded `graph_context` tools using SQLite and TypeScript/JavaScript AST analysis.",
+        "Resolve indexed-file imports, alias/re-export chains, lexical symbols and typed methods using project compiler options; record source evidence and unresolved dynamic/external calls.",
+        "Update graph snapshots during full/file/watch indexing, re-resolve consumers after edits/deletions, hide stale graphs after analysis failure, and enrich smart_context with symbol relationships.",
+        "Added AST declaration chunks and embedding-only file/line context; versioned chunk profiles require one full re-index after upgrading.",
+        "Added native Voyage/custom HTTP reranking, strict score validation and full-body timeouts. Preserve RRF on fallback, rerank a wider pool before trim and cache final ranking with query options.",
+        "Added labeled `evaluate_retrieval`: file-level Recall@K, MRR, nDCG, p95 latency and measured cl100k_base output tokens, bypassing search cache.",
+        "Added CLI graph/chunking/rerank flags, documentation, lifecycle/quality regression tests and synchronized npm/Claude/MCP metadata."
+      ]
+    },
+    {
+      "version": "0.13.0",
+      "title": "Multiple Embedding Providers",
+      "items": [
+        "Added OpenAI, Voyage, Gemini and OpenAI-compatible embedding APIs alongside backwards-compatible Ollama support.",
+        "Shared provider configuration covers indexing workers, file watching, semantic/hybrid search, diagnostics and chat memory.",
+        "Added document/query retrieval semantics, ordered responses, strict vector validation, full-request timeouts, bounded 429/5xx retries and cached cloud health probes.",
+        "Isolated vector collections by provider/model/dimensions/endpoint; tracked embedding profiles and full re-indexing when switching providers or recovering an incomplete index.",
+        "Unified file hashes across indexing paths to avoid paying for unchanged files; automatic non-Ollama worker concurrency is capped at four.",
+        "CLI supports provider/model/base URL/API key options and clears stale generic settings when switching provider.",
+        "Updated configuration docs, website changelog and package/marketplace metadata to v0.13.0."
+      ]
+    },
+    {
+      "version": "0.12.1",
+      "title": "🚫 Tool Priority Enforcement",
+      "items": [
+        "**🚫 Hardened agent_rules_stub** — Ultra-compact BANNED/INSTEAD table at top of generated rules. Shorter, punchier, harder to ignore.",
+        "**📢 priority_prompt tool** — One-shot tool to dump enforcement rules mid-conversation. Call when AI uses grep instead of MCP.",
+        "**💬 MCP prompts capability** — `tool-priority` prompt for AI clients to auto-fetch enforcement rules.",
+        "**📝 SKILL.md + CLAUDE.md** — Stronger BANNED language at top, compact 4-line table.",
+        "**📦 Versions** — `vibe-hnindex` v0.12.1, `hnindex-cli` v0.12.1."
+      ]
+    },
+    {
+      "version": "0.12.0",
+      "title": "🧠 Chat Memory System",
+      "items": [
+        "**🧠 Auto-Track** — Tự động log mọi tool call (search, smart_context, code_session) vào SQLite, không cần gọi tool thủ công. AI restart session vẫn có ngay context cũ.",
+        "**💬 chat_context tool** — Save/load/clear/ingest conversation messages. Load hỗ trợ semantic search qua Qdrant (`semantic_query` param) — chỉ trả context thực sự liên quan, tiết kiệm token.",
+        "**🔀 Hybrid storage** — SQLite (full text) + Qdrant (vector embeddings). Save = SQLite sync + Qdrant background. Load semantic = embed query → search Qdrant → fetch từ SQLite.",
+        "**📡 knowledge://context/{project} resource** — AI clients tự đọc context khi bắt đầu session, khỏi search lại từ đầu.",
+        "**⚙️ Config** — `CHAT_MEMORY_ENABLED=true` (opt-in), `CHAT_MEMORY_VECTOR_ENABLED=true` (Qdrant), `CHAT_MEMORY_LOAD_LIMIT`, `CHAT_MEMORY_MAX_AGE_HOURS`, `CHAT_MEMORY_THREAD_TTL_MS`.",
+        "**📦 Versions** — `vibe-hnindex` v0.12.0, `hnindex-cli` v0.12.0."
+      ]
+    },
+    {
+      "version": "0.11.4",
+      "title": "Watch Auto-Resume",
+      "items": [
+        "**👁️ Watch Auto-Resume** — File watchers tự động resume khi MCP server khởi động lại (IDE restart, AI agent restart, connection drop). Không còn lo mất watch mode. Env `WATCH_AUTO_RESUME` (default `true`).",
+        "**📦 Versions** — `vibe-hnindex` v0.11.4, `hnindex-cli` v0.11.4."
+      ]
+    },
+    {
+      "version": "0.11.3",
+      "title": "Agent Tool Priority Enforcement",
+      "items": [
+        "**🔴 MCP-First Rules** — `agent_rules_stub` giờ sinh rules aggressive: cấm grep/cat/read/Glob, bắt buộc dùng MCP tools. Có bảng so sánh \"Instead of → Use MCP\".",
+        "**📝 CLAUDE.md** — Thêm MANDATORY section ở đầu với bảng thay thế tool rõ ràng.",
+        "**📝 SKILL.md + init-skill** — Sync strong language về tool priority, đảm bảo AI agent nào cũng thấy.",
+        "**📦 Versions** — `vibe-hnindex` v0.11.3, `hnindex-cli` v0.11.3."
+      ]
+    },
+    {
+      "version": "0.11.2",
+      "title": "Init-Skill Code Agent Sync",
+      "items": [
+        "**📝 Init-Skill Sync** — Bản inline skill trong CLI `hnindex init-skill` giờ có đầy đủ hướng dẫn Code Agent (`code_session` + `code_apply`). Trước đây bản này thiếu → người dùng init skill không thấy Code Agent.",
+        "**📦 Versions** — `vibe-hnindex` v0.11.2, `hnindex-cli` v0.11.2."
+      ]
+    },
+    {
+      "version": "0.11.1",
+      "title": "Smart Context Fix + CLI Defaults",
+      "items": [
+        "**📄 Smart Context content limit** — Tăng từ 2500 → 25000 ký tự (gấp 10×). Thêm env `SMART_CONTEXT_MAX_FILE_CHARS`, set `0` = unlimited. File 500+ dòng giờ đọc gần như toàn bộ.",
+        "**🔧 CLI defaults** — `hnindex init` giờ include CODE_AGENT_ENABLED, CODE_AGENT_SCOPE, SMART_CONTEXT_MAX_FILE_CHARS trong config mặc định.",
+        "**📝 SKILL.md** — Hướng dẫn Code Agent chi tiết cho AI agents: params, output format, when to use.",
+        "**📦 Versions** — `vibe-hnindex` v0.11.1, `hnindex-cli` v0.11.1."
+      ]
+    },
+    {
+      "version": "0.11.0",
+      "title": "🤖 Code Agent (code_session + code_apply)",
+      "items": [
+        "**🤖 code_session** — 1 lần gọi thay thế 5-15 lần search + read. Trả về structured context package:",
+        "**✏️ code_apply** — Apply code changes an toàn:",
+        "**🔧 Feature flag** — `CODE_AGENT_ENABLED=true` + `CODE_AGENT_SCOPE` (mặc định off, không ảnh hưởng người dùng hiện tại)",
+        "**📚 Docs site** — Trang docs đầy đủ 15 trang với embedding model comparison",
+        "**🔧 CLI init** — `hnindex init` now includes CODE_AGENT_ENABLED and CODE_AGENT_SCOPE in generated config (v0.11.1)",
+        "**🎨 Website** — Thêm liên kết Documentation vào navbar hnindex.cloud"
+      ]
+    },
+    {
+      "version": "0.10.0",
+      "title": "🧠 Smart Context Generator",
+      "items": [
+        "**📄 Smart Context nâng cấp** — `smart_context` tool giờ hỗ trợ 3 chế độ mới:",
+        "**🔍 Auto-detect task type** — Server tự nhận diện loại task (explain/refactor/debug/add-feature) để cung cấp context phù hợp",
+        "**🔧 CLI Init** — `hnindex init --mcp` giờ sinh đầy đủ 16 env vars (INDEX_WORKERS, SEARCH_STREAM_ENABLED, SEARCH_FUZZY_ENABLED, SEARCH_CACHE_SIZE...)",
+        "**Versions** — `vibe-hnindex` v0.10.0, `hnindex-cli` v0.10.0."
+      ]
+    }
+  ]
+}

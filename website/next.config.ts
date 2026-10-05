@@ -6,6 +6,7 @@ const withNextIntl = createNextIntlPlugin();
 const withMDX = createMDX({});
 
 const nextConfig: NextConfig = {
+  turbopack: { root: __dirname },
   pageExtensions: ["js", "jsx", "md", "mdx", "ts", "tsx"],
 };
 

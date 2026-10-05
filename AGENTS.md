@@ -7,7 +7,7 @@ This project is an MCP (Model Context Protocol) server for indexing and searchin
 ### Release Workflow — 7 steps
 When creating a new version, ALL of these must be updated:
 1. `docs/changelog.md`
-2. `website/src/app/[locale]/changelog/changelog-data.ts`
+2. Run `npm run content:sync` to generate both sites' version and release history from `package.json` and `docs/changelog.md`. Commit both `src/lib/release.generated.json` files; `npm run content:check` verifies them and release metadata in CI. The website changelog data module re-exports this shared history.
 3. `package.json` + `packages/hnindex-cli/package.json`
 4. `server.json` (MCP marketplace metadata)
 5. `src/index.ts` (McpServer version + console.error log)

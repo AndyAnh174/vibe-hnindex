@@ -36,7 +36,7 @@ export default function SmartContextPage() {
       ]}
       pageNav={pageNav}
     >
-      <Badge variant="secondary" className="mb-4">Tools · v0.10.0</Badge>
+      <Badge variant="secondary" className="mb-4">Tools</Badge>
       <h1>Smart Context</h1>
       <p>
         The <code>smart_context</code> tool automatically gathers relevant code context for AI agents.
@@ -45,7 +45,7 @@ export default function SmartContextPage() {
       </p>
 
       <div className="not-prose my-6 p-4 rounded-lg border border-border bg-card">
-        <p className="text-sm font-semibold mb-2">✨ New in v0.10.0</p>
+        <p className="text-sm font-semibold mb-2">✨ Introduced in v0.10.0</p>
         <p className="text-sm text-muted-foreground">
           Smart Context now supports 3 modes with auto-detection of task type
           (explain/refactor/debug/add-feature) for optimal context gathering.

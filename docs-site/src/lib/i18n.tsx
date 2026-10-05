@@ -1,6 +1,15 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  type ReactNode,
+} from "react";
+import enMessages from "@/messages/en.json";
+import viMessages from "@/messages/vi.json";
 
 type Messages = Record<string, unknown>;
 
@@ -38,25 +47,27 @@ export function I18nProvider({
   const [locale, setLocaleState] = useState(defaultLocale);
   const [messages, setMessages] = useState(initialMessages);
 
-  const setLocale = useCallback(
-    (newLocale: string) => {
-      setLocaleState(newLocale);
-      import(`@/messages/${newLocale}.json`)
-        .then((mod) => setMessages(mod.default))
-        .catch(() => {
-          // fallback silently
-        });
-      if (typeof document !== "undefined") {
-        document.documentElement.lang = newLocale;
-        document.cookie = `NEXT_LOCALE=${newLocale};path=/;max-age=31536000`;
-      }
-    },
-    []
-  );
+  const setLocale = useCallback((newLocale: string) => {
+    if (newLocale !== "en" && newLocale !== "vi") return;
+    setLocaleState(newLocale);
+    setMessages(newLocale === "vi" ? viMessages : enMessages);
+    if (typeof document !== "undefined") {
+      document.documentElement.lang = newLocale;
+      document.cookie = `NEXT_LOCALE=${newLocale};path=/;max-age=31536000`;
+    }
+  }, []);
+
+  useEffect(() => {
+    const saved = document.cookie
+      .split("; ")
+      .find((value) => value.startsWith("NEXT_LOCALE="))
+      ?.split("=")[1];
+    if (saved === "en" || saved === "vi") setLocale(saved);
+  }, [setLocale]);
 
   const t = useCallback(
     (key: string) => getNestedValue(messages, key),
-    [messages]
+    [messages],
   );
 
   return (

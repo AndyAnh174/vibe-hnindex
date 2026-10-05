@@ -1,145 +1,96 @@
 "use client";
-
+import Link from "next/link";
 import { DocsLayout } from "@/components/docs/docs-layout";
 import { getPageNav } from "@/lib/navigation";
-import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
-
-export default function QuickStartPage() {
-  const pageNav = getPageNav("quick-start");
-
+import { VERSION } from "@/lib/release";
+export default function QuickStart() {
   return (
     <DocsLayout
-      breadcrumbs={[
-        { label: "Docs", href: "/" },
-        { label: "Getting Started", href: "/" },
-        { label: "Quick Start" },
-      ]}
-      pageNav={pageNav}
+      breadcrumbs={[{ label: "Docs", href: "/" }, { label: "Quick Start" }]}
+      pageNav={getPageNav("quick-start")}
     >
-      <Badge variant="secondary" className="mb-4">Getting Started</Badge>
-      <h1>Quick Start</h1>
-      <p>
-        Get vibe-hnindex running in 5 minutes. This guide assumes you have Node.js, Ollama, and
-        Qdrant installed. If not, see the <a href="/getting-started/installation">Installation guide</a> first.
+      <p className="doc-eyebrow">GETTING STARTED / v{VERSION}</p>
+      <h1>From a repo to useful context.</h1>
+      <p className="docs-lead">
+        Connect MCP, initialize a local graph, then give your agent a concrete
+        task. This offline path needs Node 22+ and a TypeScript/JavaScript
+        project.
       </p>
-
-      <h2 id="1-cli-installer">1. Install the CLI Helper</h2>
-      <p>The easiest way to set up is with the CLI:</p>
-      <pre><code>npm install -g hnindex-cli</code></pre>
-
-      <h2 id="2-init-mcp">2. Initialize MCP Config</h2>
-      <p>Pick your editor and run the init command:</p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 not-prose my-4">
-        {[
-          { cmd: "hnindex init --mcp antigravity", desc: "Google Antigravity" },
-          { cmd: "hnindex init --mcp claude", desc: "Claude Code (project)" },
-          { cmd: "hnindex init --mcp claude-desktop", desc: "Claude Desktop" },
-          { cmd: "hnindex init --mcp cursor", desc: "Cursor (global)" },
-          { cmd: "hnindex init --mcp cursor-project", desc: "Cursor (project)" },
-          { cmd: "hnindex init --mcp windsurf", desc: "Windsurf" },
-          { cmd: "hnindex init --mcp vscode", desc: "VS Code Copilot" },
-        ].map((item, i) => (
-          <Card key={i} className="p-3">
-            <code className="text-xs font-mono block mb-1">{item.cmd}</code>
-            <span className="text-xs text-muted-foreground">{item.desc}</span>
-          </Card>
-        ))}
-      </div>
-
+      <h2 id="connect">1. Connect MCP</h2>
       <p>
-        Use <code>--cwd /path/to/project</code> for project-based targets. Add flags for custom config:
+        Run in the project directory, then restart your editor’s MCP connection:
       </p>
-      <pre><code>{`hnindex init --mcp antigravity \\
-  --ollama-url http://localhost:11434 \\
-  --ollama-model bge-m3:567m \\
-  --qdrant-url http://localhost:6333`}</code></pre>
-
-      <h2 id="3-add-manual-config">3. Or Add Config Manually</h2>
+      <pre>
+        <code>
+          {
+            "npx -y hnindex-cli init --mcp claude\n# Cursor: --mcp cursor-project\n# VS Code: --mcp vscode\n# Global targets: add --project-root /your/project"
+          }
+        </code>
+      </pre>
+      <h2 id="orient">2. Inspect and index the workspace</h2>
       <p>
-        If you prefer manual configuration, add this JSON to your MCP settings file:
+        The following examples are tool calls to request from your agent, not
+        shell commands. Use an absolute path and a unique project name.
       </p>
-      <pre><code>{`{
-  "mcpServers": {
-    "vibe-hnindex": {
-      "command": "npx",
-      "args": ["-y", "vibe-hnindex"],
-      "env": {
-        "OLLAMA_URL": "http://localhost:11434",
-        "OLLAMA_MODEL": "bge-m3:567m",
-        "QDRANT_URL": "http://localhost:6333"
-      }
-    }
-  }
-}`}</code></pre>
-
-      <h2 id="4-install-skill">4. Install the Agent Skill (Recommended)</h2>
+      <pre>
+        <code>
+          {
+            'workspace_context(path: "/your/project")\nindex_code_graph(path: "/your/project", project_name: "my-app")'
+          }
+        </code>
+      </pre>
       <p>
-        The vibe-hnindex skill teaches your AI assistant how to use all 20+ tools effectively —
-        search modes, streaming, fuzzy matching, benchmarks, and best practices. Without the skill,
-        the AI may not know about advanced features like <code>stream: true</code>, fuzzy search, or
-        Code Agent.
+        The graph stores source locations and relationships in SQLite. It
+        requires no embedding key or Qdrant. If your repository uses other
+        languages, use full <code>index_codebase</code> indexing with the
+        configured services for keyword/vector chunks.
       </p>
-
-      <pre><code>{`hnindex init-skill --target claude          # Claude Code
-hnindex init-skill --target antigravity     # Google Antigravity
-hnindex init-skill --target cursor          # Cursor
-hnindex init-skill --target windsurf        # Windsurf
-hnindex init-skill --target codex           # OpenAI Codex
-hnindex init-skill --target vscode          # VS Code
-hnindex init-skill --target openclaw        # OpenClaw`}</code></pre>
-
+      <h2 id="task">3. Declare the task</h2>
+      <pre>
+        <code>
+          {
+            'workspace_context(\n  project_name: "my-app",\n  task: "Add session expiry",\n  session_id: "agent-1"\n)'
+          }
+        </code>
+      </pre>
       <p>
-        This creates a <code>SKILL.md</code> file in your editor&apos;s skills directory that the AI
-        automatically loads on startup.
+        hnindex returns purpose documents, live Git state and index readiness.
+        The declared task persists per project/session in SQLite. Git changes
+        are evidence; they do not reveal your objective. Use distinct session
+        IDs for concurrent agents.
       </p>
-
-      <div className="not-prose my-4 p-3 rounded-lg border border-border bg-primary/5">
-        <p className="text-sm">
-          <strong>💡 Pro tip:</strong> Run <code>hnindex init-skill</code> after updating vibe-hnindex
-          to get the latest tool documentation for new features.
+      <h2 id="locate">4. Locate before editing</h2>
+      <pre>
+        <code>
+          {
+            'locate_code(project_name: "my-app", symbol: "verifySession")\nlocate_code(project_name: "my-app", query: "src/auth/session.ts")'
+          }
+        </code>
+      </pre>
+      <p>
+        Inspect paths, lines, source excerpts, ambiguity and freshness. Auto
+        mode tries file, symbol and local keyword lookup without embeddings.
+        Re-index changed code; use filesystem search for excluded, missing or
+        stale results.
+      </p>
+      <h2 id="retrieval">5. Add semantic retrieval when useful</h2>
+      <p>
+        Configure Qdrant and your embedding provider, then request{" "}
+        <code>
+          index_codebase(path: "/your/project", project_name: "my-app")
+        </code>
+        . Explicit <code>locate_code</code> hybrid mode uses these services and
+        can incur provider costs. Switching providers/models/dimensions requires
+        full re-indexing.
+      </p>
+      <div className="docs-note">
+        <strong>Next steps</strong>
+        <p>
+          Explore <Link href="/tools/workspace">workspace and locations</Link>,{" "}
+          <Link href="/tools/code-graph">code graph tools</Link> and{" "}
+          <Link href="/configuration">embedding configuration</Link>.
         </p>
       </div>
-
-      <h2 id="5-restart">5. Restart Your AI Tool</h2>
-      <p>Restart Claude, Cursor, Antigravity, or whatever MCP client you use.</p>
-
-      <h2 id="6-first-index">6. Index Your First Project</h2>
-      <p>In your AI chat, type:</p>
-      <pre><code>Index the codebase at /path/to/my-project, name it my-project</code></pre>
-      <p>
-        This calls the <code>index_codebase</code> tool. The first index may take a while
-        (embeddings are being generated), but subsequent runs are incremental.
-      </p>
-
-      <h2 id="7-search">7. Search Your Code</h2>
-      <p>Now you can search:</p>
-      <pre><code>{`Search my-project for authentication middleware
-Search my-project for "error handling" in mode: semantic
-Search my-project for "/TODO|FIXME/g" in mode: regex
-List all indexed projects`}</code></pre>
-
-      <h2 id="8-smart-context">8. Try Smart Context</h2>
-      <p>
-        For complex tasks, use smart context to gather relevant code automatically:
-      </p>
-      <pre><code>Get smart context for my-project, task: add rate limiting to the API</code></pre>
-
-      <h2 id="whats-next">What&apos;s Next?</h2>
-      <ul>
-        <li>
-          <a href="/configuration">Configure</a> environment variables for custom behavior
-        </li>
-        <li>
-          <a href="/tools/search">Learn about all search modes</a> — keyword, semantic, hybrid, regex, symbol
-        </li>
-        <li>
-          <a href="/tools/index-codebase">Explore indexing options</a> — parallel workers, ignore files, watch mode
-        </li>
-        <li>
-          <a href="/tools/smart-context">Use Smart Context</a> for AI-assisted code understanding
-        </li>
-      </ul>
     </DocsLayout>
   );
 }
