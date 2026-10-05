@@ -6,14 +6,14 @@
   },
   "metadata": {
     "description": "Hybrid code search with multiple embedding providers, SQLite AST Code Graph, references, callers, bounded source context, retrieval evaluation and chat memory.",
-    "version": "0.14.0"
+    "version": "0.15.0"
   },
   "plugins": [
     {
       "name": "vibe-hnindex",
       "source": "./",
       "description": "Hybrid code search with multiple embedding providers, SQLite AST Code Graph, references, callers, bounded source context, retrieval evaluation and chat memory.",
-      "version": "0.14.0",
+      "version": "0.15.0",
       "author": {
         "name": "Ho Viet Anh (AndyAnh174)",
         "email": "hovietanh147@gmail.com"

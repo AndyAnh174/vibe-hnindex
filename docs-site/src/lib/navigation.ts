@@ -31,6 +31,7 @@ export const docsNavigation: DocSection[] = [
     title: "sidebar.tools",
     slug: "tools",
     items: [
+      { title: "sidebar.workspace", href: "/tools/workspace", slug: "workspace" },
       { title: "sidebar.search", href: "/tools/search", slug: "search" },
       { title: "sidebar.indexCodebase", href: "/tools/index-codebase", slug: "index-codebase" },
       { title: "sidebar.smartContext", href: "/tools/smart-context", slug: "smart-context" },

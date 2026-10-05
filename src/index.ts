@@ -31,15 +31,45 @@ import { getContextResource } from './services/chat-memory.js';
 import { config } from './config.js';
 import { indexCodeGraphTool, findReferencesTool, callersTool, graphContextTool } from './tools/code-graph.js';
 import { evaluateRetrievalTool } from './tools/evaluate-retrieval.js';
+import { workspaceContextTool, WORKSPACE_INSTRUCTIONS } from './tools/workspace-context.js';
+import { locateCodeTool } from './tools/locate-code.js';
 
 // Initialize database on startup
 initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.14.0',
+  version: '0.15.0',
 }, {
   capabilities: { logging: {}, prompts: {} },
+  instructions: WORKSPACE_INSTRUCTIONS,
+});
+
+// Read current roots on each call: a shared client may switch its workspace.
+async function workspaceRoots(args: { path?: string; project_name?: string } = {}): Promise<string[]> {
+  if (args.path || args.project_name || process.env.HNINDEX_PROJECT_ROOT?.trim() || !server.server.getClientCapabilities()?.roots) return [];
+  try { return (await server.server.listRoots({}, { timeout: 2000 })).roots.map(root => root.uri); }
+  catch { return []; }
+}
+const workspaceArgs = {
+  project_name: z.string().min(1).max(256).optional().describe('Explicit indexed project; overrides automatic workspace selection'),
+  path: z.string().min(1).max(4096).optional().describe('Explicit absolute workspace directory; otherwise use configured root or MCP client roots'),
+};
+server.tool('workspace_context', 'Start here: identify the active workspace, read its purpose/architecture documents, Git state and index readiness. Optionally remember a declared task per project/session. Local only; never guesses user intent or chooses among multiple roots.', {
+  ...workspaceArgs,
+  task: z.string().min(1).max(1000).optional().describe('Current objective explicitly declared by the user/agent'),
+  session_id: z.string().min(1).max(160).optional().describe('Use a distinct ID for each concurrent agent; default is shared'),
+  clear_task: z.boolean().optional(), token_budget: z.number().int().min(512).max(10000).default(2500),
+}, async args => workspaceContextTool(args, await workspaceRoots(args)));
+server.tool('locate_code', 'Locate indexed files, definitions and nearby CALLS/REFERENCES with file/line/symbol evidence and current-file freshness. Auto mode tries file, symbol, then local keyword search without embeddings. Explicit hybrid mode can call configured APIs. Ambiguous names return choices; refresh stale positions before editing.', {
+  ...workspaceArgs,
+  query: z.string().min(1).max(1000).optional(), symbol: z.string().min(1).max(256).optional().describe('Exact symbol name'),
+  file_pattern: z.string().max(512).optional(), mode: z.enum(['auto', 'symbol', 'keyword', 'hybrid']).default('auto'),
+  limit: z.number().int().min(1).max(20).default(8), token_budget: z.number().int().min(512).max(10000).default(2000),
+}, async args => locateCodeTool(args, await workspaceRoots(args)));
+server.resource('active-workspace', 'knowledge://workspace', { description: 'Active project purpose, current declared task and index state. Same selection as workspace_context.', mimeType: 'application/json' }, async () => {
+  const result = await workspaceContextTool({}, await workspaceRoots());
+  return { contents: [{ uri: 'knowledge://workspace', mimeType: 'application/json', text: result.content[0].text }] };
 });
 
 // --- Resource: knowledge://projects ---
@@ -450,71 +480,14 @@ if (config.chatMemoryEnabled) {
   );
 }
 
-// --- Prompt: tool-priority (v0.12.1) ---
-// AI clients fetch this prompt to enforce MCP tool usage for indexed projects
-server.prompt(
-  'tool-priority',
-  '🚫 Enforce vibe-hnindex MCP tool usage — blocks grep/cat/Glob for indexed projects',
-  {
-    project_name: z.string().describe('Project name to scope rules'),
-  },
-  (args) => ({
-    messages: [{
-      role: 'user',
-      content: {
-        type: 'text',
-        text: [
-          `CRITICAL for "${args.project_name}": This project is PRE-INDEXED. Using grep/cat misses data.`,
-          '',
-          'BANNED → MCP:',
-          `- grep/rg → search(query="<term>", project_name="${args.project_name}", stream=true)`,
-          `- cat/Read → smart_context(project_name="${args.project_name}", file_path="<file>")`,
-          `- Glob/ls → search(project_name="${args.project_name}", file_pattern="src/**")`,
-          '- Multi-step edit → code_session(task) → code_apply(edits)',
-          '',
-          'If you use grep instead, you will get incomplete results and waste context tokens.',
-        ].join('\n'),
-      },
-    }],
-  })
-);
-
-// --- Tool: priority_prompt (v0.12.1) ---
-// One-shot tool to dump enforcement rules into conversation
-server.tool(
-  'priority_prompt',
-  'Dump MCP tool priority enforcement rules into the conversation. Call this when the AI agent is using grep/cat/Glob instead of MCP tools. Returns compact rules the AI must follow.',
-  {
-    project_name: z.string().describe('Project name'),
-  },
-  async (args) => {
-    const project = getProject(args.project_name);
-    if (!project) {
-      return { content: [{ type: 'text', text: `Project "${args.project_name}" not found. Index it first.` }] };
-    }
-    return {
-      content: [{
-        type: 'text',
-        text: [
-          `🚫 TOOL PRIORITY for "${args.project_name}":`,
-          '',
-          'This codebase is PRE-INDEXED by vibe-hnindex. Using grep/cat/Glob WASTES tokens and MISSES results.',
-          '',
-          '| ❌ DO NOT USE | ✅ USE INSTEAD |',
-          '|---|---|',
-          '| grep / rg / git grep | search(query, stream=true) |',
-          '| cat / Read / View file | smart_context(file_path) or code_session(task) |',
-          '| Glob / ls / find | search(file_pattern="src/**") |',
-          '| Bash(grep ...) | search(mode="keyword") |',
-          '| Multi-step manual edit | code_session(task) → code_apply(edits) |',
-          '',
-          'MCP tools are FASTER (pre-indexed), RICHER (deps, tests, patterns), and save context tokens.',
-          'Using grep = wasting 500+ tokens and missing semantic search results.',
-        ].join('\n'),
-      }],
-    };
-  },
-);
+// Compatible prompt/tool names with workspace-aware navigation guidance.
+server.prompt('tool-priority', 'Workspace-aware code navigation guidance', { project_name: z.string() }, args => ({
+  messages: [{ role: 'user', content: { type: 'text', text: args.project_name + ': ' + WORKSPACE_INSTRUCTIONS } }],
+}));
+server.tool('priority_prompt', 'Return workspace-aware code navigation guidance.', { project_name: z.string() }, async args => {
+  const project = getProject(args.project_name);
+  return { content: [{ type: 'text', text: project ? project.projectName + ': ' + WORKSPACE_INSTRUCTIONS : 'Project not found. Index it first.' }] };
+});
 
 // --- Auto-resume watch on startup ---
 function autoResumeWatch() {
@@ -538,7 +511,7 @@ async function main() {
   autoResumeWatch();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started (v0.14.0)');
+  console.error('[vibe-hnindex] Server started (v0.15.0)');
 }
 
 main().catch((error) => {

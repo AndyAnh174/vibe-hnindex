@@ -46,19 +46,13 @@ export async function agentRulesStubTool(args: {
         ? 'AGENTS.md stub'
         : 'Agent rules stub';
 
-  // v0.12.1: ultra-compact + penalty language at TOP
   const lines: string[] = [
     `# ${title}`,
-    '',
-    `> 🚫 grep/Read/Glob for this project = BANNED. Pre-indexed. Use MCP tools or you will miss results.`,
-    '',
-    `| BANNED | Use MCP instead |`,
-    `|---|---|`,
-    `| grep / rg / git grep | \`search(query, stream=true)\` |`,
-    `| cat / Read / View file | \`smart_context(file_path)\` or \`code_session(task)\` |`,
-    `| Glob / ls / find | \`search(file_pattern="src/**")\` |`,
-    `| Bash(grep ...) | \`search(query, project_name="${args.project_name}")\` |`,
-    '',
+    "",
+    "Start with workspace_context(project_name, task, session_id) to identify project purpose and declare the objective.",
+    "Locate with locate_code(query or symbol), then callers/find_references and smart_context as needed.",
+    "Refresh stale positions before editing. Use filesystem search for unavailable, stale or excluded code. Host/user instructions take precedence.",
+    "",
     `**Project:** ${project.projectName} · **Root:** ${project.rootPath}`,
     `**Language:** ${topLang} · **Files:** ${stats.totalFiles} · **Chunks:** ${stats.totalChunks}`,
     '',

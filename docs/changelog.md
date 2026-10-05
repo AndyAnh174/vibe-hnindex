@@ -1,5 +1,14 @@
 # Changelog (highlights)
 
+## v0.15.0 — Agent Workspace and Code Locations
+
+- Added local `workspace_context`: explicit project/path, configured root, MCP client roots or indexed cwd; require selection for multiple roots/project names. Read live bounded purpose documents, Git state and index readiness.
+- Persist declared tasks in SQLite per project/session with clear and deletion cleanup. Git changes are evidence, never inferred intent.
+- Added `locate_code`: file/symbol/keyword locations without embeddings, explicit hybrid mode, ambiguity, excerpts and per-file freshness including relationship endpoints.
+- Added MCP startup instructions and `knowledge://workspace`; updated prompts/rules/skills with filesystem fallback for missing/stale/excluded code.
+- CLI binds project installs to their root and adds `--project-root` for global configurations; fixed absolute `--cwd` resolution.
+- Server/CLI/Claude/MCP metadata v0.15.0; workspace isolation, persistence, freshness, offline, boundary and token-budget checks.
+
 ## v0.14.0 — AST Code Graph and Retrieval Evaluation
 
 - Requires Node 22+; upgraded better-sqlite3 to 13.0.3 with bundled N-API binaries to avoid native statement cleanup crashes on Node 24.

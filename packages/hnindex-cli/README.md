@@ -1,6 +1,8 @@
 # hnindex-cli
 
-v0.14.0 supports `--code-graph true|false`, `--ast-chunking true|false`, `--rerank-provider none|http|voyage`, `--rerank-model`, `--rerank-url`, and `--rerank-api-key` on `hnindex init`. Omitted graph/rerank flags preserve existing settings; changing rerank provider clears stale endpoint/model/key. Graph and AST chunking default to enabled in the server.
+v0.15.0 adds `--project-root <dir>`. Project targets (claude, cursor-project, vscode) bind `HNINDEX_PROJECT_ROOT` to `--cwd`; global targets follow client roots unless explicitly bound. Omitted flags on global targets preserve an existing root. See [workspace setup](../../docs/workspace.md).
+
+v0.14.0 added `--code-graph true|false`, `--ast-chunking true|false`, `--rerank-provider none|http|voyage`, `--rerank-model`, `--rerank-url`, and `--rerank-api-key` on `hnindex init`. Omitted graph/rerank flags preserve existing settings; changing rerank provider clears stale endpoint/model/key. Graph and AST chunking default to enabled in the server.
 
 ```sh
 hnindex init --mcp claude --code-graph true --rerank-provider voyage

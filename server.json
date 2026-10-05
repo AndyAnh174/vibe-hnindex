@@ -6,16 +6,23 @@
     "url": "https://github.com/AndyAnh174/vibe-hnindex",
     "source": "github"
   },
-  "version": "0.14.0",
+  "version": "0.15.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "vibe-hnindex",
-      "version": "0.14.0",
+      "version": "0.15.0",
       "transport": {
         "type": "stdio"
       },
       "environmentVariables": [
+        {
+          "name": "HNINDEX_PROJECT_ROOT",
+          "description": "Absolute workspace binding; otherwise use current MCP client roots or indexed cwd.",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        },
         {
           "name": "EMBEDDING_PROVIDER",
           "description": "ollama (default), openai, voyage, gemini, or openai-compatible",

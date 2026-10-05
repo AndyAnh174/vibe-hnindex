@@ -32,7 +32,10 @@ describe('agentRulesStubTool', () => {
     expect(text).toContain('# Agent rules stub');
     expect(text).toContain('**Project:** demo');
     expect(text).toContain('typescript');
-    expect(text).toContain('BANNED');
+    expect(text).toContain('workspace_context');
+    expect(text).toContain('locate_code');
+    expect(text).toContain('stale');
+    expect(text).not.toContain('BANNED');
     expect(text).toContain('search(query');
   });
 
