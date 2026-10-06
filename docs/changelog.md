@@ -1,5 +1,11 @@
 # Changelog (highlights)
 
+## v0.15.3 — MCP Setup on Mobile
+
+- Let MCP client tabs wrap to their full height and give each client a 44px touch target, keeping the Codex setup panel readable on mobile.
+- Clarified project verification through the active Codex /mcp view; reserve codex mcp list for checking user-wide configurations.
+- Keep the setup table of contents focused on visible shared sections when switching client tabs.
+
 ## v0.15.2 — Architecture Diagrams and Codex
 
 - Added system, sequence and user diagrams to both websites, generated from a shared Mermaid source in docs/architecture.md and checked in CI.

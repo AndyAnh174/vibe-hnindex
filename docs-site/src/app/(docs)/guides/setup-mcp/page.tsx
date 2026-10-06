@@ -51,7 +51,7 @@ export default function SetupMcpPage() {
       <h2 id="per-platform">Per-Platform Setup</h2>
 
       <Tabs defaultValue="codex" className="not-prose my-6">
-        <TabsList className="h-auto flex-wrap justify-start gap-1">
+        <TabsList className="group-data-horizontal/tabs:h-auto h-auto flex-wrap justify-start gap-1">
           <TabsTrigger className="min-h-11" value="codex">Codex</TabsTrigger>
           <TabsTrigger className="min-h-11" value="antigravity">Antigravity</TabsTrigger>
           <TabsTrigger className="min-h-11" value="claude-code">Claude Code</TabsTrigger>
