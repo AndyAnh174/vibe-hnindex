@@ -1,5 +1,20 @@
 # hnindex-cli
 
+## Codex setup (v0.15.2)
+
+Run inside your project:
+
+```sh
+npx -y hnindex-cli init --mcp codex
+npx -y hnindex-cli init-skill --target codex
+codex mcp list
+```
+
+MCP configuration is merged into `.codex/config.toml`; the optional skill is installed in `.agents/skills/use-vibe-hnindex`. The workspace root is bound automatically. Existing settings, MCP servers and hnindex tool policies are retained. TOML formatting and comments may change. Invalid TOML or an existing HTTP server under the same name is rejected without writing. Use `--dry-run` to preview.
+
+[Codex loads project configuration only for trusted projects](https://learn.chatgpt.com/docs/extend/mcp?surface=cli). Set trust through Codex and restart/reconnect it. For a global install, use `codex mcp add vibe-hnindex -- npx -y vibe-hnindex`. Existing legacy `.codex/skills` files are left alone; reinstall the skill to use the current discovery path.
+
+
 v0.15.0 adds `--project-root <dir>`. Project targets (claude, cursor-project, vscode) bind `HNINDEX_PROJECT_ROOT` to `--cwd`; global targets follow client roots unless explicitly bound. Omitted flags on global targets preserve an existing root. See [workspace setup](../../docs/workspace.md).
 
 v0.14.0 added `--code-graph true|false`, `--ast-chunking true|false`, `--rerank-provider none|http|voyage`, `--rerank-model`, `--rerank-url`, and `--rerank-api-key` on `hnindex init`. Omitted graph/rerank flags preserve existing settings; changing rerank provider clears stale endpoint/model/key. Graph and AST chunking default to enabled in the server.
@@ -10,7 +25,7 @@ hnindex init --mcp claude --code-graph true --rerank-provider voyage
 
 See the [Code Graph guide](../../docs/code-graph.md). After upgrading, restart MCP and run full `index_codebase` once to rebuild AST chunks/vectors; offline graph-only users can run `index_code_graph`.
 
-CLI to merge **[vibe-hnindex](https://www.npmjs.com/package/vibe-hnindex)** into your editor’s MCP JSON (Claude Code, Claude Desktop, Cursor, Antigravity, Windsurf, VS Code). Works on **Windows, macOS, and Linux** (Node.js **≥ 22**).
+CLI to merge **[vibe-hnindex](https://www.npmjs.com/package/vibe-hnindex)** into your editor’s MCP config (Codex, Claude Code, Claude Desktop, Cursor, Antigravity, Windsurf, VS Code). Works on **Windows, macOS, and Linux** (Node.js **≥ 22**).
 
 ---
 
@@ -51,7 +66,7 @@ After a successful `init`, **restart the editor** or reload MCP servers so the n
 
 ## Prerequisites (for the MCP server itself)
 
-`hnindex-cli` only writes JSON; **vibe-hnindex** uses Ollama (default), OpenAI, Voyage, Gemini, or an OpenAI-compatible API for embeddings, plus Qdrant for semantic search. See [Embedding providers](https://github.com/AndyAnh174/vibe-hnindex/blob/main/docs/embedding-providers.md).
+`hnindex-cli` writes JSON or Codex TOML; **vibe-hnindex** uses Ollama (default), OpenAI, Voyage, Gemini, or an OpenAI-compatible API for embeddings, plus Qdrant for semantic search. See [Embedding providers](https://github.com/AndyAnh174/vibe-hnindex/blob/main/docs/embedding-providers.md).
 
 ---
 
@@ -61,6 +76,7 @@ After a successful `init`, **restart the editor** or reload MCP servers so the n
 
 | `--mcp` | Config file |
 |--------|-------------|
+| `codex` | `.codex/config.toml` in the project (trusted projects only) |
 | `claude` | `.mcp.json` in the current directory (Claude Code) |
 | `claude-desktop` | Claude Desktop user config (OS-specific path) |
 | `antigravity` | `~/.gemini/antigravity/mcp_config.json` |

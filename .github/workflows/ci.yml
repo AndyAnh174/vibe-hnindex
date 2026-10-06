@@ -27,7 +27,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Check website release data
+      - name: Check website release and diagram data
         run: npm run content:check
 
       - name: Build

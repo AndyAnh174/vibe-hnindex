@@ -28,7 +28,8 @@
     "performance": "Performance",
     "troubleshooting": "Troubleshooting",
     "changelog": "Changelog",
-    "codeGraph": "Code Graph"
+    "codeGraph": "Code Graph",
+    "architecture": "Architecture diagrams"
   },
   "home": {
     "hero": {

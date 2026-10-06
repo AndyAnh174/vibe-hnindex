@@ -39,7 +39,7 @@ initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.15.1',
+  version: '0.15.2',
 }, {
   capabilities: { logging: {}, prompts: {} },
   instructions: WORKSPACE_INSTRUCTIONS,
@@ -511,7 +511,7 @@ async function main() {
   autoResumeWatch();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started (v0.15.1)');
+  console.error('[vibe-hnindex] Server started (v0.15.2)');
 }
 
 main().catch((error) => {

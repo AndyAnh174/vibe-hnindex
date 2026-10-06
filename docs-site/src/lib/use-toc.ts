@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useI18n } from "@/lib/i18n";
+import { usePathname } from "next/navigation";
 
 interface TocItem {
   id: string;
@@ -9,6 +11,8 @@ interface TocItem {
 }
 
 export function useToc() {
+  const { locale } = useI18n();
+  const pathname = usePathname();
   const [items, setItems] = useState<TocItem[]>([]);
   const [activeId, setActiveId] = useState<string>("");
 
@@ -38,7 +42,7 @@ export function useToc() {
 
     headings.forEach((h) => observer.observe(h));
     return () => observer.disconnect();
-  }, []);
+  }, [locale, pathname]);
 
   return { items, activeId };
 }

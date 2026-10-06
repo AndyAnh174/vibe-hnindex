@@ -22,8 +22,7 @@ export default function SetupMcpPage() {
       <Badge variant="secondary" className="mb-4">Guides</Badge>
       <h1>Setup MCP</h1>
       <p>
-        How to add vibe-hnindex to different AI tools. The MCP configuration is the same
-        everywhere — only the file path differs.
+        How to add vibe-hnindex to different AI tools. Most clients use JSON; Codex uses TOML, and VS Code uses a different JSON root key.
       </p>
 
       <h2 id="config-template">Configuration Template</h2>
@@ -51,8 +50,9 @@ export default function SetupMcpPage() {
 
       <h2 id="per-platform">Per-Platform Setup</h2>
 
-      <Tabs defaultValue="antigravity" className="not-prose my-6">
+      <Tabs defaultValue="codex" className="not-prose my-6">
         <TabsList className="flex-wrap">
+          <TabsTrigger value="codex">Codex</TabsTrigger>
           <TabsTrigger value="antigravity">Antigravity</TabsTrigger>
           <TabsTrigger value="claude-code">Claude Code</TabsTrigger>
           <TabsTrigger value="claude-desktop">Claude Desktop</TabsTrigger>
@@ -61,6 +61,17 @@ export default function SetupMcpPage() {
           <TabsTrigger value="vscode">VS Code</TabsTrigger>
           <TabsTrigger value="cli">CLI Method</TabsTrigger>
         </TabsList>
+
+        <TabsContent value="codex" className="mt-4">
+          <h3 id="codex">Codex — CLI, IDE and desktop</h3>
+          <p>Run the installer inside your project:</p>
+          <pre><code>{"npx -y hnindex-cli init --mcp codex\nnpx -y hnindex-cli init-skill --target codex"}</code></pre>
+          <p>The first command merges MCP into <code>.codex/config.toml</code>; the second installs an optional workflow skill in <code>.agents/skills/use-vibe-hnindex</code>. Existing settings and other MCP servers are retained; TOML formatting and comments may change.</p>
+          <pre><code>{"[mcp_servers.vibe-hnindex]\ncommand = \"npx\"\nargs = [\"-y\", \"vibe-hnindex\"]\n\n[mcp_servers.vibe-hnindex.env]\nHNINDEX_PROJECT_ROOT = \"/absolute/path/to/project\""}</code></pre>
+          <p>Replace the example root with your absolute project path. The installer handles Windows path escaping. Codex only loads project configuration for trusted projects; choose project trust through Codex, then restart or reconnect the client.</p>
+          <p>For user-wide setup, use <code>codex mcp add vibe-hnindex -- npx -y vibe-hnindex</code> or edit <code>~/.codex/config.toml</code>. A project-scoped installation is useful for binding one repository.</p>
+          <p>Check <code>codex mcp list</code> in the same project. Ask the agent to call <code>workspace_context</code>, then initialize <code>index_code_graph</code>. See <a href="https://learn.chatgpt.com/docs/extend/mcp?surface=cli">official Codex MCP documentation</a> and <a href="/guides/architecture">architecture diagrams</a>.</p>
+        </TabsContent>
 
         <TabsContent value="antigravity" className="mt-4">
           <h4>Google Antigravity</h4>
@@ -134,6 +145,7 @@ export default function SetupMcpPage() {
           <pre><code>{`npm install -g hnindex-cli
 
 # Initialize for your editor
+hnindex init --mcp codex --cwd /path/to/repo
 hnindex init --mcp antigravity
 hnindex init --mcp claude --cwd /path/to/repo
 hnindex init --mcp claude-desktop
@@ -174,7 +186,7 @@ hnindex init-skill --list`}</code></pre>
         <li>Restart your AI tool after editing the MCP config</li>
         <li>Look for vibe-hnindex in your tool&apos;s MCP server list</li>
         <li>Try indexing a project: <code>Index the codebase at /path, name it test</code></li>
-        <li>Run diagnostics: <code>server_diagnostics()</code></li>
+        <li>Run diagnostics: <code>diagnostics()</code></li>
       </ol>
 
       <h2 id="troubleshooting">Common Issues</h2>
@@ -183,7 +195,7 @@ hnindex init-skill --list`}</code></pre>
           { issue: "Ollama not reachable", fix: "Ensure ollama serve is running on the configured URL" },
           { issue: "Qdrant auth error (401)", fix: "Set QDRANT_API_KEY for Qdrant Cloud" },
           { issue: "npm install fails (Windows)", fix: "Use Node 22 or 24 or install VS Build Tools" },
-          { issue: "Server not showing up", fix: "Check file path and JSON syntax; restart tool" },
+          { issue: "Server not showing up", fix: "Check file path and JSON/TOML syntax; restart tool" },
         ].map((item, i) => (
           <Card key={i} className="p-3">
             <p className="text-sm font-semibold text-destructive">{item.issue}</p>

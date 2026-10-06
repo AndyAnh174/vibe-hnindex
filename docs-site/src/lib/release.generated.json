@@ -1,6 +1,17 @@
 {
-  "version": "0.15.1",
+  "version": "0.15.2",
   "releases": [
+    {
+      "version": "0.15.2",
+      "title": "Architecture Diagrams and Codex",
+      "items": [
+        "Added system, sequence and user diagrams to both websites, generated from a shared Mermaid source in docs/architecture.md and checked in CI.",
+        "Added project-scoped Codex MCP setup via hnindex init --mcp codex: merge valid TOML while retaining other server settings and binding the workspace root.",
+        "Corrected the Codex skill installation path to .agents/skills/use-vibe-hnindex and documented project trust, verification and TOML setup.",
+        "Added Codex to the homepage installer, integrations, installation guide and MCP setup guide.",
+        "Lazy-load diagram rendering with accessible titles, keyboard scrolling, loading feedback and a source fallback."
+      ]
+    },
     {
       "version": "0.15.1",
       "title": "Website and Documentation Refresh",

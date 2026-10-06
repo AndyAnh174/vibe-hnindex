@@ -53,19 +53,30 @@ if (!releases.length || releases[0].version !== manifest.version)
   throw new Error("Latest changelog must match package.json version.");
 const content =
   JSON.stringify({ version: manifest.version, releases }, null, 2) + "\n";
+const architecture = fs.readFileSync(path.join(root, "docs/architecture.md"), "utf8").replaceAll("\r\n", "\n");
+const charts = [...architecture.matchAll(/```mermaid\n([\s\S]*?)\n```/g)].map((match) => match[1]);
+if (charts.length !== 3 || charts.some((chart, i) =>
+  !chart.startsWith(i === 1 ? "sequenceDiagram" : "flowchart") ||
+  !chart.includes("accTitle:") || !chart.includes("accDescr:")))
+  throw new Error("Architecture must contain accessible system, sequence and user Mermaid diagrams in that order.");
+const diagramContent = JSON.stringify(charts.map((chart, i) => ({
+  id: ["system", "sequence", "user"][i], chart,
+})), null, 2) + "\n";
 for (const site of ["website", "docs-site"]) {
-  const filename = path.join(root, site, "src/lib/release.generated.json");
-  const existing = fs.existsSync(filename)
-    ? fs.readFileSync(filename, "utf8")
-    : "";
-  if (process.argv.includes("--check")) {
-    if (existing !== content)
-      throw new Error(
-        site + " release data is stale. Run npm run content:sync.",
-      );
-  } else if (existing !== content) {
-    fs.mkdirSync(path.dirname(filename), { recursive: true });
-    fs.writeFileSync(filename, content);
+  for (const [name, data] of [["release", content], ["architecture", diagramContent]]) {
+    const filename = path.join(root, site, `src/lib/${name}.generated.json`);
+    const existing = fs.existsSync(filename)
+      ? fs.readFileSync(filename, "utf8")
+      : "";
+    if (process.argv.includes("--check")) {
+      if (existing !== data)
+        throw new Error(
+          site + " " + name + " data is stale. Run npm run content:sync.",
+        );
+    } else if (existing !== data) {
+      fs.mkdirSync(path.dirname(filename), { recursive: true });
+      fs.writeFileSync(filename, data);
+    }
   }
 }
 console.log(
@@ -73,5 +84,5 @@ console.log(
     manifest.version +
     ", " +
     releases.length +
-    " changelog entries.",
+    " changelog entries, 3 architecture diagrams.",
 );

@@ -15,6 +15,7 @@ import {
   Terminal,
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
+import { ArchitectureExplorer } from "@/components/architecture-explorer";
 import { VERSION } from "@/lib/release";
 
 const copy = {
@@ -154,6 +155,7 @@ const copy = {
   },
 };
 const editors = [
+  { label: "Codex", target: "codex" },
   { label: "Claude Code", target: "claude" },
   { label: "Cursor", target: "cursor-project" },
   { label: "VS Code", target: "vscode" },
@@ -164,7 +166,7 @@ const editors = [
 export default function Home() {
   const locale = useLocale(),
     t = copy[locale === "vi" ? "vi" : "en"];
-  const [editor, setEditor] = useState("claude"),
+  const [editor, setEditor] = useState("codex"),
     [copied, setCopied] = useState(false),
     [copyError, setCopyError] = useState(false);
   const command =
@@ -221,7 +223,7 @@ export default function Home() {
               <i />
               <i />
             </span>
-            Claude · Cursor · VS Code · MCP
+            Codex · Claude · Cursor · VS Code · MCP
           </div>
         </div>
         <div className="workspace-preview" aria-label={t.example}>
@@ -301,6 +303,7 @@ export default function Home() {
       <div className="integration-strip">
         <div className="site-container">
           <span>BUILT FOR YOUR WORKFLOW</span>
+          <div>Codex</div>
           <div>Claude Code</div>
           <div>Cursor</div>
           <div>VS Code</div>
@@ -336,6 +339,15 @@ export default function Home() {
             </article>
           ))}
         </div>
+      </section>
+      <section className="site-container section-space" id="architecture">
+        <div className="section-heading">
+          <p className="eyebrow">02 / ARCHITECTURE</p>
+          <h2>{locale === "vi" ? "Ba góc nhìn. Một luồng làm việc." : "Three views. One workflow."}</h2>
+          <p>{locale === "vi" ? "Kiến trúc hệ thống, trình tự gọi tool và luồng người dùng." : "System architecture, tool sequence and the developer workflow."}</p>
+        </div>
+        <ArchitectureExplorer locale={locale} />
+        <a className="text-link" href="https://docs.hnindex.cloud/guides/architecture">{locale === "vi" ? "Xem cả ba sơ đồ và giải thích" : "Read all three diagrams and explanations"}<ArrowUpRight size={15} aria-hidden /></a>
       </section>
       <section className="control-section">
         <div className="site-container control-grid">
@@ -419,6 +431,7 @@ export default function Home() {
               {command}
             </code>
           </pre>
+          {editor === "codex" && <p className="setup-note">{locale === "vi" ? "Chạy trong thư mục dự án. Codex chỉ tải .codex/config.toml của dự án đã trust. Skill tùy chọn:" : "Run inside the project. Codex loads project .codex/config.toml for trusted projects only. Optional skill:"} <code>npx -y hnindex-cli init-skill --target codex</code></p>}
           {copyError && (
             <p className="copy-error" role="status">
               {t.copyError}

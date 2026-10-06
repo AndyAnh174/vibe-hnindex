@@ -28,7 +28,8 @@
     "performance": "Hiệu suất",
     "troubleshooting": "Xử lý sự cố",
     "changelog": "Lịch sử cập nhật",
-    "codeGraph": "Code Graph"
+    "codeGraph": "Code Graph",
+    "architecture": "Sơ đồ kiến trúc"
   },
   "home": {
     "hero": {

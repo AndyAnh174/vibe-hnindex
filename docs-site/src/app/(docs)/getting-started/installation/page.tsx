@@ -19,7 +19,7 @@ export default function Installation() {
       <ul>
         <li>Node.js 22 or newer and npm.</li>
         <li>
-          An MCP client such as Claude Code, Cursor, VS Code, Windsurf or
+          An MCP client such as Codex, Claude Code, Cursor, VS Code, Windsurf or
           Antigravity.
         </li>
         <li>
@@ -36,7 +36,7 @@ export default function Installation() {
       <pre>
         <code>
           {
-            "cd /your/project\nnpx -y hnindex-cli init --mcp claude\n\n# Other project-scoped targets\nnpx -y hnindex-cli init --mcp cursor-project\nnpx -y hnindex-cli init --mcp vscode"
+            "cd /your/project\nnpx -y hnindex-cli init --mcp codex\nnpx -y hnindex-cli init --mcp claude\n\n# Other project-scoped targets\nnpx -y hnindex-cli init --mcp cursor-project\nnpx -y hnindex-cli init --mcp vscode"
           }
         </code>
       </pre>
@@ -57,6 +57,10 @@ export default function Installation() {
         Follow the <Link href="/getting-started/quick-start">quick start</Link>{" "}
         to initialize the local graph.
       </p>
+      <h2 id="codex">Codex</h2>
+      <p>The Codex target writes project <code>.codex/config.toml</code> and binds the workspace automatically. Codex loads this file only for trusted projects. Restart or reconnect Codex after setup.</p>
+      <pre><code>{"npx -y hnindex-cli init --mcp codex\nnpx -y hnindex-cli init-skill --target codex"}</code></pre>
+      <p>The optional skill is installed in <code>.agents/skills/use-vibe-hnindex</code>. See the <Link href="/guides/setup-mcp">Codex MCP setup</Link> for TOML and connection checks.</p>
       <h2 id="semantic">Optional: semantic and hybrid retrieval</h2>
       <p>
         Full codebase vector indexing and semantic/hybrid search use Qdrant plus

@@ -1,8 +1,8 @@
 /**
- * Merge vibe-hnindex into existing MCP JSON without clobbering other servers.
+ * Merge vibe-hnindex into parsed MCP JSON or TOML without clobbering other servers.
  */
 
-export type ConfigFormat = 'mcpServers' | 'servers';
+export type ConfigFormat = 'mcpServers' | 'servers' | 'mcp_servers';
 
 export function mergeServerEntry(
   existing: Record<string, unknown> | null,
@@ -15,14 +15,18 @@ export function mergeServerEntry(
       ? { ...existing }
       : {};
 
-  const key = format === 'mcpServers' ? 'mcpServers' : 'servers';
+  const key = format;
   const prev = root[key];
   const bucket: Record<string, unknown> =
     prev && typeof prev === 'object' && !Array.isArray(prev)
       ? { ...(prev as Record<string, unknown>) }
       : {};
 
-  bucket[serverName] = serverBlock;
-  root[key] = bucket;
+  const prior = bucket[serverName];
+  // Codex tables can also contain timeouts and tool policies: keep those values.
+  const mergedBlock = format === 'mcp_servers' && prior && typeof prior === 'object' && !Array.isArray(prior)
+    ? { ...(prior as Record<string, unknown>), ...serverBlock }
+    : serverBlock;
+  root[key] = { ...bucket, [serverName]: mergedBlock };
   return root;
 }

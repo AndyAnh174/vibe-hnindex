@@ -36,14 +36,14 @@ Usage:
   hnindex init-skill --target <editor>
 
 Commands:
-  init       Merge vibe-hnindex into the MCP JSON for your editor (creates dirs if needed)
+  init       Merge vibe-hnindex into your editor's MCP config (JSON or Codex TOML)
   update     Run: npm update -g hnindex-cli
   version    Print hnindex-cli version
 
 Init options:
   --mcp <name>           Required. One of: claude, claude-desktop, antigravity, cursor,
-                         cursor-project, windsurf, vscode
-  --name <label>         Server key in JSON (default: vibe-hnindex)
+                         cursor-project, windsurf, vscode, codex
+  --name <label>         Server key in config (default: vibe-hnindex)
   --ollama-url <url>     Default: http://localhost:11434
   --ollama-model <name> Default: bge-m3:567m
   --embedding-provider <name>  ollama (default), openai, voyage, gemini, openai-compatible
@@ -62,9 +62,11 @@ Init options:
   --project-root <dir>   Explicit workspace binding for global configurations
   --cwd <dir>            Working directory for project-scoped files (default: .)
   --output <path>        Write to this file instead of the default path for --mcp
-  --dry-run              Print JSON to stdout; do not write files
+  --dry-run              Print config to stdout; do not write files
 
 Examples:
+  hnindex init --mcp codex --cwd ~/my-repo
+  hnindex init-skill --target codex --cwd ~/my-repo
   hnindex init --mcp antigravity
   hnindex init --mcp claude --cwd ~/my-repo
   hnindex init --mcp vscode --qdrant-url https://xxx.cloud.qdrant.io:6333 --qdrant-api-key "***"
