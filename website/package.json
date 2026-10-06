@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "predev": "node ../scripts/sync-site-content.mjs",
+    "prebuild": "node ../scripts/sync-site-content.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

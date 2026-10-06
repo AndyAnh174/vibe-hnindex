@@ -25,7 +25,7 @@ export default function ConfigurationPage() {
 
       <h2 id="environment-variables">Environment Variables</h2>
 
-      <h3 id="embedding-providers">Embedding Providers (v0.13.0)</h3>
+      <h3 id="embedding-providers">Embedding Providers</h3>
       <p>
         Choose Ollama, OpenAI, Voyage, Gemini or an OpenAI-compatible API.
         Cloud providers receive the snippets, queries and enabled chat content being embedded.

@@ -15,8 +15,8 @@ export function useToc() {
   useEffect(() => {
     const headings = Array.from(
       document.querySelectorAll<HTMLHeadingElement>(
-        ".docs-prose h2, .docs-prose h3"
-      )
+        ".docs-prose h2[id], .docs-prose h3[id]",
+      ),
     );
     const tocItems = headings.map((h) => ({
       id: h.id,
@@ -33,7 +33,7 @@ export function useToc() {
           }
         }
       },
-      { rootMargin: "-80px 0px -80% 0px" }
+      { rootMargin: "-80px 0px -80% 0px" },
     );
 
     headings.forEach((h) => observer.observe(h));

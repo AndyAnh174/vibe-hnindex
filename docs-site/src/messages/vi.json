@@ -26,13 +26,15 @@
     "guides": "Hướng dẫn",
     "setupMcp": "Thiết lập MCP",
     "performance": "Hiệu suất",
-    "troubleshooting": "Xử lý sự cố"
+    "troubleshooting": "Xử lý sự cố",
+    "changelog": "Lịch sử cập nhật",
+    "codeGraph": "Code Graph"
   },
   "home": {
     "hero": {
       "title": "Index Một Lần,",
       "titleHighlight": "Tìm Mọi Nơi",
-      "subtitle": "MCP server cục bộ cho tìm kiếm code bằng AI. Từ khóa, ngữ nghĩa và kết hợp — code của bạn ở trên máy.",
+      "subtitle": "Ngữ cảnh dự án và tìm code có bằng chứng; semantic retrieval tùy chọn.",
       "getStarted": "Bắt đầu ngay",
       "viewOnGithub": "Xem trên GitHub"
     },
@@ -45,7 +47,7 @@
       },
       "semantic": {
         "title": "Tìm kiếm Ngữ nghĩa",
-        "description": "Vector search Qdrant với Ollama embeddings cho truy vấn tự nhiên"
+        "description": "Qdrant với Ollama, OpenAI, Voyage, Gemini hoặc API tương thích"
       },
       "hybrid": {
         "title": "Tìm kiếm Kết hợp",
@@ -60,8 +62,8 @@
         "description": "Index đa luồng và tìm kiếm streaming cho tốc độ"
       },
       "local": {
-        "title": "100% Cục bộ",
-        "description": "Code không bao giờ rời máy. SQLite + Qdrant cục bộ"
+        "title": "Ưu tiên local",
+        "description": "Workspace và graph trong SQLite; cloud embedding tùy chọn"
       }
     },
     "quickLinks": {

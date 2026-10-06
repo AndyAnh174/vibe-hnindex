@@ -1,7 +1,7 @@
 {
   "name": "vibe-hnindex",
   "description": "Hybrid code search with multiple embedding providers, SQLite AST Code Graph, references, callers, bounded source context, retrieval evaluation and chat memory.",
-  "version": "0.15.0",
+  "version": "0.15.1",
   "author": {
     "name": "Ho Viet Anh (AndyAnh174)",
     "email": "hovietanh147@gmail.com"
@@ -25,7 +25,7 @@
       "command": "npx",
       "args": [
         "-y",
-        "vibe-hnindex@0.15.0"
+        "vibe-hnindex@0.15.1"
       ],
       "env": {
         "OLLAMA_URL": "http://localhost:11434",

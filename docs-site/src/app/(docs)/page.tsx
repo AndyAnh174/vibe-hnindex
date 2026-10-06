@@ -1,164 +1,144 @@
 "use client";
-
-import { DocsLayout } from "@/components/docs/docs-layout";
-import { getPageNav } from "@/lib/navigation";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { MermaidDiagram } from "@/components/mermaid-diagram";
 import Link from "next/link";
-
-export default function HomePage() {
-  const pageNav = getPageNav("introduction");
-
+import {
+  Braces,
+  ScanSearch,
+  GitBranch,
+  SlidersHorizontal,
+  ArrowRight,
+} from "lucide-react";
+import { DocsLayout } from "@/components/docs/docs-layout";
+import { useI18n } from "@/lib/i18n";
+import { VERSION } from "@/lib/release";
+import { getPageNav } from "@/lib/navigation";
+export default function Introduction() {
+  const vi = useI18n().locale === "vi";
+  const cards = [
+    {
+      href: "/tools/workspace",
+      Icon: Braces,
+      title: vi ? "Hiểu workspace" : "Know the workspace",
+      desc: vi
+        ? "Mục đích dự án, Git và task đã khai báo trong SQLite."
+        : "Project purpose, live Git state and a declared task stored in SQLite.",
+    },
+    {
+      href: "/tools/workspace#locate",
+      Icon: ScanSearch,
+      title: vi ? "Tìm đúng vị trí" : "Find the right location",
+      desc: vi
+        ? "File, symbol, dòng code và độ mới của index."
+        : "Files, symbols, line evidence and index freshness before editing.",
+    },
+    {
+      href: "/tools/code-graph",
+      Icon: GitBranch,
+      title: vi ? "Đi theo code graph" : "Follow the code graph",
+      desc: vi
+        ? "AST TypeScript/JavaScript với caller và reference."
+        : "TypeScript/JavaScript AST relationships, callers and references.",
+    },
+    {
+      href: "/configuration",
+      Icon: SlidersHorizontal,
+      title: vi ? "Chọn embedding" : "Choose your embeddings",
+      desc: vi
+        ? "Ollama, OpenAI, Voyage, Gemini và API tương thích."
+        : "Ollama, OpenAI, Voyage, Gemini and compatible APIs.",
+    },
+  ];
   return (
-    <DocsLayout
-      breadcrumbs={[
-        { label: "Introduction" },
-      ]}
-      pageNav={pageNav}
-    >
-      <h1>vibe-hnindex</h1>
-      <p>
-        <strong>vibe-hnindex</strong> is a local{" "}
-        <a href="https://modelcontextprotocol.io/" target="_blank" rel="noopener noreferrer">
-          Model Context Protocol (MCP)
-        </a>{" "}
-        server that lets AI assistants search your codebase. Index a project once, then search it
-        in every AI session — your code stays on your machine.
+    <DocsLayout pageNav={getPageNav("introduction")}>
+      <p className="doc-eyebrow">DOCUMENTATION / v{VERSION}</p>
+      <h1 className="docs-home-title">
+        {vi ? "Dự án rõ ràng." : "A clearer project."}
+        <br />
+        <span>{vi ? "Agent sẵn sàng." : "A ready agent."}</span>
+      </h1>
+      <p className="docs-lead">
+        {vi
+          ? "hnindex cho AI agent ngữ cảnh của dự án và vị trí code có bằng chứng. Bắt đầu local, thêm semantic retrieval khi cần."
+          : "hnindex gives your AI agent project context and code locations backed by source evidence. Start locally; add semantic retrieval when you need it."}
       </p>
-
-      <h2 id="what-it-does">What It Does</h2>
-      <p>
-        vibe-hnindex builds a searchable index of your codebase using{" "}
-        <strong>SQLite</strong> (for keyword and FTS5 full-text search) and{" "}
-        <strong>Qdrant</strong> (for semantic vector search powered by Ollama embeddings).
-      </p>
-      <p>Once indexed, AI tools can:</p>
-      <ul>
-        <li>
-          <strong>Search</strong> your code by keyword, natural language, or hybrid (both combined)
-        </li>
-        <li>
-          <strong>Find definitions</strong> of functions, classes, and symbols
-        </li>
-        <li>
-          <strong>Use regex</strong> to find patterns across your entire codebase
-        </li>
-        <li>
-          <strong>Get smart context</strong> for tasks, questions, or refactoring
-        </li>
-        <li>
-          <strong>Benchmark</strong> search performance across different modes
-        </li>
-      </ul>
-
-      <h2 id="key-features">Key Features</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 not-prose my-6">
-        {[
-          { title: "🔍 Multi-Mode Search", desc: "Keyword (FTS5+BM25), semantic (Qdrant vectors), hybrid (RRF fusion), regex, and symbol search." },
-          { title: "⚡ Hyper-Speed Indexing", desc: "Single-pass indexing with parallel workers (~30-40% faster since v0.9.1)." },
-          { title: "📦 Incremental Updates", desc: "SHA-1 hashing — only re-index changed files." },
-          { title: "🔒 100% Local", desc: "Code never leaves your machine. SQLite + Qdrant run locally." },
-          { title: "🧠 Smart Context", desc: "Auto-detect task types and gather relevant context for AI agents." },
-          { title: "🌐 Streaming Search", desc: "Parallel keyword + semantic search with progress updates." },
-        ].map((f, i) => (
-          <div key={i} className="rounded-lg border border-border p-4 bg-card">
-            <h4 className="text-sm font-semibold mb-1">{f.title}</h4>
-            <p className="text-sm text-muted-foreground">{f.desc}</p>
-          </div>
-        ))}
-      </div>
-
-      <h2 id="how-it-works">How It Works</h2>
-
-      <div className="not-prose my-6">
-        <MermaidDiagram chart={`
-graph TB
-    subgraph AI_Client["AI Client (Claude / OpenClaw / Cursor)"]
-        A[AI Agent]
-    end
-
-    subgraph Server["vibe-hnindex MCP Server"]
-        B[index_codebase] --\x3e C[File Scanner]
-        C --\x3e D["Chunker (~60 lines)"]
-        D --\x3e E[Ollama Embed]
-        E --\x3e F["(Qdrant Vectors)"]
-        D --\x3e G["(SQLite FTS5 + Text)"]
-
-        A --\x3e|"search query"| H{Search Router}
-        H --\x3e|"keyword"| G
-        H --\x3e|"semantic"| F
-        H --\x3e|"hybrid"| I[RRF Fusion]
-        I --\x3e G
-        I --\x3e F
-
-        G --\x3e J["Results"]
-        F --\x3e J
-        J --\x3e|"ranked code"| A
-    end
-
-    subgraph ChatMem["Chat Memory (v0.12.0)"]
-        A --\x3e|"auto-track"| K["(SQLite Chat)"]
-        K --\x3e L[Embed]
-        L --\x3e M["(Qdrant Chat)"]
-    end
-
-    subgraph Infra["🏗️ Infrastructure"]
-        E -.-\x3e O["Ollama :11434"]
-        F -.-\x3e P["Qdrant :6333"]
-        L -.-\x3e O
-        M -.-\x3e P
-    end
-
-    style K fill:#6366f1,color:#fff
-    style M fill:#6366f1,color:#fff
-    style H fill:#f59e0b,color:#000
-`} />
-      </div>
-
-      <ol>
-        <li>
-          <strong>Index:</strong> Point vibe-hnindex at a directory. It scans files, chunks them (~60 lines),
-          embeds via Ollama, and stores in SQLite + Qdrant.
-        </li>
-        <li>
-          <strong>Search:</strong> AI assistants call <code>search</code>, which queries using
-          keyword (FTS5), semantic (Qdrant), or hybrid (RRF fusion) modes.
-        </li>
-        <li>
-          <strong>Persist:</strong> Every search, smart_context, and code_session is auto-tracked to
-          Chat Memory (SQLite + Qdrant vectors). AI restarts with full context.
-        </li>
-        <li>
-          <strong>Results:</strong> Ranked code snippets with file paths and line ranges returned to the AI.
-        </li>
-      </ol>
-
-      <h2 id="supported-platforms">Supported Platforms</h2>
-      <p>vibe-hnindex works with any MCP-compatible AI tool:</p>
-      <div className="flex flex-wrap gap-2 not-prose my-4">
-        {[
-          "Claude Desktop", "Claude Code", "Cursor", "Windsurf",
-          "VS Code Copilot", "Google Antigravity", "Continue.dev",
-        ].map((p) => (
-          <Badge key={p} variant="outline">{p}</Badge>
-        ))}
-      </div>
-
-      <h2 id="requirements">Requirements</h2>
-      <ul>
-        <li><strong>Node.js</strong> ≥ 22 (LTS recommended)</li>
-        <li><strong>Ollama</strong> — for embeddings (required for semantic/hybrid search)</li>
-        <li><strong>Qdrant</strong> — Docker or Qdrant Cloud (optional; keyword search works without it)</li>
-      </ul>
-
-      <Separator className="my-8" />
-
-      <div className="flex items-center gap-4">
-        <Link href="/getting-started/installation" className="text-primary font-medium hover:underline">
-          Next: Installation →
+      <div className="docs-action-row">
+        <Link
+          className="docs-action-primary"
+          href="/getting-started/quick-start"
+        >
+          {vi ? "Bắt đầu" : "Quick start"}
+          <ArrowRight size={15} aria-hidden />
+        </Link>
+        <Link href="/changelog">
+          {vi ? "Có gì mới" : "What’s new"}
+          <ArrowRight size={15} aria-hidden />
         </Link>
       </div>
+      <div className="docs-flow">
+        <div>
+          <small>01</small>
+          <b>{vi ? "Hiểu dự án" : "Orient"}</b>
+          <code>workspace_context</code>
+        </div>
+        <div>
+          <small>02</small>
+          <b>{vi ? "Tìm code" : "Locate"}</b>
+          <code>locate_code</code>
+        </div>
+        <div>
+          <small>03</small>
+          <b>{vi ? "Xem liên kết" : "Connect"}</b>
+          <code>graph_context</code>
+        </div>
+      </div>
+      <h2 id="explore">
+        {vi ? "Bắt đầu từ điều bạn cần" : "Start with what you need"}
+      </h2>
+      <div className="docs-guide-grid">
+        {cards.map(({ href, Icon, title, desc }) => (
+          <Link href={href} className="docs-guide-card" key={href}>
+            <Icon size={23} aria-hidden />
+            <h3>{title}</h3>
+            <p>{desc}</p>
+            <span>
+              {vi ? "Đọc hướng dẫn" : "Explore guide"}
+              <ArrowRight size={12} aria-hidden />
+            </span>
+          </Link>
+        ))}
+      </div>
+      <h2 id="first-session">
+        {vi ? "Phiên làm việc đầu tiên" : "Your first session"}
+      </h2>
+      <p>
+        {vi
+          ? "Chạy từ thư mục dự án. Node 22+ là đủ cho luồng code graph offline TypeScript/JavaScript."
+          : "Run this from your project directory. Node 22+ is enough for the offline TypeScript/JavaScript graph workflow."}
+      </p>
+      <pre>
+        <code>
+          {
+            'npx -y hnindex-cli init --mcp claude\n\n// Ask your MCP agent to run:\nindex_code_graph(path: "/your/project", project_name: "my-app")\nworkspace_context(project_name: "my-app", task: "Add session expiry")\nlocate_code(project_name: "my-app", symbol: "verifySession")'
+          }
+        </code>
+      </pre>
+      <div className="docs-note">
+        <strong>
+          {vi ? "Local trước, cloud tùy chọn." : "Local first. Cloud optional."}
+        </strong>
+        <p>
+          {vi
+            ? "Workspace, task và code graph nằm trong SQLite. Semantic/hybrid search cần Qdrant và nhà cung cấp embedding. Nếu chọn cloud, các đoạn code embedding sẽ được gửi tới nhà cung cấp."
+            : "Workspace context, tasks and the code graph live in SQLite. Semantic/hybrid search needs Qdrant and an embedding provider. Cloud providers receive the code chunks you choose to embed."}
+        </p>
+      </div>
+      <h2 id="evidence">
+        {vi ? "Ngữ cảnh có bằng chứng" : "Context with evidence"}
+      </h2>
+      <p>
+        {vi
+          ? "Task được agent khai báo, không tự suy đoán từ Git. Code graph hiện hỗ trợ TS/JS; dynamic call và dependency bên ngoài có thể chưa resolve. Luôn kiểm tra freshness trước khi sửa, và dùng filesystem khi code chưa index hoặc đã cũ."
+          : "Tasks are declared by the agent, rather than inferred from Git. The code graph currently supports TS/JS; dynamic calls and external dependencies can remain unresolved. Check freshness before editing and use filesystem search for missing, excluded or stale code."}
+      </p>
     </DocsLayout>
   );
 }

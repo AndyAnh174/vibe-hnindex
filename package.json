@@ -1,6 +1,6 @@
 {
   "name": "vibe-hnindex",
-  "version": "0.15.0",
+  "version": "0.15.1",
   "workspaces": [
     "packages/*"
   ],
@@ -20,7 +20,9 @@
     "test:watch": "vitest",
     "bench:perf": "node scripts/perf-compare.mjs",
     "bench:mcp": "node scripts/mcp-search-benchmark.mjs",
-    "bench:quality": "node scripts/retrieval-quality.mjs"
+    "bench:quality": "node scripts/retrieval-quality.mjs",
+    "content:sync": "node scripts/sync-site-content.mjs",
+    "content:check": "node scripts/sync-site-content.mjs --check"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",

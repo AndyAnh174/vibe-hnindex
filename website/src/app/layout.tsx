@@ -1,16 +1,21 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import "./refresh.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "vibe-hnindex — Local MCP Codebase Indexing & Search",
+    default: "hnindex — Project Context for AI Agents",
     template: "%s — vibe-hnindex",
   },
-  description: "Index your codebase once, search it in every AI session.",
+  description: "Workspace context, source code locations and optional semantic retrieval for your MCP agent.",
   icons: { icon: "/logo.svg" },
 };
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" className="h-full antialiased">
       <body className="min-h-full flex flex-col bg-background text-foreground">

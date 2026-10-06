@@ -26,13 +26,15 @@
     "guides": "Guides",
     "setupMcp": "Setup MCP",
     "performance": "Performance",
-    "troubleshooting": "Troubleshooting"
+    "troubleshooting": "Troubleshooting",
+    "changelog": "Changelog",
+    "codeGraph": "Code Graph"
   },
   "home": {
     "hero": {
       "title": "Index Once,",
       "titleHighlight": "Search Everywhere",
-      "subtitle": "A local MCP server for AI-powered code search. Keyword, semantic, and hybrid search — your code stays on disk.",
+      "subtitle": "Project context and code locations with evidence; optional semantic retrieval.",
       "getStarted": "Get Started",
       "viewOnGithub": "View on GitHub"
     },
@@ -45,7 +47,7 @@
       },
       "semantic": {
         "title": "Semantic Search",
-        "description": "Qdrant vector search with Ollama embeddings for natural language queries"
+        "description": "Qdrant with Ollama, OpenAI, Voyage, Gemini or compatible APIs"
       },
       "hybrid": {
         "title": "Hybrid Search",
@@ -60,8 +62,8 @@
         "description": "Multi-threaded indexing and streaming search for speed"
       },
       "local": {
-        "title": "100% Local",
-        "description": "Your code never leaves your machine. SQLite + local Qdrant"
+        "title": "Local first",
+        "description": "Workspace and graph in SQLite; cloud embeddings optional"
       }
     },
     "quickLinks": {

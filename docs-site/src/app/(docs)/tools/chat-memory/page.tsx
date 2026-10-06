@@ -18,7 +18,7 @@ export default function ChatMemoryPage() {
       ]}
       pageNav={pageNav}
     >
-      <Badge variant="secondary" className="mb-4">Tools · v0.12.0</Badge>
+      <Badge variant="secondary" className="mb-4">Tools</Badge>
       <h1>Chat Memory</h1>
       <p>
         Chat Memory persists AI agent working context across sessions. When enabled,
@@ -27,7 +27,7 @@ export default function ChatMemoryPage() {
       </p>
 
       <div className="not-prose my-6 p-4 rounded-lg border border-border bg-card">
-        <p className="text-sm font-semibold mb-2">🧠 New in v0.12.0</p>
+        <p className="text-sm font-semibold mb-2">🧠 Introduced in v0.12.0</p>
         <p className="text-sm text-muted-foreground">
           Hybrid storage: <strong>SQLite</strong> (full text) + <strong>Qdrant</strong> (vector embeddings).
           Auto-track via existing tools, semantic search via <code>chat_context</code> tool,

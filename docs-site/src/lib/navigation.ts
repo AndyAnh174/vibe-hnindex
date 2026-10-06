@@ -16,37 +16,91 @@ export const docsNavigation: DocSection[] = [
     slug: "getting-started",
     items: [
       { title: "sidebar.introduction", href: "/", slug: "introduction" },
-      { title: "sidebar.installation", href: "/getting-started/installation", slug: "installation" },
-      { title: "sidebar.quickStart", href: "/getting-started/quick-start", slug: "quick-start" },
+      {
+        title: "sidebar.installation",
+        href: "/getting-started/installation",
+        slug: "installation",
+      },
+      {
+        title: "sidebar.quickStart",
+        href: "/getting-started/quick-start",
+        slug: "quick-start",
+      },
+      { title: "sidebar.changelog", href: "/changelog", slug: "changelog" },
     ],
   },
   {
     title: "sidebar.configuration",
     slug: "configuration",
     items: [
-      { title: "sidebar.configuration", href: "/configuration", slug: "configuration" },
+      {
+        title: "sidebar.configuration",
+        href: "/configuration",
+        slug: "configuration",
+      },
     ],
   },
   {
     title: "sidebar.tools",
     slug: "tools",
     items: [
-      { title: "sidebar.workspace", href: "/tools/workspace", slug: "workspace" },
+      {
+        title: "sidebar.workspace",
+        href: "/tools/workspace",
+        slug: "workspace",
+      },
+      {
+        title: "sidebar.codeGraph",
+        href: "/tools/code-graph",
+        slug: "code-graph",
+      },
       { title: "sidebar.search", href: "/tools/search", slug: "search" },
-      { title: "sidebar.indexCodebase", href: "/tools/index-codebase", slug: "index-codebase" },
-      { title: "sidebar.smartContext", href: "/tools/smart-context", slug: "smart-context" },
-      { title: "sidebar.codeAgent", href: "/tools/code-agent", slug: "code-agent" },
-      { title: "sidebar.chatMemory", href: "/tools/chat-memory", slug: "chat-memory" },
-      { title: "sidebar.benchmark", href: "/tools/benchmark", slug: "benchmark" },
+      {
+        title: "sidebar.indexCodebase",
+        href: "/tools/index-codebase",
+        slug: "index-codebase",
+      },
+      {
+        title: "sidebar.smartContext",
+        href: "/tools/smart-context",
+        slug: "smart-context",
+      },
+      {
+        title: "sidebar.codeAgent",
+        href: "/tools/code-agent",
+        slug: "code-agent",
+      },
+      {
+        title: "sidebar.chatMemory",
+        href: "/tools/chat-memory",
+        slug: "chat-memory",
+      },
+      {
+        title: "sidebar.benchmark",
+        href: "/tools/benchmark",
+        slug: "benchmark",
+      },
     ],
   },
   {
     title: "sidebar.guides",
     slug: "guides",
     items: [
-      { title: "sidebar.setupMcp", href: "/guides/setup-mcp", slug: "setup-mcp" },
-      { title: "sidebar.performance", href: "/guides/performance", slug: "performance" },
-      { title: "sidebar.troubleshooting", href: "/guides/troubleshooting", slug: "troubleshooting" },
+      {
+        title: "sidebar.setupMcp",
+        href: "/guides/setup-mcp",
+        slug: "setup-mcp",
+      },
+      {
+        title: "sidebar.performance",
+        href: "/guides/performance",
+        slug: "performance",
+      },
+      {
+        title: "sidebar.troubleshooting",
+        href: "/guides/troubleshooting",
+        slug: "troubleshooting",
+      },
     ],
   },
 ];
@@ -57,14 +111,17 @@ export interface PageNav {
 }
 
 const flatPages = docsNavigation.flatMap((s) =>
-  s.items.map((i) => ({ ...i, section: s.slug }))
+  s.items.map((i) => ({ ...i, section: s.slug })),
 );
 
 export function getPageNav(currentSlug: string): PageNav {
   const idx = flatPages.findIndex((p) => p.slug === currentSlug);
   if (idx === -1) return {};
   return {
-    prev: idx > 0 ? { title: flatPages[idx - 1].title, href: flatPages[idx - 1].href } : undefined,
+    prev:
+      idx > 0
+        ? { title: flatPages[idx - 1].title, href: flatPages[idx - 1].href }
+        : undefined,
     next:
       idx < flatPages.length - 1
         ? { title: flatPages[idx + 1].title, href: flatPages[idx + 1].href }

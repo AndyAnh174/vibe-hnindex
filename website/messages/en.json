@@ -6,7 +6,7 @@
     "npm": "npm"
   },
   "hero": {
-    "badge": "v0.13.0 · Open Source · MIT",
+    "badge": "Open Source · MIT",
     "title": "Index Once,",
     "titleHighlight": "Search Every Session",
     "subtitle": "A local MCP server that indexes your codebase for any AI assistant. Choose local Ollama or OpenAI, Voyage, Gemini and compatible embedding APIs.",

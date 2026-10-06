@@ -1,5 +1,13 @@
 # Changelog (highlights)
 
+## v0.15.1 — Website and Documentation Refresh
+
+- Redesigned the main website and docs with a shared visual identity, responsive navigation, keyboard focus states and English/Vietnamese interface controls.
+- Generate both sites’ version and full release history from package.json and docs/changelog.md; check committed data in CI and regenerate before site builds.
+- Added a docs changelog and code graph guide; refreshed installation and quick start around offline workspace context and source locations.
+- Clarified optional embedding providers, cloud code-chunk transmission, declared task behavior and graph/freshness limits.
+- Synchronized server, CLI, MCP and Claude marketplace metadata for the documentation patch release.
+
 ## v0.15.0 — Agent Workspace and Code Locations
 
 - Added local `workspace_context`: explicit project/path, configured root, MCP client roots or indexed cwd; require selection for multiple roots/project names. Read live bounded purpose documents, Git state and index readiness.
