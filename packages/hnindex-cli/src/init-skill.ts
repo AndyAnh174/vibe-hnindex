@@ -191,7 +191,7 @@ export function runInitSkill(target: string, cwd: string): InitSkillResult {
     cursor: '.cursor/skills/use-vibe-hnindex',
     'cursor-project': '.cursor/skills/use-vibe-hnindex',
     windsurf: '.windsurf/skills/use-vibe-hnindex',
-    codex: '.codex/skills/use-vibe-hnindex',
+    codex: '.agents/skills/use-vibe-hnindex',
     openclaw: '.openclaw/workspace/skills/use-vibe-hnindex',
     vscode: '.vscode/skills/use-vibe-hnindex',
   };
@@ -212,7 +212,7 @@ export function printSkillTargets(): string {
   claude          Claude Code (.claude/skills/)
   antigravity     Google Antigravity (.antigravity/skills/)
   cursor          Cursor (.cursor/skills/)
-  codex           OpenAI Codex (.codex/skills/)
+  codex           OpenAI Codex (.agents/skills/)
   windsurf        Windsurf (.windsurf/skills/)
   vscode          VS Code (.vscode/skills/)
   openclaw        OpenClaw (.openclaw/workspace/skills/)`;

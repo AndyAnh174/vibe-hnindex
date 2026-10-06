@@ -87,6 +87,11 @@ export const docsNavigation: DocSection[] = [
     slug: "guides",
     items: [
       {
+        title: "sidebar.architecture",
+        href: "/guides/architecture",
+        slug: "architecture",
+      },
+      {
         title: "sidebar.setupMcp",
         href: "/guides/setup-mcp",
         slug: "setup-mcp",

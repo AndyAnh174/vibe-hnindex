@@ -44,7 +44,7 @@ Also available in-repo: [docs/getting-started.md](docs/getting-started.md), [doc
 
 ## CLI installer (`hnindex`)
 
-Optional — writes the MCP JSON for you (merge-safe, same `npx -y vibe-hnindex` block as in the docs):
+Optional — writes MCP JSON or Codex TOML for you (merge-safe, same `npx -y vibe-hnindex` block as in the docs):
 
 ```bash
 npm install -g hnindex-cli
@@ -239,3 +239,9 @@ Issues and PRs: [github.com/AndyAnh174/vibe-hnindex](https://github.com/AndyAnh1
 ## Contact
 
 **Ho Viet Anh (AndyAnh174)** · [hovietanh147@gmail.com](mailto:hovietanh147@gmail.com) · [GitHub](https://github.com/AndyAnh174)
+
+## Codex and architecture (v0.15.2)
+
+Run `npx -y hnindex-cli init --mcp codex` inside the project, then optionally `npx -y hnindex-cli init-skill --target codex`. Codex project MCP uses `.codex/config.toml` (trusted projects only); skills use `.agents/skills/use-vibe-hnindex`. Restart/reconnect Codex and ask for `workspace_context`, followed by `index_code_graph`.
+
+See [CLI configuration](packages/hnindex-cli/README.md#codex-setup-v0152), [system, sequence and user diagrams](docs/architecture.md), and [official Codex MCP setup](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).

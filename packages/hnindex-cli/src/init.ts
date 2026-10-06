@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { parse as parseToml, stringify as stringifyToml } from 'smol-toml';
 import { defaultEnv, defaultServerBlock } from './constants.js';
 import { mergeServerEntry } from './merge-config.js';
 import { listTargets, resolveTargetPath, TARGET_LABELS, type McpTarget } from './paths.js';
@@ -12,7 +13,7 @@ export function readExistingServerEnv(
   serverName: string
 ): Record<string, string> {
   if (!existing) return {};
-  const bucketKey = format === 'mcpServers' ? 'mcpServers' : 'servers';
+  const bucketKey = format;
   const bucket = existing[bucketKey];
   if (!bucket || typeof bucket !== 'object' || Array.isArray(bucket)) return {};
   const block = (bucket as Record<string, unknown>)[serverName];
@@ -71,9 +72,22 @@ export function runInit(opts: InitOptions): { written: boolean; filePath: string
   if (fs.existsSync(resolved.filePath)) {
     const raw = fs.readFileSync(resolved.filePath, 'utf8');
     try {
-      existing = JSON.parse(raw) as Record<string, unknown>;
+      existing = resolved.format === 'mcp_servers' ? parseToml(raw) : JSON.parse(raw) as Record<string, unknown>;
     } catch {
-      throw new Error(`Invalid JSON in ${resolved.filePath} — fix or remove the file and retry`);
+      throw new Error(`Invalid ${resolved.format === 'mcp_servers' ? 'TOML' : 'JSON'} in ${resolved.filePath} — fix or remove the file and retry`);
+    }
+  }
+
+  if (resolved.format === 'mcp_servers' && existing) {
+    const bucket = existing.mcp_servers;
+    const entry = bucket && typeof bucket === 'object' && !Array.isArray(bucket)
+      ? (bucket as Record<string, unknown>)[opts.serverName] : undefined;
+    if ((bucket !== undefined && (!bucket || typeof bucket !== 'object' || Array.isArray(bucket))) ||
+        (entry !== undefined && (!entry || typeof entry !== 'object' || Array.isArray(entry)))) {
+      throw new Error('Codex mcp_servers and server entries must be TOML tables; existing configuration was not changed.');
+    }
+    if (entry && typeof entry === 'object' && 'url' in entry) {
+      throw new Error('Existing Codex server uses HTTP transport; choose a different --name for the hnindex stdio server.');
     }
   }
 
@@ -109,11 +123,13 @@ export function runInit(opts: InitOptions): { written: boolean; filePath: string
   const env = { ...existingEnv, ...freshEnv };
   // Global installations follow client roots; project files bind to their directory.
   if (opts.projectRoot !== undefined) env.HNINDEX_PROJECT_ROOT = path.resolve(opts.cwd, opts.projectRoot);
-  else if (['claude', 'cursor-project', 'vscode'].includes(opts.mcp)) env.HNINDEX_PROJECT_ROOT = path.resolve(opts.cwd);
+  else if (['codex', 'claude', 'cursor-project', 'vscode'].includes(opts.mcp)) env.HNINDEX_PROJECT_ROOT = path.resolve(opts.cwd);
   const block = defaultServerBlock(env);
 
   const merged = mergeServerEntry(existing, resolved.format, opts.serverName, block as Record<string, unknown>);
-  const json = JSON.stringify(merged, null, 2) + '\n';
+  const json = resolved.format === 'mcp_servers'
+    ? stringifyToml(merged)
+    : JSON.stringify(merged, null, 2) + '\n';
 
   if (opts.dryRun) {
     return { written: false, filePath: resolved.filePath, json };

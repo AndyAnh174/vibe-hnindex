@@ -2,6 +2,7 @@ import os from 'node:os';
 import path from 'node:path';
 
 export type McpTarget =
+  | 'codex'
   | 'claude'
   | 'claude-desktop'
   | 'antigravity'
@@ -13,10 +14,11 @@ export type McpTarget =
 export type ResolvedTarget = {
   target: McpTarget;
   filePath: string;
-  format: 'mcpServers' | 'servers';
+  format: 'mcpServers' | 'servers' | 'mcp_servers';
 };
 
 export const TARGET_LABELS: Record<McpTarget, string> = {
+  codex: 'OpenAI Codex — .codex/config.toml in current directory (trusted projects)',
   claude: 'Claude Code — .mcp.json in current directory',
   'claude-desktop': 'Claude Desktop — claude_desktop_config.json (user profile)',
   antigravity: 'Google Antigravity — ~/.gemini/antigravity/mcp_config.json',
@@ -28,6 +30,7 @@ export const TARGET_LABELS: Record<McpTarget, string> = {
 
 export function listTargets(): McpTarget[] {
   return [
+    'codex',
     'claude',
     'claude-desktop',
     'antigravity',
@@ -43,6 +46,8 @@ export function resolveTargetPath(target: McpTarget, cwd: string): ResolvedTarge
   const platform = process.platform;
 
   switch (target) {
+    case 'codex':
+      return { target, filePath: path.join(cwd, '.codex', 'config.toml'), format: 'mcp_servers' };
     case 'claude':
       return {
         target,

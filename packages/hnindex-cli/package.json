@@ -1,7 +1,7 @@
 {
   "name": "hnindex-cli",
-  "version": "0.15.1",
-  "description": "CLI to install vibe-hnindex MCP config for Claude, Cursor, Antigravity, Windsurf, VS Code — Windows, macOS, Linux",
+  "version": "0.15.2",
+  "description": "CLI to install vibe-hnindex MCP config for Codex, Claude, Cursor, Antigravity, Windsurf, VS Code — Windows, macOS, Linux",
   "type": "module",
   "bin": {
     "hnindex": "dist/cli.js"
@@ -39,5 +39,8 @@
   "devDependencies": {
     "@types/node": "^22.0.0",
     "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "smol-toml": "^1.9.0"
   }
 }

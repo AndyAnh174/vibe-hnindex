@@ -37,6 +37,7 @@ export function FloatingHeader({
           </span>
         </Link>
         <nav className="desktop-nav" aria-label="Main navigation">
+          <Link href="/#architecture">{locale === "vi" ? "Sơ đồ" : "Diagrams"}</Link>
           <a href="https://docs.hnindex.cloud">{docs}</a>
           <Link href="/changelog">{changelog}</Link>
           <a href="https://github.com/AndyAnh174/vibe-hnindex">
@@ -66,6 +67,7 @@ export function FloatingHeader({
           className="mobile-nav site-container"
           aria-label="Mobile navigation"
         >
+          <Link onClick={() => setOpen(false)} href="/#architecture">{locale === "vi" ? "Sơ đồ" : "Diagrams"}</Link>
           <a onClick={() => setOpen(false)} href="https://docs.hnindex.cloud">
             {docs}
           </a>

@@ -1,5 +1,13 @@
 # Changelog (highlights)
 
+## v0.15.2 — Architecture Diagrams and Codex
+
+- Added system, sequence and user diagrams to both websites, generated from a shared Mermaid source in docs/architecture.md and checked in CI.
+- Added project-scoped Codex MCP setup via hnindex init --mcp codex: merge valid TOML while retaining other server settings and binding the workspace root.
+- Corrected the Codex skill installation path to .agents/skills/use-vibe-hnindex and documented project trust, verification and TOML setup.
+- Added Codex to the homepage installer, integrations, installation guide and MCP setup guide.
+- Lazy-load diagram rendering with accessible titles, keyboard scrolling, loading feedback and a source fallback.
+
 ## v0.15.1 — Website and Documentation Refresh
 
 - Redesigned the main website and docs with a shared visual identity, responsive navigation, keyboard focus states and English/Vietnamese interface controls.
