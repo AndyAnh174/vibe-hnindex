@@ -7,7 +7,7 @@ Run inside your project:
 ```sh
 npx -y hnindex-cli init --mcp codex
 npx -y hnindex-cli init-skill --target codex
-codex mcp list
+# Open the trusted project in Codex, then use /mcp to inspect active servers
 ```
 
 MCP configuration is merged into `.codex/config.toml`; the optional skill is installed in `.agents/skills/use-vibe-hnindex`. The workspace root is bound automatically. Existing settings, MCP servers and hnindex tool policies are retained. TOML formatting and comments may change. Invalid TOML or an existing HTTP server under the same name is rejected without writing. Use `--dry-run` to preview.

@@ -1,6 +1,15 @@
 {
-  "version": "0.15.2",
+  "version": "0.15.3",
   "releases": [
+    {
+      "version": "0.15.3",
+      "title": "MCP Setup on Mobile",
+      "items": [
+        "Let MCP client tabs wrap to their full height and give each client a 44px touch target, keeping the Codex setup panel readable on mobile.",
+        "Clarified project verification through the active Codex /mcp view; reserve codex mcp list for checking user-wide configurations.",
+        "Keep the setup table of contents focused on visible shared sections when switching client tabs."
+      ]
+    },
     {
       "version": "0.15.2",
       "title": "Architecture Diagrams and Codex",
