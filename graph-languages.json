@@ -1,0 +1,26 @@
+{
+  "labels": {
+    "typescript": "TypeScript",
+    "javascript": "JavaScript",
+    "python": "Python",
+    "php": "PHP",
+    "go": "Go",
+    "java": "Java",
+    "c": "C",
+    "cpp": "C++",
+    "csharp": "C#",
+    "rust": "Rust",
+    "ruby": "Ruby",
+    "kotlin": "Kotlin",
+    "swift": "Swift",
+    "scala": "Scala",
+    "lua": "Lua"
+  },
+  "extensions": {
+    "py": "python", "pyi": "python", "php": "php", "phtml": "php",
+    "go": "go", "java": "java", "c": "c", "h": "cpp", "cc": "cpp",
+    "cpp": "cpp", "cxx": "cpp", "hpp": "cpp", "hh": "cpp", "hxx": "cpp",
+    "cs": "csharp", "rs": "rust", "rb": "ruby", "rake": "ruby", "kt": "kotlin",
+    "kts": "kotlin", "swift": "swift", "scala": "scala", "sc": "scala", "lua": "lua"
+  }
+}

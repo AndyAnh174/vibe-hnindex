@@ -1,5 +1,9 @@
 # Documentation index
 
+<!-- hnindex:release:start -->
+Current release: **v0.16.1** · MCP server `vibe-hnindex` · installer `hnindex-cli`. [Release notes](https://github.com/AndyAnh174/vibe-hnindex/releases/tag/v0.16.1)
+<!-- hnindex:release:end -->
+
 Use this page to pick **one** path, or jump to a topic.
 
 ---
@@ -22,8 +26,9 @@ Use this page to pick **one** path, or jump to a topic.
 | [Integrations](integrations.md) | Config file paths per editor / assistant |
 | [Configuration](configuration.md) | Environment variables, `.hnindexignore` |
 | [Embedding providers](embedding-providers.md) | Ollama, OpenAI, Voyage, Gemini, compatible APIs and provider migration |
-| [Code Graph](code-graph.md) | Offline TS/JS graph, references, callers, context budgets and labeled evaluation |
+| [Code Graph](code-graph.md) | Offline multilingual AST graph, references, callers, context budgets and labeled evaluation |
 | [Workspace and locations](workspace.md) | Active project purpose/task, workspace binding, precise code positions and freshness |
+| [Source security review](security-tools.md) | Audit evidence, review context and source-linked pentest validation plans with optional rerank |
 | [Tools reference](tools-reference.md) | MCP tools (`index_codebase`, `search`, …) |
 | [How it works](how-it-works.md) | Indexing pipeline, hybrid RRF, search pipeline, where data lives |
 | [Changelog](changelog.md) | What changed per release |

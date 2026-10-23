@@ -12,7 +12,7 @@ export default function Installation() {
       <p className="doc-eyebrow">GETTING STARTED / v{VERSION}</p>
       <h1>Installation</h1>
       <p className="docs-lead">
-        Start with local workspace context and TS/JS code navigation. Add
+        Start with local workspace context and multilingual code navigation. Add
         semantic retrieval when your workflow needs it.
       </p>
       <h2 id="requirements">Requirements</h2>
@@ -29,8 +29,7 @@ export default function Installation() {
       </ul>
       <p>
         Workspace context and <code>index_code_graph</code> do not require
-        Qdrant, Ollama or a cloud API key. AST graph analysis currently supports
-        TypeScript and JavaScript.
+        Qdrant, Ollama or a cloud API key. AST graph analysis uses the JS/TS compiler plus bundled Tree-sitter profiles for additional languages.
       </p>
       <h2 id="connect">Connect your editor</h2>
       <pre>

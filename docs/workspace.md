@@ -1,4 +1,4 @@
-# Workspace and code locations (v0.15.0)
+# Workspace and code locations
 
 Use this workflow to give a coding agent project context before it searches or edits code. Auto/symbol/keyword location lookup works locally; full vector indexing and explicit hybrid retrieval use configured embedding/Qdrant services.
 
@@ -18,7 +18,7 @@ Selection order: explicit `project_name`, explicit `path`, `HNINDEX_PROJECT_ROOT
 
 ```text
 workspace_context(path="/absolute/project")
-# Initialize locations offline if needed (TypeScript/JavaScript):
+# Initialize locations offline if needed (supported AST languages):
 index_code_graph(path="/absolute/project", project_name="my-project")
 workspace_context(project_name="my-project", task="Add authentication", session_id="agent-1")
 ```
@@ -39,7 +39,7 @@ locate_code(query="jwt validation", mode="keyword")
 locate_code(query="how requests authenticate", mode="hybrid")
 ```
 
-Omit project/path when selection is configured. Auto tries known paths/basenames, definitions, then FTS5 chunks. Symbol mode looks up definitions, keyword searches chunks, and hybrid explicitly opts into configured semantic services/API costs. Graph-only indexing provides TS/JS locations, not FTS/vector chunks. Use `index_codebase` to add keyword/vector coverage for other languages and conceptual queries.
+Omit project/path when selection is configured. Auto tries known paths/basenames, definitions, then FTS5 chunks. Symbol mode looks up definitions, keyword searches chunks, and hybrid explicitly opts into configured semantic services/API costs. Graph-only indexing provides supported AST-language locations, not FTS/vector chunks. Use `index_codebase` for keyword/vector coverage and other text formats.
 
 Results include paths, lines, optional symbol/signature, short excerpts and ambiguity. Duplicate names return choices instead of merging relationships. Narrow `file_pattern` or use existing graph tools with `file_path` and definition `line` for same-file ambiguity. Current `.hnindexignore` filters results. Lookup uses up to 100 graph/symbol candidates or 50 keyword hits; `limit` returns at most 20. Keyword/symbol SQL uses its existing SQLite GLOB filter, followed by the final glob check.
 

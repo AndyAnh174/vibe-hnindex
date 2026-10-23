@@ -43,7 +43,7 @@ import {
 import { healthCheck as embeddingHealthCheck, embeddingUnavailableMessage } from '../services/embeddings.js';
 import { startWatchingProject } from './watch-project.js';
 import { syncCodeGraph } from '../services/code-graph-store.js';
-import { isScriptFile } from '../services/typescript-ast.js';
+import { isGraphFile } from '../services/polyglot-graph.js';
 
 export async function indexCodebase(args: {
   path: string;
@@ -118,7 +118,7 @@ export async function indexCodebase(args: {
   for await (const file of scanDirectory(rootPath)) {
     totalFiles++;
     scannedFiles.add(file.relativePath);
-    if (config.codeGraphEnabled && isScriptFile(file.relativePath)) graphInputs.push({ filePath: file.relativePath, content: file.content });
+    if (config.codeGraphEnabled && isGraphFile(file.relativePath)) graphInputs.push({ filePath: file.relativePath, content: file.content });
 
     // Fast hash for change detection (SHA-1, ~2x faster than SHA-256)
     const fileHash = fastHash(file.content);

@@ -39,7 +39,7 @@ Matches require input/guard/sink and behavior validation before becoming finding
 - \`list_projects\` — See what's indexed.
 
 ### Code Graph (v0.14.0)
-- \`index_code_graph(path, project_name)\` — Offline TS/JS AST graph in SQLite.
+- \`index_code_graph(path, project_name)\` — Offline multilingual AST graph in SQLite. JS/TS compiler resolution plus bundled Tree-sitter profiles for Python, PHP, Go, Java, C/C++, C#, Rust, Ruby, Kotlin, Swift, Scala and Lua. Re-index after upgrading; unknown/dynamic bindings remain unresolved.
 - \`find_references(project_name, symbol, file_path?)\` / \`callers(...)\` — Resolved use/call sites with source evidence.
 - \`graph_context(project_name, symbol?, file_path?, query?, depth?, token_budget?)\` — Bounded relationships and excerpts. Exact symbol/file mode works offline; query mode uses hybrid retrieval.
 - \`evaluate_retrieval(project_name, cases, k?)\` — Labeled file Recall@K, MRR, nDCG, latency and tokens.

@@ -1,6 +1,6 @@
 # hnindex architecture
 
-Three views of the same workflow: where context lives, how an agent retrieves it, and how a developer uses it. The offline graph path currently supports TypeScript and JavaScript.[^graph]
+Three views of the same workflow: where context lives, how an agent retrieves it, and how a developer uses it. The offline graph combines the JS/TS compiler path with bundled Tree-sitter profiles for additional source languages.[^graph]
 
 ## 🏗️ System diagram
 
@@ -12,7 +12,7 @@ flowchart TB
     accDescr: An MCP agent calls a local hnindex server with workspace files and SQLite storage. Semantic retrieval optionally uses embeddings and Qdrant.
     agent_client["AI agent / MCP client<br/>Codex · Claude · Cursor"]
     subgraph local_workspace["Local workspace"]
-        hnindex_server["hnindex MCP server<br/>Context · AST · code lookup"]
+        hnindex_server["hnindex MCP server<br/>Context · multilingual AST · code lookup"]
         project_files["Source files<br/>README · Git"]
         sqlite_store[("SQLite<br/>FTS · graph · declared tasks")]
         security_review["Security review<br/>Live source · bounded leads · validation plan"]
@@ -55,7 +55,7 @@ sequenceDiagram
     hnindex_server-->>agent_client: Workspace and index status
     opt Graph missing or needs refresh
         agent_client->>hnindex_server: index_code_graph(path, project_name)
-        hnindex_server->>project_files: Parse TS/JS source
+        hnindex_server->>project_files: Parse supported source with compiler / Tree-sitter AST
         hnindex_server->>sqlite_store: Store graph and source snapshots
         hnindex_server-->>agent_client: Index summary
     end

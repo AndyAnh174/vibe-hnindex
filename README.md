@@ -10,9 +10,13 @@
 [![npm hnindex-cli](https://img.shields.io/npm/v/hnindex-cli.svg?style=flat-square&logo=npm&label=hnindex-cli)](https://www.npmjs.com/package/hnindex-cli)
 [![License](https://img.shields.io/badge/license-MIT-yellow?style=flat-square)](LICENSE)
 [![MCP](https://img.shields.io/badge/MCP-compatible-6366f1?style=flat-square)](https://modelcontextprotocol.io/)
-[![Node](https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Node](https://img.shields.io/badge/node-%3E%3D22-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
 
-**MCP server (`vibe-hnindex`) version: v0.16.0** · [`hnindex-cli`](https://www.npmjs.com/package/hnindex-cli) **v0.16.0** — [Docs](https://docs.hnindex.cloud) · [Changelog](https://hnindex.cloud/changelog) · [GitHub Releases](https://github.com/AndyAnh174/vibe-hnindex/releases)
+<!-- hnindex:release:start -->
+Current release: **v0.16.1** · MCP server `vibe-hnindex` · installer `hnindex-cli`. [Release notes](https://github.com/AndyAnh174/vibe-hnindex/releases/tag/v0.16.1)
+<!-- hnindex:release:end -->
+
+[Docs](https://docs.hnindex.cloud) · [Changelog](https://hnindex.cloud/changelog) · [npm server](https://www.npmjs.com/package/vibe-hnindex) · [npm CLI](https://www.npmjs.com/package/hnindex-cli)
 
 </div>
 
@@ -98,15 +102,15 @@ See **[docs.hnindex.cloud](https://docs.hnindex.cloud)** for full documentation.
 
 For **Qdrant Cloud**, add `QDRANT_API_KEY` and set `QDRANT_URL` to your HTTPS cluster URL — details in [Getting started](docs/getting-started.md).
 
-### Agent Workspace (v0.15.0)
+### Agent Workspace
 
 `workspace_context` identifies the active project purpose, Git/index state and a declared task persisted per project/session. `locate_code` finds files/symbols then keywords locally, returning line evidence and freshness. Explicit hybrid mode uses configured semantic APIs. MCP startup instructions and `knowledge://workspace` expose this workflow. Project-scoped CLI installs bind their root automatically; global installs follow client roots unless explicitly configured.
 
 See [Workspace and code locations](docs/workspace.md). Refresh stale positions before editing; use filesystem tools for unavailable or excluded code.
 
-### Code Graph (v0.14.0)
+### Code Graph
 
-Build a TypeScript/JavaScript symbol graph with `index_code_graph(path, project_name)` using SQLite alone. `index_codebase` also builds it; file indexing and watching update relationships automatically. Use `find_references`, `callers`, and `graph_context` to inspect source evidence and bounded relationship context. No graph database service is required.
+Build a multilingual AST symbol graph with `index_code_graph(path, project_name)` using SQLite alone. `index_codebase` also builds it; file indexing and watching update relationships automatically. Use `find_references`, `callers`, and `graph_context` to inspect source evidence and bounded relationship context. SQLite remains the graph backend. JS/TS retain compiler resolution; Python, PHP, Go, Java, C/C++, C#, Rust, Ruby, Kotlin, Swift, Scala and Lua use bundled offline Tree-sitter profiles. See the language coverage and resolution limits in the graph guide.
 
 AST chunking preserves function/class boundaries where possible. After upgrading, run `index_codebase` once to rebuild chunks and vectors. See [Code Graph guide](docs/code-graph.md) for resolution limits, offline usage, token budgets and quality evaluation.
 
@@ -160,69 +164,47 @@ Step-by-step: [Integrations → Google Antigravity](docs/integrations.md#google-
 | **Search** | 6 modes: keyword (FTS5+BM25), semantic (Qdrant vectors), hybrid (RRF fusion), regex, symbol, auto |
 | **Code Agent** | `code_session` — 1 call replaces 5-15 searches. `code_apply` — safe code changes with auto test/lint/typecheck |
 | **Chat Memory** 🆕 | Auto-track tool calls, semantic search via Qdrant, persistent AI context across sessions |
-| **Streaming** | Parallel keyword+semantic search (~1.5-2× faster), 4-phase progress notifications |
+| **Streaming** | Parallel keyword+semantic search with progress notifications |
 | **Fuzzy Search** | Levenshtein distance auto-corrects typos ("fucntion" → "function") |
 | **Smart Context** | Task-aware context: impact analysis, test file detection, similar code patterns |
-| **Storage** | SQLite on disk + Qdrant for vectors; 100% local, no cloud required |
-| **Indexing** | Incremental (SHA-1 hash), parallel workers (~3-4× faster), watch mode (auto re-index on save), 40+ languages, `.hnindexignore` |
+| **Storage** | SQLite for keyword, graph and metadata; Qdrant for vectors; optional cloud embedding/rerank providers |
+| **Indexing** | Incremental change detection, parallel workers, watch mode, text indexing across languages, `.hnindexignore` |
 | **Resilience** | Keyword search works without Qdrant or Ollama; graceful degradation |
 | **Benchmark** | Built-in `benchmark_search` tool — compare streaming vs non-streaming, all search modes |
-| **Multiple Embedding Providers (v0.13.0)** | Ollama, OpenAI, Voyage, Gemini and OpenAI-compatible APIs; provider/model-aware vector collections |
+| **Multiple Embedding Providers** | Ollama, OpenAI, Voyage, Gemini and OpenAI-compatible APIs; provider/model-aware vector collections |
 | **Multiple Embedding Models** | bge-m3 (default), nomic-embed-text, qwen3-embedding, mxbai-embed-large, and more |
 
 ---
 
 ## Architecture
 
+<!-- hnindex:architecture:start -->
 ```mermaid
-graph TB
-    subgraph Input["📂 Input"]
-        A["💻 Your Codebase<br/>.ts .py .go .rs ..."]
+flowchart TB
+    accTitle: hnindex system architecture
+    accDescr: An MCP agent calls a local hnindex server with workspace files and SQLite storage. Semantic retrieval optionally uses embeddings and Qdrant.
+    agent_client["AI agent / MCP client<br/>Codex · Claude · Cursor"]
+    subgraph local_workspace["Local workspace"]
+        hnindex_server["hnindex MCP server<br/>Context · multilingual AST · code lookup"]
+        project_files["Source files<br/>README · Git"]
+        sqlite_store[("SQLite<br/>FTS · graph · declared tasks")]
+        security_review["Security review<br/>Live source · bounded leads · validation plan"]
+        hnindex_server --> security_review
+        project_files --> security_review
+        project_files -->|Read and check freshness| hnindex_server
+        hnindex_server <-->|Index and task storage| sqlite_store
     end
-
-    subgraph Server["⚙️ vibe-hnindex MCP Server"]
-        B["🔍 Search Router<br/>keyword | semantic | hybrid"]
-        C["🔀 RRF Fusion"]
+    subgraph semantic_services["Optional semantic retrieval"]
+        embedding_provider["Embeddings<br/>Ollama local or cloud API"]
+        qdrant_store[("Qdrant vectors<br/>Local or hosted")]
     end
-
-    subgraph Storage["💾 Storage"]
-        D[("SQLite<br/>FTS5 + Keyword")]
-        E[("Qdrant<br/>Vector Embeddings")]
-    end
-
-    subgraph Memory["🧠 Chat Memory (v0.12)"]
-        F[("SQLite<br/>Chat Context")]
-        G[("Qdrant<br/>Chat Vectors")]
-    end
-
-    subgraph Infra["🏗️ Infrastructure"]
-        H["Ollama<br/>Embeddings"]
-        I["Qdrant<br/>localhost:6333"]
-    end
-
-    subgraph Output["🤖 AI Clients"]
-        J["Claude · Cursor · Windsurf<br/>Antigravity · VS Code"]
-    end
-
-    A -->|"index_codebase"| Storage
-    A -->|scan| H
-    B -->|"keyword"| D
-    B -->|"semantic"| E
-    B -->|"hybrid"| C
-    C --> D
-    C --> E
-    B -.->|"auto-track"| F
-    F --> H
-    H --> G
-    D --> J
-    E --> J
-    H -.-> I
-
-    style F fill:#6366f1,color:#fff
-    style G fill:#6366f1,color:#fff
-    style B fill:#f59e0b,color:#000
-    style J fill:#22c55e,color:#fff
+    agent_client <-->|MCP / stdio| hnindex_server
+    hnindex_server -.->|Code chunks and queries| embedding_provider
+    embedding_provider -.->|Vectors| hnindex_server
+    hnindex_server <-.->|Store and retrieve vectors| qdrant_store
+    security_review -.->|Redacted query and evidence when enabled| reranker["Optional Voyage / HTTP rerank"]
 ```
+<!-- hnindex:architecture:end -->
 
 <p align="center">
   <a href="docs/how-it-works.md">How indexing &amp; search work →</a>
@@ -242,8 +224,8 @@ Issues and PRs: [github.com/AndyAnh174/vibe-hnindex](https://github.com/AndyAnh1
 
 **Ho Viet Anh (AndyAnh174)** · [hovietanh147@gmail.com](mailto:hovietanh147@gmail.com) · [GitHub](https://github.com/AndyAnh174)
 
-## Codex and architecture (v0.15.2)
+## Codex and architecture
 
 Run `npx -y hnindex-cli init --mcp codex` inside the project, then optionally `npx -y hnindex-cli init-skill --target codex`. Codex project MCP uses `.codex/config.toml` (trusted projects only); skills use `.agents/skills/use-vibe-hnindex`. Restart/reconnect Codex and ask for `workspace_context`, followed by `index_code_graph`.
 
-See [CLI configuration](packages/hnindex-cli/README.md#codex-setup-v0152), [system, sequence and user diagrams](docs/architecture.md), and [official Codex MCP setup](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).
+See [CLI configuration](packages/hnindex-cli/README.md#codex-setup), [system, sequence and user diagrams](docs/architecture.md), and [official Codex MCP setup](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).

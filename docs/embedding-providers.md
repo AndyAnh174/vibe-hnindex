@@ -1,4 +1,4 @@
-# Embedding providers (v0.13.0)
+# Embedding providers
 
 Select one embedding provider for the server. Indexing, file watching, semantic/hybrid search and chat memory share that provider; automatic fallback to a different model is intentionally avoided because vector spaces are incompatible.
 

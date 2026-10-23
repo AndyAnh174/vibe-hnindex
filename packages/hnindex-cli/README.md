@@ -1,6 +1,10 @@
 # hnindex-cli
 
-## Codex setup (v0.15.2)
+<!-- hnindex:release:start -->
+Current release: **v0.16.1** · MCP server `vibe-hnindex` · installer `hnindex-cli`. [Release notes](https://github.com/AndyAnh174/vibe-hnindex/releases/tag/v0.16.1)
+<!-- hnindex:release:end -->
+
+## Codex setup
 
 Run inside your project:
 
@@ -15,9 +19,9 @@ MCP configuration is merged into `.codex/config.toml`; the optional skill is ins
 [Codex loads project configuration only for trusted projects](https://learn.chatgpt.com/docs/extend/mcp?surface=cli). Set trust through Codex and restart/reconnect it. For a global install, use `codex mcp add vibe-hnindex -- npx -y vibe-hnindex`. Existing legacy `.codex/skills` files are left alone; reinstall the skill to use the current discovery path.
 
 
-v0.15.0 adds `--project-root <dir>`. Project targets (claude, cursor-project, vscode) bind `HNINDEX_PROJECT_ROOT` to `--cwd`; global targets follow client roots unless explicitly bound. Omitted flags on global targets preserve an existing root. See [workspace setup](../../docs/workspace.md).
+Use `--project-root <dir>` for explicit workspace binding. Project targets (claude, cursor-project, vscode) bind `HNINDEX_PROJECT_ROOT` to `--cwd`; global targets follow client roots unless explicitly bound. Omitted flags on global targets preserve an existing root. See [workspace setup](../../docs/workspace.md).
 
-v0.14.0 added `--code-graph true|false`, `--ast-chunking true|false`, `--rerank-provider none|http|voyage`, `--rerank-model`, `--rerank-url`, and `--rerank-api-key` on `hnindex init`. Omitted graph/rerank flags preserve existing settings; changing rerank provider clears stale endpoint/model/key. Graph and AST chunking default to enabled in the server.
+`hnindex init` supports `--code-graph true|false`, `--ast-chunking true|false`, `--rerank-provider none|http|voyage`, `--rerank-model`, `--rerank-url`, and `--rerank-api-key`. Omitted graph/rerank flags preserve existing settings; changing rerank provider clears stale endpoint/model/key. Graph and AST chunking default to enabled in the server.
 
 ```sh
 hnindex init --mcp claude --code-graph true --rerank-provider voyage

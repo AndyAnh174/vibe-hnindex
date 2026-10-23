@@ -35,8 +35,8 @@ export default function Introduction() {
       Icon: GitBranch,
       title: vi ? "Đi theo code graph" : "Follow the code graph",
       desc: vi
-        ? "AST TypeScript/JavaScript với caller và reference."
-        : "TypeScript/JavaScript AST relationships, callers and references.",
+        ? "AST đa ngôn ngữ với caller và reference."
+        : "Multilingual AST relationships, callers and references.",
     },
     {
       href: "/configuration",
@@ -111,8 +111,8 @@ export default function Introduction() {
       </h2>
       <p>
         {vi
-          ? "Chạy từ thư mục dự án. Node 22+ là đủ cho luồng code graph offline TypeScript/JavaScript."
-          : "Run this from your project directory. Node 22+ is enough for the offline TypeScript/JavaScript graph workflow."}
+          ? "Chạy từ thư mục dự án. Node 22+ là đủ cho luồng code graph offline đa ngôn ngữ."
+          : "Run this from your project directory. Node 22+ is enough for the offline multilingual graph workflow."}
       </p>
       <pre>
         <code>
@@ -136,8 +136,8 @@ export default function Introduction() {
       </h2>
       <p>
         {vi
-          ? "Task được agent khai báo, không tự suy đoán từ Git. Code graph hiện hỗ trợ TS/JS; dynamic call và dependency bên ngoài có thể chưa resolve. Luôn kiểm tra freshness trước khi sửa, và dùng filesystem khi code chưa index hoặc đã cũ."
-          : "Tasks are declared by the agent, rather than inferred from Git. The code graph currently supports TS/JS; dynamic calls and external dependencies can remain unresolved. Check freshness before editing and use filesystem search for missing, excluded or stale code."}
+          ? "Task được agent khai báo, không tự suy đoán từ Git. Code graph hiện có parser cho nhiều ngôn ngữ; dynamic call và dependency bên ngoài có thể chưa resolve. Luôn kiểm tra freshness trước khi sửa, và dùng filesystem khi code chưa index hoặc đã cũ."
+          : "Tasks are declared by the agent, rather than inferred from Git. The code graph now supports multiple AST language profiles; dynamic calls and external dependencies can remain unresolved. Check freshness before editing and use filesystem search for missing, excluded or stale code."}
       </p>
     </DocsLayout>
   );
