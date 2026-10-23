@@ -33,17 +33,22 @@ import { indexCodeGraphTool, findReferencesTool, callersTool, graphContextTool }
 import { evaluateRetrievalTool } from './tools/evaluate-retrieval.js';
 import { workspaceContextTool, WORKSPACE_INSTRUCTIONS } from './tools/workspace-context.js';
 import { locateCodeTool } from './tools/locate-code.js';
+import { securityArgs, securityAuditTool, securityContextTool, pentestPlanTool } from './tools/security.js';
 
 // Initialize database on startup
 initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.15.3',
+  version: '0.16.0',
 }, {
   capabilities: { logging: {}, prompts: {} },
   instructions: WORKSPACE_INSTRUCTIONS,
 });
+
+server.tool('security_audit', 'Collect bounded security review candidates from live indexed source, with CWE topics, redacted evidence and validation steps. Heuristics are not confirmed findings. Scope/exclusions and incomplete coverage are reported. Optional configured reranking receives redacted snippets; rerank:false keeps this operation local.', securityArgs, securityAuditTool);
+server.tool('security_context', 'Gather source-backed security review context by question, category and file glob. Live snippets and line evidence; no embedding service required. Optional Voyage/HTTP rerank follows SEARCH_RERANK; false forces local ranking.', {...securityArgs, query:z.string().trim().min(1).max(2000)}, securityContextTool);
+server.tool('pentest_plan', 'Build source-linked security validation checks for an authorized test plan. Does not execute commands, probes or exploits. Reads bounded live indexed source; optional configured rerank prioritizes evidence, not vulnerability severity.', securityArgs, pentestPlanTool);
 
 // Read current roots on each call: a shared client may switch its workspace.
 async function workspaceRoots(args: { path?: string; project_name?: string } = {}): Promise<string[]> {
@@ -511,7 +516,7 @@ async function main() {
   autoResumeWatch();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started (v0.15.3)');
+  console.error('[vibe-hnindex] Server started (v0.16.0)');
 }
 
 main().catch((error) => {

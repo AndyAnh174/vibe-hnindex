@@ -7,7 +7,7 @@ import { join, resolve } from 'node:path';
 // Inlined SKILL.md content (avoid file path issues when installed via npm)
 const SKILL_CONTENT = `---
 name: use-vibe-hnindex
-description: Guide for using vibe-hnindex MCP tools — indexing codebases, searching with keyword/semantic/hybrid modes, streaming, fuzzy matching, benchmarking, smart context, and code agent (code_session + code_apply). Use when the user asks to index a codebase, search code, benchmark search performance, or work with codebase knowledge bases.
+description: Use vibe-hnindex MCP for project context, indexed code search and navigation, source security review evidence, and source-linked validation plans. Applies to indexing, codebase knowledge and source reviews backed by hnindex.
 ---
 
 # vibe-hnindex — Agent Guide
@@ -21,6 +21,13 @@ Refresh stale source before trusting positions. Use filesystem reads/search for 
 You have access to vibe-hnindex MCP tools for indexing and searching codebases. This skill tells you how to use them effectively.
 
 ## Available Tools
+
+### Source security review (v0.16.0)
+- \`security_audit(project_name, file_pattern?, categories?, query?, rerank?)\` — Live source review candidates with coverage and validation steps.
+- \`security_context(project_name, query, ...)\` — Focus security-boundary evidence.
+- \`pentest_plan(project_name, ...)\` — Source-linked validation checks; no probes are executed.
+
+Matches require input/guard/sink and behavior validation before becoming findings. These tools need no embeddings. Optional Voyage/HTTP rerank follows server settings and receives best-effort-redacted snippets; \`rerank:false\` keeps these operations local. Inspect skipped paths and truncation; narrow scopes as needed.
 
 ### Workspace and Locations (v0.15.0)
 - \`workspace_context(path?, project_name?, task?, session_id?)\` — Identify purpose and recall the declared task.

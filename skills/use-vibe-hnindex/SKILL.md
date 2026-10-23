@@ -1,6 +1,6 @@
 ---
 name: use-vibe-hnindex
-description: Guide for using vibe-hnindex MCP tools — indexing codebases, searching with keyword/semantic/hybrid modes, streaming, fuzzy matching, benchmarking, smart context, code agent (code_session + code_apply), and chat memory with hybrid SQLite+Qdrant storage. Use when the user asks to index a codebase, search code, benchmark search performance, or work with codebase knowledge bases.
+description: Use vibe-hnindex MCP for project context, indexed code search and navigation, source security review evidence, and source-linked validation plans. Applies to indexing, codebase knowledge and source reviews backed by hnindex.
 ---
 
 # vibe-hnindex — Agent Guide
@@ -16,6 +16,10 @@ You have access to vibe-hnindex MCP tools for indexing and searching codebases. 
 ---
 
 ## Available Tools
+
+### Source security review (v0.16.0)
+
+For requested source audits, use `security_audit(project_name, file_pattern?, categories?, query?, rerank?)` to gather review leads. Use `security_context(project_name, query, ...)` to focus source evidence and `pentest_plan(project_name, ...)` to prepare validation checks. These tools read live indexed paths and report coverage; matches are not confirmed vulnerabilities. Validate input-to-guard-to-sink paths and behavior before reporting a finding. They execute no probes. Optional Voyage/HTTP rerank follows server settings and receives best-effort-redacted snippets; `rerank:false` forces local operation. Use narrow scopes and review truncation. No embeddings required.
 
 ### Core Indexing
 | Tool | Purpose | Key Params |
