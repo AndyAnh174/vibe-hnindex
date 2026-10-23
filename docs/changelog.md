@@ -1,5 +1,15 @@
 # Changelog (highlights)
 
+## v0.16.1 — Multilingual Code Graph
+
+- Add bundled offline Tree-sitter AST graph profiles for Python, PHP, Go, Java, C/C++, C#, Rust, Ruby, Kotlin, Swift, Scala and Lua alongside the existing JS/TS compiler graph.
+- Extract definitions, scoped call/reference evidence and selected explicit local imports; preserve ambiguous, dynamic and external calls as unresolved. Test Python aliases, PHP/Java class imports, Go package/receiver bindings and incremental graph refresh.
+- Version graph snapshots independently; rebuild with index_code_graph after upgrading to include additional languages without requiring embeddings.
+- Synchronize current-release banners in the main README, CLI README and docs index from package.json, alongside both websites.
+- Remove outdated release labels from ongoing setup/feature headings and repair the Codex setup anchor while preserving historical changelog entries.
+- Extend content:check to reject stale README banners and accept Git-converted CRLF generated data on Windows.
+- Keep SQLite as the graph backend and retain the v0.16 source security tools with optional reranking.
+
 ## v0.16.0 — Source Security Review
 
 - Added security_audit, security_context and pentest_plan MCP tools with live source evidence, CWE review topics, bounded coverage and validation steps.

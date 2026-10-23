@@ -1,6 +1,6 @@
 {
   "name": "vibe-hnindex",
-  "version": "0.16.0",
+  "version": "0.16.1",
   "workspaces": [
     "packages/*"
   ],
@@ -31,7 +31,9 @@
     "better-sqlite3": "13.0.3",
     "js-tiktoken": "^1.0.21",
     "minimatch": "^10.2.5",
+    "tree-sitter-wasm": "2.0.4",
     "typescript": "^5.9.3",
+    "web-tree-sitter": "0.27.1",
     "zod": "^3.24.0"
   },
   "devDependencies": {
@@ -45,6 +47,7 @@
   },
   "files": [
     "dist",
+    "graph-languages.json",
     "README.md",
     "LICENSE"
   ],

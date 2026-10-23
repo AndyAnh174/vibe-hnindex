@@ -40,7 +40,7 @@ initDatabase();
 
 const server = new McpServer({
   name: 'vibe-hnindex',
-  version: '0.16.0',
+  version: '0.16.1',
 }, {
   capabilities: { logging: {}, prompts: {} },
   instructions: WORKSPACE_INSTRUCTIONS,
@@ -137,7 +137,7 @@ server.tool(
 
 // --- Tool: search ---
 if (config.codeGraphEnabled) {
-  server.tool('index_code_graph', 'Build an AST-based TypeScript/JavaScript code graph in SQLite, independently of embedding/vector services. Honors scanner exclusions and .hnindexignore. Re-run after changes if not using index_codebase/watch_project.', {
+  server.tool('index_code_graph', 'Build a multilingual AST code graph in SQLite without embedding/vector services: JS/TS compiler resolution plus bundled Tree-sitter profiles for Python, PHP, Go, Java, C/C++, C#, Rust, Ruby, Kotlin, Swift, Scala and Lua. Reports syntax recovery/coverage warnings. Dynamic/external/ambiguous relationships may be unresolved. Honors scanner exclusions and .hnindexignore. Re-run after upgrading or changing source.', {
     path: z.string().describe('Absolute repository directory'),
     project_name: z.string().describe('Unique project name'),
   }, indexCodeGraphTool);
@@ -516,7 +516,7 @@ async function main() {
   autoResumeWatch();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('[vibe-hnindex] Server started (v0.16.0)');
+  console.error('[vibe-hnindex] Server started (v0.16.1)');
 }
 
 main().catch((error) => {

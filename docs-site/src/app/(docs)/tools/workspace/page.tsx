@@ -38,7 +38,7 @@ hnindex init --mcp windsurf --project-root /absolute/project`}</code>
       <h2 id="start">Start and remember a task</h2>
       <pre>
         <code>{`workspace_context(path: "/absolute/project")
-// If not indexed, initialize TS/JS locations offline:
+// If not indexed, initialize supported source locations offline:
 index_code_graph(path: "/absolute/project", project_name: "my-app")
 workspace_context(project_name: "my-app", task: "Fix authentication", session_id: "agent-1")`}</code>
       </pre>
@@ -67,9 +67,8 @@ locate_code(query: "how requests authenticate", mode: "hybrid")`}</code>
       <p>
         Auto mode tries files, symbols and local keywords without embeddings.
         Explicit hybrid mode uses configured semantic services/API costs.
-        Graph-only indexing provides TS/JS locations; use{" "}
-        <code>index_codebase</code> for keyword/vector chunks and other
-        languages.
+        Graph-only indexing provides locations for supported AST languages; use{" "}
+        <code>index_codebase</code> for keyword/vector chunks and other text formats.
       </p>
       <p>
         Results include paths, lines, optional signatures/excerpts, ambiguous

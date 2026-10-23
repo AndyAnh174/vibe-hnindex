@@ -25,7 +25,7 @@ Security review: use `security_audit(project_name, file_pattern?, categories?, q
 | `locate_code` | File/symbol/keyword locations and freshness | `query` / `symbol`, `file_pattern`, `mode`, `token_budget` |
 | `index_codebase` | Index entire directory | `path`, `project_name`, `watch` (default true) |
 | `index_file` | Re-index single file | `file_path`, `project_name` |
-| `index_code_graph` | Offline TS/JS AST graph (SQLite) | `path`, `project_name` |
+| `index_code_graph` | Offline multilingual AST graph (SQLite) | `path`, `project_name` |
 | `find_references` | Resolved symbol use sites | `project_name`, `symbol`, `file_path`, `line` |
 | `callers` | Resolved call sites | `project_name`, `symbol`, `file_path`, `line` |
 | `graph_context` | Bounded source/relationship context | `project_name`, `symbol` / `file_path` / `query`, `depth`, `token_budget` |

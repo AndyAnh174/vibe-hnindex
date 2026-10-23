@@ -13,8 +13,7 @@ export default function QuickStart() {
       <h1>From a repo to useful context.</h1>
       <p className="docs-lead">
         Connect MCP, initialize a local graph, then give your agent a concrete
-        task. This offline path needs Node 22+ and a TypeScript/JavaScript
-        project.
+        task. This offline path needs Node 22+ and a project in one of the supported AST languages.
       </p>
       <h2 id="connect">1. Connect MCP</h2>
       <p>

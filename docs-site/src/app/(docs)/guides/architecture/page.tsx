@@ -13,7 +13,7 @@ export default function Architecture() {
     <p className="doc-eyebrow">GUIDES / v{VERSION}</p>
     <h1>{vi ? "Hiểu hệ thống qua ba sơ đồ." : "Understand the system in three diagrams."}</h1>
     <p className="docs-lead">{vi ? "System diagram mô tả các thành phần. Sequence diagram mô tả trình tự gọi tool. User diagram mô tả công việc của bạn và agent." : "The system diagram maps components. The sequence diagram follows tool calls. The user diagram shows the developer and agent workflow."}</p>
-    <p>{vi ? "Đây là luồng graph offline cho TypeScript/JavaScript. Client quyết định gọi tool nào; skill và hướng dẫn MCP hỗ trợ lựa chọn đó." : "These views focus on the offline TypeScript/JavaScript graph path. The client chooses which tools to call; skills and MCP instructions guide that choice."}</p>
+    <p>{vi ? "Đây là luồng graph offline đa ngôn ngữ. Client quyết định gọi tool nào; skill và hướng dẫn MCP hỗ trợ lựa chọn đó." : "These views focus on the offline multilingual graph path. The client chooses which tools to call; skills and MCP instructions guide that choice."}</p>
     <ArchitectureExplorer locale={locale} showAll />
     <h2 id="boundaries">{vi ? "Ranh giới và độ mới dữ liệu" : "Boundaries and freshness"}</h2>
     <p>{vi ? "SQLite lưu code graph, snapshot và task đã khai báo theo dự án/phiên. workspace_context đọc tài liệu và Git hiện tại; Git không tự suy đoán mục tiêu của bạn." : "SQLite stores the code graph, snapshots and explicitly declared tasks per project/session. workspace_context reads live purpose documents and Git; Git activity does not infer your objective."}</p>

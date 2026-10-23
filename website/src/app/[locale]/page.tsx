@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { Link } from "@/i18n/navigation";
 import { ArchitectureExplorer } from "@/components/architecture-explorer";
-import { VERSION } from "@/lib/release";
+import { GRAPH_LANGUAGES, VERSION } from "@/lib/release";
 
 const copy = {
   en: {
@@ -59,12 +59,12 @@ const copy = {
     copy: "Copy command",
     copyError: "Copy unavailable — select the command manually.",
     setupNote:
-      "Node 22+ · Graph indexing supports TypeScript and JavaScript · Embeddings are optional for the offline path.",
+      `Node 22+ · ${GRAPH_LANGUAGES.length} Code Graph languages · Embeddings are optional for the offline path.`,
     faq: "A few things to know.",
     faqItems: [
       [
         "Do I need an embedding API key?",
-        "Workspace context and TypeScript/JavaScript code graph navigation work offline. Semantic and hybrid retrieval need your configured embedding provider and Qdrant.",
+        "Workspace context and multilingual code graph navigation work offline. Semantic and hybrid retrieval need your configured embedding provider and Qdrant.",
       ],
       [
         "Does my code leave my machine?",
@@ -124,12 +124,12 @@ const copy = {
     copy: "Sao chép lệnh",
     copyError: "Không sao chép được — hãy chọn lệnh và sao chép thủ công.",
     setupNote:
-      "Node 22+ · Code graph hỗ trợ TypeScript và JavaScript · Luồng offline không cần embedding.",
+      `Node 22+ · Code Graph hỗ trợ ${GRAPH_LANGUAGES.length} ngôn ngữ · Luồng offline không cần embedding.`,
     faq: "Một vài điều nên biết.",
     faqItems: [
       [
         "Có cần API key embedding không?",
-        "Ngữ cảnh workspace và code graph TypeScript/JavaScript chạy offline. Semantic và hybrid retrieval cần nhà cung cấp embedding đã cấu hình cùng Qdrant.",
+        "Ngữ cảnh workspace và code graph đa ngôn ngữ chạy offline. Semantic và hybrid retrieval cần nhà cung cấp embedding đã cấu hình cùng Qdrant.",
       ],
       [
         "Code có được gửi ra ngoài không?",

@@ -6,7 +6,7 @@ import { config } from '../config.js';
 import { getProject, upsertProject, getExistingFileHash } from '../services/sqlite.js';
 import { fastHash } from '../services/fast-hash.js';
 import { scanDirectory } from '../services/file-scanner.js';
-import { isScriptFile } from '../services/typescript-ast.js';
+import { isGraphFile } from '../services/polyglot-graph.js';
 import { findGraphNodes, graphEdges, graphNodesById, graphSources, graphState, syncCodeGraph, traverseCodeGraph } from '../services/code-graph-store.js';
 import type { GraphNode } from '../services/code-graph.js';
 import type { SearchResult } from '../types.js';
@@ -28,7 +28,7 @@ export async function indexCodeGraphTool(args: { path: string; project_name: str
   if (project && path.resolve(project.rootPath) !== rootPath) return result('Error: project_name already belongs to another directory. Use a new project name.');
   const inputs = [];
   for await (const file of scanDirectory(rootPath)) {
-    if (isScriptFile(file.relativePath)) inputs.push({ filePath: file.relativePath, content: file.content });
+    if (isGraphFile(file.relativePath)) inputs.push({ filePath: file.relativePath, content: file.content });
   }
   upsertProject(args.project_name, rootPath);
   try {

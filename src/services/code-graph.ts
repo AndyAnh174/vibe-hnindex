@@ -2,8 +2,10 @@ import ts from 'typescript';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { parseScript, scriptDeclarations } from './typescript-ast.js';
+import { isScriptFile } from './typescript-ast.js';
+import { analyzePolyglotGraph } from './polyglot-graph.js';
 
-export const CODE_GRAPH_VERSION = '1';
+export const CODE_GRAPH_VERSION = '2';
 export interface GraphSource { filePath: string; content: string }
 export interface GraphNode {
   id: string; projectName: string; filePath: string; name: string; kind: string;
@@ -22,7 +24,8 @@ const normalize = (value: string) => path.resolve(value).replace(/\\/g, '/');
 
 /** Only indexed snapshots participate in resolution; ignored files cannot enter the graph. */
 export function analyzeCodeGraph(projectName: string, rootPath: string, inputs: GraphSource[], options: ts.CompilerOptions = {}): CodeGraph {
-  const snapshots = new Map(inputs.map(input => [normalize(path.join(rootPath, input.filePath)), input]));
+  const foreign = analyzePolyglotGraph(projectName, inputs.filter(input => !isScriptFile(input.filePath)));
+  const snapshots = new Map(inputs.filter(input => isScriptFile(input.filePath)).map(input => [normalize(path.join(rootPath, input.filePath)), input]));
   const compilerOptions: ts.CompilerOptions = {
     ...options, allowJs: true, checkJs: true, noLib: true, noEmit: true,
     target: ts.ScriptTarget.ESNext,
@@ -46,9 +49,9 @@ export function analyzeCodeGraph(projectName: string, rootPath: string, inputs: 
   };
   const program = ts.createProgram([...snapshots.keys()], compilerOptions, host);
   const checker = program.getTypeChecker();
-  const nodes: GraphNode[] = [];
-  const edges: GraphEdge[] = [];
-  const warnings: string[] = [];
+  const nodes: GraphNode[] = [...foreign.nodes];
+  const edges: GraphEdge[] = [...foreign.edges];
+  const warnings: string[] = [...foreign.warnings];
   const nodeIds = new Map<ts.Node, string>();
   const variableIds = new Set<string>();
   const kindsById = new Map<string, string>();

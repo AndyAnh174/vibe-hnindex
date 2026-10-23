@@ -1,6 +1,20 @@
-# Code Graph (v0.14.0)
+# Code Graph
 
-Code Graph augments hybrid retrieval with static relationships from indexed TypeScript/JavaScript source. Graph nodes, edges and source snapshots live in SQLite. Qdrant remains the vector backend; no Neo4j service is required.
+Code Graph augments retrieval with static relationships from indexed source in 15 languages. Graph nodes, edges and source snapshots live in SQLite; Qdrant remains the vector backend. The bundled grammars work offline and require no language compiler installation.
+
+## Language coverage in v0.16.1
+
+| Languages | Parser and resolution |
+|---|---|
+| TypeScript, JavaScript (including TSX/JSX) | Existing TypeScript compiler AST, project options, aliases, barrels and typed bindings |
+| Python | Tree-sitter definitions, classes, lexical calls/references, explicit self receivers and selected module/import aliases |
+| PHP, Java | Tree-sitter functions/methods/classes, local lexical/self calls and selected explicit local class imports |
+| Go | Tree-sitter package functions, local relative package imports, struct methods and explicit named receiver bindings |
+| C, C++, C#, Rust, Ruby, Kotlin, Swift, Scala, Lua | Tree-sitter declarations and scoped call/reference evidence; common local/self cases where bindings are known. C/C++ include prototypes and qualified class implementations |
+
+Grammar assets are installed with the pinned Node dependencies and initialized from local files at server startup. Indexing makes no grammar download request. All profiles use real syntax trees rather than matching function/call text in comments or strings. This does not imply complete compiler semantics for every language. General object type inference, overloaded methods, inheritance dispatch, build-system paths, macros, reflection and dynamic calls may remain unresolved. File extensions and labels share `graph-languages.json`; `.h` files use the C++ grammar. Syntax recovery or AST-budget failures are reported as warnings.
+
+After upgrading, run `index_code_graph(path, project_name)` to rebuild graph snapshots and add the newly supported source languages. This operation makes no embedding request. Existing full codebase/file/watch indexing also updates multilingual graph sources.
 
 ## Start offline
 
@@ -20,9 +34,9 @@ graph_context(project_name="app", symbol="authenticate", file_path="src/auth.ts"
 
 File and symbol nodes carry declaration kind, signature, parent and source span. Edges are `DEFINES`, `IMPORTS`, `REFERENCES`, and `CALLS`, with source file, line, column, target and resolution status. Reference/caller tools return resolved sites and report ambiguous names; supply `file_path` and the definition's start `line` to disambiguate overloads or nested declarations.
 
-Resolution uses a TypeScript compiler program populated from indexed snapshots only. Project-root `tsconfig.json` or `jsconfig.json`, including compiler paths and inherited options, configure resolution. Imports through `.js` paths to TS source, aliases, barrels, default/namespace imports and typed methods are supported when the compiler resolves them. External package source and ignored/unindexed files do not enter the graph.
+For JS/TS, resolution uses a TypeScript compiler program populated from indexed snapshots only. Project-root `tsconfig.json` or `jsconfig.json`, including compiler paths and inherited options, configure resolution. Imports through `.js` paths to TS source, aliases, barrels, default/namespace imports and typed methods are supported when the compiler resolves them. External package source and ignored/unindexed files do not enter the graph.
 
-This is static analysis, not runtime tracing. Dynamic calls, callbacks without a known binding, reflection and external declarations can remain unresolved. Syntax diagnostics are reported. The graph does not certify that source type-checks. Other languages retain existing indexing and file dependency behavior. Whole-project resolution is rebuilt after source/options changes; fingerprinting skips unchanged full scans. For very large projects this adds CPU/memory cost; disable graph analysis with `CODE_GRAPH_ENABLED=false` if necessary.
+This is static analysis, not runtime tracing. Dynamic calls, callbacks without a known binding, reflection and external declarations can remain unresolved. Syntax diagnostics are reported. The graph does not certify that source type-checks. Files without a supported graph profile retain text indexing and file dependency behavior. Whole-project resolution is rebuilt after source/options changes; fingerprinting skips unchanged full scans. For very large projects this adds CPU/memory cost; disable graph analysis with `CODE_GRAPH_ENABLED=false` if necessary.
 
 ## Context and budgets
 

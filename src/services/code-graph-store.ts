@@ -5,7 +5,7 @@ import { createHash } from 'node:crypto';
 import { config } from '../config.js';
 import { getDb } from './sqlite.js';
 import { analyzeCodeGraph, CODE_GRAPH_VERSION, type GraphSource, type GraphNode, type GraphEdge, type GraphEdgeKind } from './code-graph.js';
-import { isScriptFile } from './typescript-ast.js';
+import { isGraphFile } from './polyglot-graph.js';
 
 export function graphSources(projectName: string, filePaths?: string[]): GraphSource[] {
   if (filePaths && !filePaths.length) return [];
@@ -61,7 +61,7 @@ export function refreshCodeGraph(projectName: string, rootPath: string) {
 export function syncCodeGraph(projectName: string, rootPath: string, inputs: GraphSource[]) {
   if (!config.codeGraphEnabled) return refreshCodeGraph(projectName, rootPath);
   const db = getDb();
-  const scripts = inputs.filter(input => isScriptFile(input.filePath));
+  const scripts = inputs.filter(input => isGraphFile(input.filePath));
   const previous = graphSources(projectName);
   if (JSON.stringify(previous) !== JSON.stringify([...scripts].sort((a, b) => a.filePath < b.filePath ? -1 : a.filePath > b.filePath ? 1 : 0))) {
     db.transaction(() => {
@@ -78,11 +78,11 @@ export function updateCodeGraphFile(projectName: string, rootPath: string, fileP
   if (!config.codeGraphEnabled) return;
   const db = getDb();
   const previous = db.prepare('SELECT content FROM code_graph_sources WHERE project_name = ? AND file_path = ?').get(projectName, filePath) as { content: string } | undefined;
-  if ((content !== null && isScriptFile(filePath) && previous?.content === content)
-    || ((!isScriptFile(filePath) || content === null) && !previous)) return refreshCodeGraph(projectName, rootPath);
+  if ((content !== null && isGraphFile(filePath) && previous?.content === content)
+    || ((!isGraphFile(filePath) || content === null) && !previous)) return refreshCodeGraph(projectName, rootPath);
   db.transaction(() => {
     db.prepare('DELETE FROM code_graph_state WHERE project_name = ?').run(projectName);
-    if (content !== null && isScriptFile(filePath)) db.prepare('INSERT OR REPLACE INTO code_graph_sources VALUES (?, ?, ?)').run(projectName, filePath, content);
+    if (content !== null && isGraphFile(filePath)) db.prepare('INSERT OR REPLACE INTO code_graph_sources VALUES (?, ?, ?)').run(projectName, filePath, content);
     else db.prepare('DELETE FROM code_graph_sources WHERE project_name = ? AND file_path = ?').run(projectName, filePath);
   })();
   return refreshCodeGraph(projectName, rootPath);
