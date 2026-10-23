@@ -12,7 +12,7 @@
 [![MCP](https://img.shields.io/badge/MCP-compatible-6366f1?style=flat-square)](https://modelcontextprotocol.io/)
 [![Node](https://img.shields.io/badge/node-%3E%3D20-339933?style=flat-square&logo=node.js&logoColor=white)](https://nodejs.org/)
 
-**MCP server (`vibe-hnindex`) version: v0.15.0** · [`hnindex-cli`](https://www.npmjs.com/package/hnindex-cli) **v0.15.0** — [Docs](https://docs.hnindex.cloud) · [Changelog](https://hnindex.cloud/changelog) · [GitHub Releases](https://github.com/AndyAnh174/vibe-hnindex/releases)
+**MCP server (`vibe-hnindex`) version: v0.16.0** · [`hnindex-cli`](https://www.npmjs.com/package/hnindex-cli) **v0.16.0** — [Docs](https://docs.hnindex.cloud) · [Changelog](https://hnindex.cloud/changelog) · [GitHub Releases](https://github.com/AndyAnh174/vibe-hnindex/releases)
 
 </div>
 
@@ -25,6 +25,8 @@
 ---
 
 ## Documentation
+
+[Source security review](docs/security-tools.md): `security_audit`, `security_context` and `pentest_plan` provide live source evidence and validation checks. Optional Voyage/HTTP rerank follows server configuration; `rerank:false` keeps review local. Results are heuristic review leads with explicit coverage, not confirmed vulnerability reports.
 
 📚 **Full docs site: [docs.hnindex.cloud](https://docs.hnindex.cloud)** — 16 pages covering Getting Started, Configuration, Tools Reference, Guides, and Code Agent.
 

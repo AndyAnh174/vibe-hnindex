@@ -1,5 +1,13 @@
 # Changelog (highlights)
 
+## v0.16.0 — Source Security Review
+
+- Added security_audit, security_context and pentest_plan MCP tools with live source evidence, CWE review topics, bounded coverage and validation steps.
+- Support optional Voyage/custom HTTP reranking with per-call opt-out, global configuration, credential redaction and stable fallback ordering.
+- Keep security review local without embedding services; report ignored/unindexed paths, scan/output limits and graph-only language coverage honestly.
+- Added regression and actual stdio MCP tests for source changes, scoping, redaction, rerank failures, token budgets and root containment.
+- Document source audit and pentest preparation in the agent guide, CLI-installed skill and tools reference; synchronize both sites' release and architecture data.
+
 ## v0.15.3 — MCP Setup on Mobile
 
 - Let MCP client tabs wrap to their full height and give each client a 44px touch target, keeping the Codex setup panel readable on mobile.

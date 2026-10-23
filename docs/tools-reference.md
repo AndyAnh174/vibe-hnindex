@@ -1,5 +1,9 @@
 # Tools reference
 
+## Security review (v0.16.0)
+
+`security_audit`, `security_context` and `pentest_plan` collect live source review candidates, security-boundary context and source-linked validation checks. They support `project_name`, `file_pattern`, `categories`, `query`, `limit`, `max_files`, `token_budget` and `rerank`. `security_context` requires a question. Optional configured reranking follows `SEARCH_RERANK`; `rerank:false` forces local operation. See [Security review tools](security-tools.md) for examples, redaction, coverage and validation limits. Matches are review leads, not confirmed vulnerabilities; the pentest plan executes no probes.
+
 ## Workspace and locations (v0.15.0)
 
 Start with `workspace_context(path?, project_name?, task?, session_id?, clear_task?, token_budget?)` for active project purpose, Git/index state and a declared task persisted per project/session. Use `locate_code(query?, symbol?, path?, project_name?, file_pattern?, mode?, limit?, token_budget?)` before editing for file/line evidence and freshness. Auto mode is local; hybrid explicitly uses configured services. See [Workspace and code locations](workspace.md).

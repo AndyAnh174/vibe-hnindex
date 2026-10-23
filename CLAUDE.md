@@ -17,6 +17,8 @@ Refresh stale source before trusting positions. Use filesystem reads/search for 
 
 ## All Tools
 
+Security review: use `security_audit(project_name, file_pattern?, categories?, query?, rerank?)` for source candidates, `security_context(project_name, query, ...)` for relevant boundaries, and `pentest_plan(project_name, ...)` for validation checks. Results are live evidence and review leads, not confirmed findings. Scope/budget limits and skipped paths are reported; no probes are executed. Optional reranking sends best-effort-redacted snippets to the configured provider; `rerank:false` keeps these operations local. See [Security tools](docs/security-tools.md).
+
 | Tool | Purpose | Key Params |
 |------|---------|------------|
 | `workspace_context` | Active purpose and declared task | `path` / `project_name`, `task`, `session_id` |

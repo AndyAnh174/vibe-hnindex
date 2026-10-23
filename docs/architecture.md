@@ -15,6 +15,9 @@ flowchart TB
         hnindex_server["hnindex MCP server<br/>Context · AST · code lookup"]
         project_files["Source files<br/>README · Git"]
         sqlite_store[("SQLite<br/>FTS · graph · declared tasks")]
+        security_review["Security review<br/>Live source · bounded leads · validation plan"]
+        hnindex_server --> security_review
+        project_files --> security_review
         project_files -->|Read and check freshness| hnindex_server
         hnindex_server <-->|Index and task storage| sqlite_store
     end
@@ -26,6 +29,7 @@ flowchart TB
     hnindex_server -.->|Code chunks and queries| embedding_provider
     embedding_provider -.->|Vectors| hnindex_server
     hnindex_server <-.->|Store and retrieve vectors| qdrant_store
+    security_review -.->|Redacted query and evidence when enabled| reranker["Optional Voyage / HTTP rerank"]
 ```
 
 OpenAI, Voyage, Gemini and compatible endpoints receive the chunks/queries sent for embedding. Ollama can run locally. The diagram does not imply that local graph navigation needs either service.[^search]
